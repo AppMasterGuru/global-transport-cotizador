@@ -1,28 +1,24 @@
-import fs from 'fs';
-import path from 'path';
+/**
+ * tasks.js
+ * GET  /api/tasks  — returns current task state
+ * POST /api/tasks  — toggles a single task { id, done }
+ *
+ * State is stored in Redis (gt:state key) so it persists on Vercel.
+ * Falls back to static task defaults if Redis is not configured.
+ */
+
+import { redisGet, redisSet } from '../../lib/redis';
 import { SECTIONS } from '../../data/tasks';
 
-const STATE_FILE = path.join(process.cwd(), 'data', 'state.json');
-
-function loadState() {
-  try {
-    if (fs.existsSync(STATE_FILE)) {
-      return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
-    }
-  } catch {}
-  // Build default state from task definitions
+function defaultState() {
   const state = {};
   SECTIONS.forEach(s => s.tasks.forEach(t => { state[t.id] = t.done; }));
   return state;
 }
 
-function saveState(state) {
-  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
-}
-
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === 'GET') {
-    const state = loadState();
+    const state = (await redisGet('gt:state')) || defaultState();
     return res.status(200).json({ state });
   }
 
@@ -31,9 +27,9 @@ export default function handler(req, res) {
     if (!id || typeof done !== 'boolean') {
       return res.status(400).json({ error: 'Missing id or done' });
     }
-    const state = loadState();
+    const state = (await redisGet('gt:state')) || defaultState();
     state[id] = done;
-    saveState(state);
+    await redisSet('gt:state', state);
     return res.status(200).json({ ok: true, state });
   }
 

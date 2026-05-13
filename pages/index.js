@@ -29,14 +29,54 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [source, setSource] = useState('static'); // 'static' | 'memory'
+  const [sections, setSections] = useState(SECTIONS);
+  const [memoryLastModified, setMemoryLastModified] = useState(null);
+  const [memoryError, setMemoryError] = useState(null);
+  const [agentLog, setAgentLog] = useState([]);
 
   useEffect(() => {
     fetch('/api/tasks')
       .then(r => r.json())
       .then(({ state }) => { setState(state); setLoading(false); });
+    // Load agent activity log
+    fetch('/api/agent-log')
+      .then(r => r.ok ? r.json() : { log: [] })
+      .then(({ log }) => setAgentLog(log || []))
+      .catch(() => {});
+    // Poll for new agent pushes every 30 seconds
+    const interval = setInterval(() => {
+      fetch('/api/tasks').then(r => r.json()).then(({ state }) => setState(state)).catch(() => {});
+      fetch('/api/agent-log').then(r => r.ok ? r.json() : { log: [] }).then(({ log }) => setAgentLog(log || [])).catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  const allTasks = SECTIONS.flatMap(s => s.tasks);
+  async function loadMemory() {
+    setMemoryError(null);
+    try {
+      const r = await fetch('/api/memory');
+      const data = await r.json();
+      if (!r.ok) {
+        setMemoryError(data.error || 'Failed to load MEMORY.md');
+        return;
+      }
+      setSections(data.sections);
+      setMemoryLastModified(data.lastModified);
+      setSource('memory');
+    } catch (err) {
+      setMemoryError(err.message);
+    }
+  }
+
+  function loadStatic() {
+    setSections(SECTIONS);
+    setMemoryLastModified(null);
+    setMemoryError(null);
+    setSource('static');
+  }
+
+  const allTasks = sections.flatMap(s => s.tasks);
   const doneCount = allTasks.filter(t => state[t.id]).length;
   const total = allTasks.length;
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
@@ -103,9 +143,25 @@ export default function Dashboard() {
               GLOBAL TRANSPORT × TIMEBACK AI
             </span>
           </div>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'rgba(255,255,255,.45)' }}>
-            {lastUpdated ? `saved ${lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}` : 'pipeline #1'}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'rgba(255,255,255,.45)' }}>
+              {lastUpdated ? `saved ${lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}` : 'pipeline #1'}
+            </span>
+            <button
+              onClick={source === 'static' ? loadMemory : loadStatic}
+              style={{
+                fontFamily: 'var(--mono)', fontSize: '10px', fontWeight: 600,
+                letterSpacing: '.06em', textTransform: 'uppercase',
+                padding: '3px 10px', borderRadius: '20px', border: 'none',
+                cursor: 'pointer',
+                background: source === 'memory' ? '#2DD4BF' : 'rgba(255,255,255,0.12)',
+                color: source === 'memory' ? '#05080F' : 'rgba(255,255,255,0.7)',
+                transition: 'all .15s',
+              }}
+            >
+              {source === 'memory' ? '● MEMORY.md' : 'MEMORY.md'}
+            </button>
+          </div>
         </div>
 
         <div style={{ maxWidth: '780px', margin: '0 auto', padding: '32px 24px 64px' }}>
@@ -118,6 +174,26 @@ export default function Dashboard() {
               Pipeline #1 · Click a task row to see why it matters and how to do it
             </p>
           </div>
+
+          {/* Memory source info bar */}
+          {source === 'memory' && (
+            <div style={{ marginBottom: '16px', padding: '10px 14px', borderRadius: '8px', background: '#e6f4ea', border: '1px solid #bbdfc8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: '#1e7e34' }}>
+                ● Live from MEMORY.md
+                {memoryLastModified && ` · Last modified ${new Date(memoryLastModified).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`}
+              </span>
+              <button onClick={loadMemory} style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: '#1e7e34', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                refresh
+              </button>
+            </div>
+          )}
+          {memoryError && (
+            <div style={{ marginBottom: '16px', padding: '10px 14px', borderRadius: '8px', background: '#fdecea', border: '1px solid #f5c6c2' }}>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: '#b91c1c' }}>
+                ✕ {memoryError}
+              </span>
+            </div>
+          )}
 
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '32px' }}>
@@ -144,7 +220,7 @@ export default function Dashboard() {
           </div>
 
           {/* Sections */}
-          {SECTIONS.map((sec, sIdx) => {
+          {sections.map((sec, sIdx) => {
             const tasks = sec.tasks;
             const secDone = tasks.filter(t => state[t.id]).length;
             const secBlocked = tasks.filter(t => t.tags?.includes('blocked') && !state[t.id]).length;
@@ -272,6 +348,58 @@ export default function Dashboard() {
               </div>
             );
           })}
+
+          {/* Agent activity feed */}
+          {agentLog.length > 0 && (
+            <div style={{ marginTop: '40px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2DD4BF' }} />
+                <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: '#6b7280', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                  Agent activity
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {agentLog.slice(0, 10).map((entry, i) => (
+                  <div key={i} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '12px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: entry.summary ? '6px' : 0 }}>
+                      <div style={{ flex: 1 }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: '#9ca3af' }}>
+                          {new Date(entry.timestamp).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        {entry.from_email && (
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: '#6b7280', marginLeft: '8px' }}>
+                            {entry.from_email}
+                          </span>
+                        )}
+                        {entry.subject && (
+                          <div style={{ fontSize: '13px', fontWeight: 500, color: '#111', marginTop: '3px' }}>
+                            {entry.subject}
+                          </div>
+                        )}
+                      </div>
+                      {entry.task_updates?.length > 0 && (
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: '20px', background: '#e6f4ea', color: '#1e7e34', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          {entry.task_updates.length} task{entry.task_updates.length > 1 ? 's' : ''} updated
+                        </span>
+                      )}
+                    </div>
+                    {entry.summary && (
+                      <p style={{ fontSize: '13px', color: '#374151', lineHeight: 1.5, margin: 0 }}>
+                        {entry.summary}
+                      </p>
+                    )}
+                    {entry.notes?.length > 0 && (
+                      <ul style={{ margin: '6px 0 0', paddingLeft: '16px' }}>
+                        {entry.notes.map((note, j) => (
+                          <li key={j} style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.5 }}>{note}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <p style={{ textAlign: 'center', fontSize: '11px', color: '#d1d5db', marginTop: '32px', fontFamily: 'var(--mono)' }}>
             TimeBack AI · Pipeline #1 · {new Date().getFullYear()}
