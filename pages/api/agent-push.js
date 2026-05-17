@@ -26,15 +26,8 @@
  */
 
 import { redisGet, redisSet, hasRedis } from '../../lib/redis';
-import { SECTIONS } from '../../data/tasks';
 
 const MAX_LOG_ENTRIES = 50;
-
-function defaultState() {
-  const state = {};
-  SECTIONS.forEach(s => s.tasks.forEach(t => { state[t.id] = t.done; }));
-  return state;
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -55,7 +48,7 @@ export default async function handler(req, res) {
   const { source, from_email, subject, summary, task_updates, notes } = req.body || {};
 
   // 1. Apply task state updates to Redis
-  const state = (await redisGet('gt:state')) || defaultState();
+  const state = (await redisGet('gt:state')) || {};
   const applied = [];
   for (const update of (task_updates || [])) {
     if (update.id && typeof update.done === 'boolean') {
