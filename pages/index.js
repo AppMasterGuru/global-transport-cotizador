@@ -12,20 +12,34 @@ const C = {
 };
 
 // ── Baseline deliverables from Propuesta_Pipeline1_V2_2.md (signed 2026-05-11) ─
+// Covers §2.1 (functional flow), §2.2 (languages), §2.4 (infrastructure), §2.5 (kickers)
 const BASELINE = [
-  { id: 'bl-1',  name: 'Recepción de solicitudes por email',             done: true  },
-  { id: 'bl-2',  name: 'Recepción de solicitudes por WhatsApp',          done: false },
-  { id: 'bl-3',  name: 'Consulta de tarifas — Drive rate cards',         done: true  },
-  { id: 'bl-4',  name: 'Costos de aduana desde Drive',                   done: true  },
-  { id: 'bl-5',  name: 'Tarifas de transporte local',                    done: true  },
-  { id: 'bl-6',  name: 'Generación de proforma Excel',                   done: true  },
-  { id: 'bl-7',  name: 'Generación de PDF con logos y firma',            done: true  },
-  { id: 'bl-8',  name: 'Compuerta de aprobación humana',                 done: true  },
-  { id: 'bl-9',  name: 'Envío automático desde correo corporativo',      done: false },
-  { id: 'bl-10', name: 'Procedimientos SIG ISO 9001 en lógica',          done: false },
-  { id: 'bl-11', name: 'Piloto WCA (20–30 agentes)',                     done: false },
-  { id: 'bl-12', name: 'Auto-acuse multilingüe',                        done: false },
-  { id: 'bl-13', name: 'Tests automatizados',                            done: true  },
+  // §2.1 — Flujo funcional (8 items)
+  { id: 'bl-1',  section: '§2.1', name: 'Recepción de solicitudes por correo electrónico y WhatsApp',        done: true  },
+  { id: 'bl-2',  section: '§2.1', name: 'Consulta de tarifas a aerolíneas y navieras',                        done: true  },
+  { id: 'bl-3',  section: '§2.1', name: 'Lectura de costos de aduana desde Google Drive',                     done: true  },
+  { id: 'bl-4',  section: '§2.1', name: 'Lectura de tarifas de transporte local desde base de datos interna', done: true  },
+  { id: 'bl-5',  section: '§2.1', name: 'Generación de proforma Excel con el formato de Global Transport',    done: true  },
+  { id: 'bl-6',  section: '§2.1', name: 'Generación de PDF con logos, plantillas y firma corporativa',        done: true  },
+  { id: 'bl-7',  section: '§2.1', name: 'Compuerta de aprobación humana antes de cualquier envío al cliente', done: true  },
+  { id: 'bl-8',  section: '§2.1', name: 'Envío automático desde correo corporativo con firma del responsable', done: false },
+  // §2.2 — Idiomas
+  { id: 'bl-9',  section: '§2.2', name: 'Proformas y PDFs en español e inglés',                               done: true  },
+  // §2.4 — Infraestructura técnica (6 items)
+  { id: 'bl-10', section: '§2.4', name: 'Integración con Google Drive de Global Transport',                    done: true  },
+  { id: 'bl-11', section: '§2.4', name: 'Estructuración de tarifarios y plantillas de costos de aduana',      done: true  },
+  { id: 'bl-12', section: '§2.4', name: 'Codificación de procedimientos SIG ISO 9001 en la lógica del agente', done: false },
+  { id: 'bl-13', section: '§2.4', name: 'Manejo de credenciales con prácticas compatibles con BASC/ISO',      done: true  },
+  { id: 'bl-14', section: '§2.4', name: 'Interfaz de aprobación humana para el equipo comercial',             done: true  },
+  { id: 'bl-15', section: '§2.4', name: 'Listeners de correo y WhatsApp con detección automática de idioma',  done: false },
+  // §2.5a — Piloto WCA (3 items)
+  { id: 'bl-16', section: '§2.5a', name: 'Capabilities deck bilingüe',                                        done: false },
+  { id: 'bl-17', section: '§2.5a', name: 'Correos de outreach localizados',                                   done: false },
+  { id: 'bl-18', section: '§2.5a', name: 'Envío a 20–30 agentes WCA seleccionados del directorio',            done: false },
+  // §2.5b — Auto-acuse
+  { id: 'bl-19', section: '§2.5b', name: 'Auto-acuse de recibo multilingüe',                                  done: false },
+  // Tests
+  { id: 'bl-20', section: 'Tests', name: 'Tests automatizados',                                               done: true  },
 ];
 
 // ── Status tags ────────────────────────────────────────────────────────────────
@@ -249,7 +263,7 @@ function BaselineTab() {
           BASELINE — Propuesta Pipeline #1
         </div>
         <div style={{ fontSize: '12px', color: '#374151' }}>
-          Signed 2026-05-11 · {done}/{BASELINE.length} deliverables complete ({pct}%) · Frozen — this list does not change
+          Firmada 2026-05-11 · {done}/{BASELINE.length} entregables completos ({pct}%) · §2.1 + §2.2 + §2.4 + §2.5 · Lista congelada — no cambia
         </div>
       </div>
 
@@ -257,20 +271,20 @@ function BaselineTab() {
         {BASELINE.map((item, i) => (
           <div key={item.id} style={{
             display: 'flex', alignItems: 'center', gap: '12px',
-            padding: '12px 18px',
+            padding: '11px 18px',
             borderBottom: i < BASELINE.length - 1 ? '1px solid #f3f4f6' : 'none',
             borderLeft: `3px solid ${C.navy}`,
             background: item.done ? '#fafaf9' : '#fff',
           }}>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: '#9ca3af', width: '20px', flexShrink: 0 }}>
-              {String(i + 1).padStart(2, '0')}
+            <span style={{ fontFamily: 'var(--mono)', fontSize: '9px', color: '#d1d5db', width: '28px', flexShrink: 0, textAlign: 'right' }}>
+              {item.section}
             </span>
-            <input type="checkbox" checked={item.done} readOnly style={{ width: '15px', height: '15px', cursor: 'default', accentColor: C.navy, flexShrink: 0 }} />
-            <span style={{ fontSize: '13.5px', color: item.done ? '#9ca3af' : '#111', textDecoration: item.done ? 'line-through' : 'none', flex: 1 }}>
+            <input type="checkbox" checked={item.done} readOnly style={{ width: '14px', height: '14px', cursor: 'default', accentColor: C.navy, flexShrink: 0 }} />
+            <span style={{ fontSize: '13px', color: item.done ? '#9ca3af' : '#111', textDecoration: item.done ? 'line-through' : 'none', flex: 1, lineHeight: 1.4 }}>
               {item.name}
             </span>
             {item.done && (
-              <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: '#16a34a', fontWeight: 600 }}>✓</span>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: '#16a34a', fontWeight: 600, flexShrink: 0 }}>✓</span>
             )}
           </div>
         ))}
