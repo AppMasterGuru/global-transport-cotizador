@@ -1,0 +1,13 @@
+[build]
+builder = "DOCKERFILE"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[[deploy.cronJobs]]
+name = "email-listener-poll"
+schedule = "*/5 * * * *"
+command = "curl -s -X POST http://localhost:8080/run-listener"
