@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GT Cotizador — Auditoría</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .filter-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .filter-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .filter-group input {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 13px;
+      min-width: 150px;
+    }
+    .audit-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .audit-table thead tr { background: #1B3A6B; color: #fff; }
+    .audit-table thead th { padding: 9px 12px; text-align: left; white-space: nowrap; }
+    .audit-table tbody tr:nth-child(even) { background: #f9f9f9; }
+    .audit-table tbody td { padding: 7px 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+    .audit-table tbody td code { font-size: 11px; }
+    .event-type { font-weight: 700; color: #1B3A6B; font-size: 12px; }
+    .detail-json { color: #666; font-size: 11px; word-break: break-all; }
+    .export-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .count-note { font-size: 13px; color: #777; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-name">Global Transport SAC</span>
+    <span class="brand-sub">Cotizador · Pipeline #1</span>
+  </div>
+  <nav>
+    <a href="{{ url_for('cotizador.dashboard') }}" class="nav-link">← Dashboard</a>
+    <a href="{{ url_for('cotizador.wca_pilot') }}" class="nav-link">Campaña WCA</a>
+  </nav>
+</header>
+
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="page-header">
+    <h1>Log de Auditoría</h1>
+  </div>
+
+  <!-- Filter form -->
+  <form method="GET" action="{{ url_for('cotizador.audit_log_page') }}" class="filter-form">
+    <div class="filter-group">
+      <label>Referencia</label>
+      <input type="text" name="quote_ref" value="{{ filters.quote_ref }}" placeholder="Ej: 26-05-001">
+    </div>
+    <div class="filter-group">
+      <label>Actor</label>
+      <input type="text" name="actor" value="{{ filters.actor }}" placeholder="Ej: Jean Paul">
+    </div>
+    <div class="filter-group">
+      <label>Evento</label>
+      <input type="text" name="action" value="{{ filters.action }}" placeholder="Ej: STATUS_TRANSITION">
+    </div>
+    <div class="filter-group">
+      <label>Desde (fecha)</label>
+      <input type="date" name="from" value="{{ filters.from }}">
+    </div>
+    <div class="filter-group">
+      <label>Hasta (fecha)</label>
+      <input type="date" name="to" value="{{ filters.to }}">
+    </div>
+    <div class="filter-group" style="justify-content:flex-end;">
+      <button type="submit" class="btn btn-primary">Filtrar</button>
+      <a href="{{ url_for('cotizador.audit_log_page') }}" class="btn btn-secondary" style="margin-top:4px;">Limpiar</a>
+    </div>
+  </form>
+
+  <div class="export-bar">
+    <span class="count-note">{{ entries | length }} entrada(s) — máx. 500</span>
+    <a href="{{ url_for('cotizador.audit_export_csv') }}" class="btn btn-secondary">
+      ⬇ Exportar CSV completo
+    </a>
+  </div>
+
+  {% if entries %}
+  <table class="audit-table">
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Evento</th>
+        <th>Referencia</th>
+        <th>Actor</th>
+        <th>Detalle</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in entries %}
+      <tr>
+        <td><code>{{ e.ts[:19].replace('T', ' ') }}</code></td>
+        <td><span class="event-type">{{ e.event_type }}</span></td>
+        <td>
+          {% if e.quote_reference %}
+          <a href="{{ url_for('cotizador.quote_detail', ref_code=e.quote_reference) }}">
+            <code>{{ e.quote_reference }}</code>
+          </a>
+          {% else %}—{% endif %}
+        </td>
+        <td>{{ e.actor or '—' }}</td>
+        <td><code class="detail-json">{{ e.detail_json }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty-state">No hay entradas que coincidan con los filtros.</p>
+  {% endif %}
+</main>
+
+<footer>
+  <p>Global Transport SAC &middot; BASC &amp; ISO 9001 Certified &middot; GT Cotizador v1.0</p>
+</footer>
+
+</body>
+</html>

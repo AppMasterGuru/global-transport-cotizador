@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GT Cotizador — Campaña WCA Pilot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .wca-form {
+      max-width: 560px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #333;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+      color: #333;
+      box-sizing: border-box;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #1B3A6B;
+      box-shadow: 0 0 0 3px rgba(27,58,107,.1);
+    }
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .slider-wrap input[type="range"] {
+      flex: 1;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+    }
+    .slider-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1B3A6B;
+      min-width: 36px;
+      text-align: right;
+    }
+    .info-box {
+      background: #e8f0fb;
+      border: 1px solid #b6ccf0;
+      border-left: 4px solid #1B3A6B;
+      border-radius: 5px;
+      padding: 12px 16px;
+      margin-bottom: 22px;
+      font-size: 13px;
+      color: #1B3A6B;
+    }
+    .warn-box {
+      background: #fffbe6;
+      border: 1px solid #ffe082;
+      border-left: 4px solid #f9a825;
+      border-radius: 5px;
+      padding: 12px 16px;
+      margin-bottom: 22px;
+      font-size: 13px;
+      color: #5d4037;
+    }
+    .warn-box strong { color: #333; }
+    .submit-row { margin-top: 24px; }
+
+    /* ── Vista Clásica overrides ── */
+    body.vista-clasica {
+      background: #fff; font-family: Calibri, Arial, sans-serif;
+    }
+    body.vista-clasica header {
+      background: #fff; border-bottom: 3px solid #E8471C; box-shadow: none;
+    }
+    body.vista-clasica .brand-name { color: #1B3A6B; }
+    body.vista-clasica .brand-sub  { color: #E8471C; }
+    body.vista-clasica .nav-link   { color: #1B3A6B; text-decoration: underline; }
+    body.vista-clasica footer { background: #1B3A6B; border-top: 3px solid #E8471C; }
+    body.vista-clasica .info-box {
+      background: #FCE4D6; border-color: #ED7D31; border-left-color: #E8471C;
+      color: #7F4A20; border-radius: 0;
+    }
+    body.vista-clasica .warn-box {
+      background: #FCE4D6; border-color: #ED7D31; border-left-color: #C55A11;
+      color: #7F4A20; border-radius: 0;
+    }
+    body.vista-clasica .form-group input,
+    body.vista-clasica .form-group select {
+      border-color: #9C9C9C; border-radius: 0; background: #FAFAFA;
+    }
+    body.vista-clasica .btn, body.vista-clasica .btn-primary {
+      background: #E8471C; color: #fff; border: 1px solid #C55A11;
+      border-radius: 0; box-shadow: none;
+    }
+    body.vista-clasica .page-header h1 { color: #1B3A6B; }
+
+    /* Toggle */
+    .vista-toggle-btn {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+      cursor: pointer; user-select: none;
+    }
+    .vista-toggle-btn button {
+      padding: 5px 12px; font-size: 12px; font-weight: 600;
+      border-radius: 4px; border: 1px solid #ccc;
+      background: #f8f9fa; color: #333; cursor: pointer; white-space: nowrap;
+    }
+    .vista-toggle-btn button:hover { background: #e9ecef; }
+    .vista-label { font-size: 10px; color: #888; text-align: right; }
+    body.vista-clasica .vista-toggle-btn button {
+      background: #E8471C; color: #fff; border-color: #C55A11; border-radius: 0;
+    }
+    body.vista-clasica .vista-label { color: #E8471C; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-name">Global Transport SAC</span>
+    <span class="brand-sub">Cotizador · Pipeline #1</span>
+  </div>
+  <nav>
+    <a href="{{ url_for('cotizador.dashboard') }}" class="nav-link">← Dashboard</a>
+    <a href="{{ url_for('cotizador.audit_log_page') }}" class="nav-link">Auditoría</a>
+    <div class="vista-toggle-btn" onclick="toggleVista()">
+      <button id="vistaBtn" type="button">📊 Vista Clásica (Excel actual) →</button>
+      <span class="vista-label" id="vistaLabel">Vista Moderna activa</span>
+    </div>
+  </nav>
+</header>
+
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="page-header">
+    <h1>Campaña WCA Pilot</h1>
+  </div>
+
+  <div class="info-box">
+    Genera un archivo ZIP con: <strong>capability deck</strong> bilingüe (ES+EN),
+    <strong>un correo personalizado por agente</strong> (nombre y empresa ya completados),
+    y un <strong>CSV de seguimiento</strong> pre-cargado con los datos del agente.
+    Pipeline #2 — Pilot incluido en el alcance de Pipeline #1.
+    <br><br>
+    <strong>Italia + Textiles:</strong> lista de 25 agentes disponible — selecciona
+    país <em>Italia</em> y vertical <em>Textiles / Confecciones</em> para usar la lista piloto.
+  </div>
+
+  <div class="warn-box">
+    <strong>Aviso WCA:</strong> Los correos son para uso cuidadoso y dirigido —
+    no para envío masivo. Revisa cada correo antes de enviar.
+    El envío masivo externo puede resultar en sanciones ante WCA.
+  </div>
+
+  <form method="POST" action="{{ url_for('cotizador.wca_pilot') }}" class="wca-form">
+
+    <div class="form-group">
+      <label>País Destino *</label>
+      <input type="text" name="country" required
+             placeholder="Ej: Colombia, Alemania, Estados Unidos"
+             value="{{ request.form.get('country', '') }}">
+    </div>
+
+    <div class="form-group">
+      <label>Vertical de Carga</label>
+      <select name="vertical">
+        {% for val, label in verticals %}
+        <option value="{{ val }}" {% if request.form.get('vertical', 'general') == val %}selected{% endif %}>
+          {{ label }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Número de Agentes (10–30)</label>
+      <div class="slider-wrap">
+        <input type="range" name="n_agents" min="10" max="30" step="1"
+               value="{{ request.form.get('n_agents', 15) }}"
+               oninput="document.getElementById('sliderVal').textContent = this.value">
+        <span class="slider-val" id="sliderVal">{{ request.form.get('n_agents', 15) }}</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Idioma de Correos</label>
+      <select name="language">
+        <option value="es" {% if request.form.get('language', 'es') == 'es' %}selected{% endif %}>Español</option>
+        <option value="en" {% if request.form.get('language') == 'en' %}selected{% endif %}>English</option>
+        <option value="de" {% if request.form.get('language') == 'de' %}selected{% endif %}>Deutsch</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Nombre del Remitente</label>
+      <input type="text" name="sender_name"
+             value="{{ request.form.get('sender_name', 'Renato Alvarez') }}"
+             placeholder="Ej: Renato Alvarez">
+    </div>
+
+    <div class="submit-row">
+      <button type="submit" class="btn btn-primary">⬇ Generar y Descargar ZIP</button>
+    </div>
+  </form>
+</main>
+
+<footer>
+  <p>Global Transport SAC &middot; BASC &amp; ISO 9001 Certified &middot; GT Cotizador v1.0</p>
+</footer>
+
+<script>
+  const STORAGE_KEY = 'gt_vista_preference';
+  const btn   = document.getElementById('vistaBtn');
+  const label = document.getElementById('vistaLabel');
+  function applyVista(mode) {
+    if (mode === 'clasica') {
+      document.body.classList.add('vista-clasica');
+      btn.textContent   = '✨ Vista Moderna →';
+      label.textContent = 'Vista Clásica activa — estilo Excel GT';
+    } else {
+      document.body.classList.remove('vista-clasica');
+      btn.textContent   = '📊 Vista Clásica (Excel actual) →';
+      label.textContent = 'Vista Moderna activa';
+    }
+  }
+  function toggleVista() {
+    const current = localStorage.getItem(STORAGE_KEY) || 'moderna';
+    const next    = current === 'moderna' ? 'clasica' : 'moderna';
+    localStorage.setItem(STORAGE_KEY, next);
+    applyVista(next);
+  }
+  applyVista(localStorage.getItem(STORAGE_KEY) || 'moderna');
+</script>
+</body>
+</html>

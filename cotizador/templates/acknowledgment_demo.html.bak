@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GT Cotizador — Acuses Automáticos Demo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .demo-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-top: 1.5rem; }
+    .demo-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .demo-card-header { background: #1B3A6B; color: #fff; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
+    .demo-card-header h3 { margin: 0; font-size: 1rem; font-weight: 600; }
+    .lang-flag { font-size: 1.3rem; }
+    .lang-badge { background: rgba(255,255,255,0.2); font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .demo-card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .side { padding: 1.25rem 1.5rem; }
+    .side-left { border-right: 1px solid #e2e8f0; background: #f7fafc; }
+    .side-label { font-size: 0.7rem; color: #718096; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; margin-bottom: 0.5rem; }
+    .incoming-email { font-size: 0.82rem; color: #4a5568; white-space: pre-wrap; line-height: 1.5; max-height: 200px; overflow-y: auto; }
+    .ack-subject { font-size: 0.82rem; color: #718096; margin-bottom: 0.5rem; font-style: italic; }
+    .ack-subject strong { color: #2d3748; font-style: normal; }
+    .ack-body { font-size: 0.9rem; color: #2d3748; white-space: pre-wrap; line-height: 1.6; }
+    .topic-tag { display: inline-block; background: #ebf8ff; color: #2b6cb0; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; margin-top: 0.75rem; }
+    .stub-notice { background: #fffbeb; border: 1px solid #f6c90e; border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.85rem; color: #744210; margin-bottom: 1.5rem; }
+    .stub-notice strong { color: #92400e; }
+    .pipeline-tag { background: #E8471C; color: #fff; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 3px; font-weight: 700; }
+    @media (max-width: 768px) {
+      .demo-card-body { grid-template-columns: 1fr; }
+      .side-left { border-right: none; border-bottom: 1px solid #e2e8f0; }
+    }
+
+    /* ── Vista Clásica overrides ── */
+    body.vista-clasica {
+      background: #fff; font-family: Calibri, Arial, sans-serif;
+    }
+    body.vista-clasica header {
+      background: #fff; border-bottom: 3px solid #E8471C; box-shadow: none;
+    }
+    body.vista-clasica .brand-name { color: #1B3A6B; }
+    body.vista-clasica .brand-sub  { color: #E8471C; }
+    body.vista-clasica .nav-link   { color: #1B3A6B; text-decoration: underline; }
+    body.vista-clasica footer { background: #1B3A6B; border-top: 3px solid #E8471C; }
+    body.vista-clasica .demo-card { border-radius: 0; border-color: #9C9C9C; }
+    body.vista-clasica .demo-card-header {
+      background: #E8471C; /* orange instead of navy */
+    }
+    body.vista-clasica .side-left { background: #FCE4D6; }
+    body.vista-clasica .side-label { color: #C55A11; }
+    body.vista-clasica .stub-notice {
+      background: #FCE4D6; border-color: #ED7D31; border-radius: 0; color: #7F4A20;
+    }
+    body.vista-clasica .topic-tag { background: #BDD7EE; color: #1B3A6B; border-radius: 0; }
+    body.vista-clasica .btn, body.vista-clasica .btn-primary {
+      background: #E8471C; color: #fff; border: 1px solid #C55A11;
+      border-radius: 0; box-shadow: none;
+    }
+    body.vista-clasica .page-header h1 { color: #1B3A6B; }
+
+    /* Toggle */
+    .vista-toggle-btn {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+      cursor: pointer; user-select: none;
+    }
+    .vista-toggle-btn button {
+      padding: 5px 12px; font-size: 12px; font-weight: 600;
+      border-radius: 4px; border: 1px solid #ccc;
+      background: #f8f9fa; color: #333; cursor: pointer; white-space: nowrap;
+    }
+    .vista-toggle-btn button:hover { background: #e9ecef; }
+    .vista-label { font-size: 10px; color: #888; text-align: right; }
+    body.vista-clasica .vista-toggle-btn button {
+      background: #E8471C; color: #fff; border-color: #C55A11; border-radius: 0;
+    }
+    body.vista-clasica .vista-label { color: #E8471C; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-name">Global Transport SAC</span>
+    <span class="brand-sub">Cotizador · Pipeline #1</span>
+  </div>
+  <nav>
+    <a href="{{ url_for('cotizador.dashboard') }}" class="nav-link">Dashboard</a>
+    <a href="{{ url_for('cotizador.audit_log_page') }}" class="nav-link">Auditoría</a>
+    <a href="{{ url_for('cotizador.email_listener_preview') }}" class="nav-link">Listener</a>
+    <a href="{{ url_for('cotizador.new_quote_form') }}" class="btn btn-primary">+ Nueva Cotización</a>
+    <div class="vista-toggle-btn" onclick="toggleVista()">
+      <button id="vistaBtn" type="button">📊 Vista Clásica (Excel actual) →</button>
+      <span class="vista-label" id="vistaLabel">Vista Moderna activa</span>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <div class="page-header">
+    <h1>
+      Acuses Automáticos — Demo
+      <span class="pipeline-tag" style="vertical-align: middle; margin-left: 0.5rem;">Pipeline #3 · Kicker</span>
+    </h1>
+    <p style="color:#718096; margin-top:0.25rem;">
+      Cada solicitud entrante recibe un acuse instantáneo en el idioma del cliente, a cualquier hora.
+      <strong>Sin costos, sin compromisos — solo confirmación profesional.</strong>
+    </p>
+  </div>
+
+  <div class="stub-notice">
+    <strong>Modo STUB activo.</strong>
+    Los correos son muestras hardcodeadas. Los acuses se generan con plantillas multilingüe integradas.
+    Cuando se configure ANTHROPIC_API_KEY, los acuses se generarán con IA
+    (claude-sonnet-4-20250514) adaptados al contenido exacto de cada correo.
+  </div>
+
+  <div class="demo-grid">
+    {% for demo in demos %}
+
+    {% set lang_labels = {'es': '🇪🇸 Español', 'en': '🇺🇸 English', 'de': '🇩🇪 Deutsch', 'zh': '🇨🇳 中文', 'fr': '🇫🇷 Français', 'pt': '🇧🇷 Português'} %}
+    {% set lang_label = lang_labels.get(demo.language, demo.language | upper) %}
+
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <h3>{{ demo.parsed._email_subject or 'Solicitud entrante' }}</h3>
+        <span class="lang-badge">{{ demo.language | upper }}</span>
+        <span style="margin-left:auto; font-size:0.82rem; opacity:0.8;">{{ lang_label }}</span>
+      </div>
+
+      <div class="demo-card-body">
+
+        <!-- Left: incoming email -->
+        <div class="side side-left">
+          <div class="side-label">Lo que llega ({{ demo.parsed._email_from or '...' }})</div>
+          <div class="incoming-email">{{ demo.parsed.raw_text or '' }}</div>
+        </div>
+
+        <!-- Right: generated acknowledgment -->
+        <div class="side">
+          <div class="side-label">Lo que recibe el cliente al instante</div>
+
+          <div class="ack-subject">
+            <strong>Asunto:</strong> {{ demo.subject }}
+          </div>
+
+          <div class="ack-body">{{ demo.body }}</div>
+
+          {% if demo.topic %}
+            <div class="topic-tag">
+              Tema detectado: {{ demo.topic }}
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    {% else %}
+    <p style="color:#718096;">No hay datos de demo disponibles.</p>
+    {% endfor %}
+  </div>
+
+  <div style="margin-top: 2rem; padding: 1.25rem; background: #ebf8ff; border-radius: 8px; border: 1px solid #bee3f8;">
+    <strong style="color:#1B3A6B;">¿Por qué esto importa?</strong>
+    <p style="color:#2c5282; font-size:0.9rem; margin: 0.5rem 0 0;">
+      El cliente en Alemania escribió a las 2:45 AM hora Lima. Sin este sistema, esperaría hasta el amanecer sin confirmación.
+      Con acuse automático, recibe respuesta profesional en su idioma en &lt;60 segundos — a cualquier hora.
+      Esto es Pipeline #3, Paso 1. Sin costo adicional, incluido en Pipeline #1.
+    </p>
+  </div>
+
+</main>
+
+<script>
+  const STORAGE_KEY = 'gt_vista_preference';
+  const btn   = document.getElementById('vistaBtn');
+  const label = document.getElementById('vistaLabel');
+  function applyVista(mode) {
+    if (mode === 'clasica') {
+      document.body.classList.add('vista-clasica');
+      btn.textContent   = '✨ Vista Moderna →';
+      label.textContent = 'Vista Clásica activa — estilo Excel GT';
+    } else {
+      document.body.classList.remove('vista-clasica');
+      btn.textContent   = '📊 Vista Clásica (Excel actual) →';
+      label.textContent = 'Vista Moderna activa';
+    }
+  }
+  function toggleVista() {
+    const current = localStorage.getItem(STORAGE_KEY) || 'moderna';
+    const next    = current === 'moderna' ? 'clasica' : 'moderna';
+    localStorage.setItem(STORAGE_KEY, next);
+    applyVista(next);
+  }
+  applyVista(localStorage.getItem(STORAGE_KEY) || 'moderna');
+</script>
+</body>
+</html>

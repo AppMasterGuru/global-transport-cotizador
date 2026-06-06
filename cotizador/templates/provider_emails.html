@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GT Cotizador — Correos a Proveedores · {{ quote.reference_code }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .email-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-left: 4px solid #1B3A6B;
+      border-radius: 6px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .email-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .email-provider {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1B3A6B;
+    }
+    .email-lang-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: #e8f0fb;
+      color: #1B3A6B;
+      text-transform: uppercase;
+    }
+    .email-subject {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .email-body-wrap {
+      position: relative;
+    }
+    .email-body {
+      white-space: pre-wrap;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 13px;
+      color: #333;
+      line-height: 1.6;
+      background: #fafafa;
+      border: 1px solid #e8e8e8;
+      border-radius: 4px;
+      padding: 14px 16px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #1B3A6B;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .copy-btn:hover { background: #E8471C; }
+    .copy-btn.copied { background: #2e7d32; }
+    .warn-note {
+      background: #fffbe6;
+      border: 1px solid #ffe082;
+      border-left: 4px solid #f9a825;
+      border-radius: 4px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #5d4037;
+    }
+    .warn-note strong { color: #333; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-name">Global Transport SAC</span>
+    <span class="brand-sub">Cotizador · Pipeline #1</span>
+  </div>
+  <nav>
+    <a href="{{ url_for('cotizador.quote_detail', ref_code=quote.reference_code) }}" class="nav-link">
+      ← {{ quote.reference_code }}
+    </a>
+    <a href="{{ url_for('cotizador.dashboard') }}" class="nav-link">Dashboard</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page-header">
+    <h1>Correos a Proveedores</h1>
+    <p style="color:#666;font-size:14px;margin-top:4px;">
+      {{ quote.reference_code }} &middot; {{ quote.mode | upper }} &middot;
+      {{ quote.origin }} → {{ quote.destination }}
+    </p>
+  </div>
+
+  <div class="warn-note">
+    <strong>Instrucciones:</strong> Copie cada correo y envíelo manualmente desde su cuenta de Outlook personal.
+    Rellene <code>[AGENT_NAME]</code> y <code>[AGENT_COMPANY]</code> con los datos reales antes de enviar.
+    No envíe en masa — personalice cada mensaje.
+  </div>
+
+  {% for email in emails %}
+  <div class="email-card">
+    <div class="email-card-header">
+      <span class="email-provider">{{ email.provider }}</span>
+      <span class="email-lang-badge">{{ email.language }}</span>
+    </div>
+    <div class="email-subject">ASUNTO: {{ email.subject }}</div>
+    <div class="email-body-wrap">
+      <button class="copy-btn"
+              onclick="copyEmail(this, 'body-{{ loop.index }}')"
+              data-idx="{{ loop.index }}">
+        📋 Copiar
+      </button>
+      <pre class="email-body" id="body-{{ loop.index }}">{{ email.body }}</pre>
+    </div>
+  </div>
+  {% endfor %}
+</main>
+
+<footer>
+  <p>Global Transport SAC &middot; BASC &amp; ISO 9001 Certified &middot; GT Cotizador v1.0</p>
+</footer>
+
+<script>
+  function copyEmail(btn, bodyId) {
+    const text = document.getElementById(bodyId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copiado';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '📋 Copiar';
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      // Fallback for older browsers
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.textContent = '✓ Copiado';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '📋 Copiar';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+</script>
+</body>
+</html>

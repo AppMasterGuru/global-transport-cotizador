@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GT Cotizador — Nueva Cotización</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-name">Global Transport SAC</span>
+    <span class="brand-sub">Cotizador · Pipeline #1</span>
+  </div>
+  <nav>
+    <a href="{{ url_for('cotizador.dashboard') }}" class="nav-link">← Dashboard</a>
+  </nav>
+</header>
+
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <h1>Nueva Cotización</h1>
+
+  <form method="POST" action="{{ url_for('cotizador.create_quote') }}" class="quote-form">
+
+    <!-- SECTION 1: Client & Mode -->
+    <section class="form-section">
+      <h2>1. Cliente y Modo de Transporte</h2>
+      <div class="form-grid">
+        <label class="field">
+          <span class="label-text">Cliente *</span>
+          <input type="text" name="client_name" required placeholder="Universal Cargo SA">
+        </label>
+        <label class="field">
+          <span class="label-text">Modo *</span>
+          <select name="mode" required>
+            <option value="lcl">LCL — Carga Suelta</option>
+            <option value="fcl">FCL — Contenedor Completo</option>
+            <option value="aereo">Aéreo</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="label-text">Incoterm *</span>
+          <select name="incoterm" required>
+            <option value="FOB">FOB — Free On Board</option>
+            <option value="CIF">CIF — Cost, Insurance & Freight</option>
+            <option value="DDP">DDP — Delivered Duty Paid</option>
+            <option value="EXW">EXW — Ex Works</option>
+            <option value="DAP">DAP — Delivered At Place</option>
+            <option value="CFR">CFR — Cost and Freight</option>
+            <option value="FCA">FCA — Free Carrier</option>
+            <option value="CPT">CPT — Carriage Paid To</option>
+            <option value="CIP">CIP — Carriage & Insurance Paid</option>
+            <option value="DPU">DPU — Delivered at Place Unloaded</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="label-text">Idioma del cliente</span>
+          <select name="language">
+            <option value="es">Español</option>
+            <option value="en">English</option>
+            <option value="de">Deutsch</option>
+            <option value="zh">中文</option>
+            <option value="fr">Français</option>
+            <option value="pt">Português</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="label-text">Origen *</span>
+          <input type="text" name="origin" required placeholder="Lima, Peru">
+        </label>
+        <label class="field">
+          <span class="label-text">Destino *</span>
+          <input type="text" name="destination" required placeholder="Miami, USA">
+        </label>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Cargo -->
+    <section class="form-section">
+      <h2>2. Descripción de Carga</h2>
+      <div class="form-grid">
+        <label class="field field-wide">
+          <span class="label-text">Descripción de la mercancía</span>
+          <input type="text" name="cargo_description" placeholder="Textiles, carga general, maquinaria...">
+        </label>
+        <label class="field">
+          <span class="label-text">Peso</span>
+          <div class="input-compound">
+            <input type="number" name="weight" step="0.01" min="0" placeholder="295">
+            <select name="weight_unit">
+              <option value="kg">kg</option>
+              <option value="lbs">lbs</option>
+            </select>
+          </div>
+        </label>
+        <label class="field">
+          <span class="label-text">Cantidad (bultos)</span>
+          <input type="number" name="quantity" min="1" value="1">
+        </label>
+      </div>
+      <div class="form-grid">
+        <label class="field">
+          <span class="label-text">Largo (cm)</span>
+          <input type="number" name="length_cm" step="0.1" min="0" placeholder="120">
+        </label>
+        <label class="field">
+          <span class="label-text">Ancho (cm)</span>
+          <input type="number" name="width_cm" step="0.1" min="0" placeholder="80">
+        </label>
+        <label class="field">
+          <span class="label-text">Alto (cm)</span>
+          <input type="number" name="height_cm" step="0.1" min="0" placeholder="60">
+        </label>
+        <label class="field">
+          <span class="label-text">O ingrese CBM directo</span>
+          <input type="number" name="volume_cbm" step="0.001" min="0" placeholder="0.576">
+          <span class="field-hint">Si ingresa dimensiones, el CBM se calcula automáticamente</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Costs -->
+    <section class="form-section">
+      <h2>3. Tarifas y Costos</h2>
+      <div class="form-grid">
+        <label class="field">
+          <span class="label-text">Flete Internacional (USD)</span>
+          <input type="number" name="flete_lcl" step="0.01" min="0" placeholder="Ej: 850.00">
+        </label>
+        <label class="field">
+          <span class="label-text">Consolidador (LCL)</span>
+          <select name="consolidator">
+            <option value="MSL">MSL — Visto bueno $180 + IGV</option>
+            <option value="KRAFT">Kraft — Visto bueno $160 + IGV</option>
+            <option value="SACO">Saco — Visto bueno $190 + IGV</option>
+            <option value="EQ">EQ — Visto bueno $170 + IGV</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="label-text">Aerolínea (Aéreo)</span>
+          <select name="airline">
+            <option value="">— Seleccionar —</option>
+            <option value="LAN">LAN Airlines / LAN Cargo</option>
+            <option value="American Airlines">American Airlines</option>
+            <option value="United Airlines">United Airlines</option>
+            <option value="COPA">Copa Airlines</option>
+            <option value="DELTA">Delta</option>
+            <option value="TAMPA / AVIANCA">Avianca / Tampa</option>
+            <option value="SWISS WORLD CARGO / LUFTCARGO">Lufthansa Cargo / Swiss</option>
+            <option value="K L M Cia Real Holandesa de Aviacion">KLM</option>
+            <option value="QATAR">Qatar Airways</option>
+            <option value="AIR CANADA">Air Canada</option>
+          </select>
+          <span class="field-hint">Tarifa de handling aeroportuario se calcula automáticamente</span>
+        </label>
+        <label class="field">
+          <span class="label-text">Margen (%)</span>
+          <input type="number" name="margin_pct" step="0.5" min="10" max="100" value="20">
+          <span class="field-hint">Piso mínimo: 10% (no negociable)</span>
+        </label>
+      </div>
+      <div class="form-grid">
+        <label class="field field-check">
+          <input type="checkbox" name="requires_oea_basc">
+          <span class="label-text">Cliente requiere agente OEA+BASC</span>
+          <span class="field-hint">Ej: Farmex. Costo mayor que Alefero estándar.</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- SECTION 4: Assignment -->
+    <section class="form-section">
+      <h2>4. Asignación</h2>
+      <div class="form-grid">
+        <label class="field">
+          <span class="label-text">Código de Staff</span>
+          <select name="staff_code">
+            <option value="GT-PC">GT-PC — Pricing / Comercial</option>
+            <option value="GT-WCA">GT-WCA — Canal WCA</option>
+            <option value="GT-LOC">GT-LOC — Canal Lognet</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-lg">Crear Cotización →</button>
+      <a href="{{ url_for('cotizador.dashboard') }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+
+  </form>
+</main>
+
+<footer>
+  <p>Global Transport SAC &middot; BASC &amp; ISO 9001 Certified &middot; GT Cotizador v1.0</p>
+</footer>
+
+</body>
+</html>

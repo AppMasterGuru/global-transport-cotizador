@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GT Cotizador — {{ quote.reference_code }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    /* ── Vista Clásica — "Excel 2005 printout" demo mode ── */
+    /* Activated by adding class="vista-clasica" to <body>  */
+
+    body.vista-clasica {
+      background: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 13px;
+      color: #000;
+    }
+
+    /* Header: strip all brand colour, look like a printed page top */
+    body.vista-clasica header {
+      background: #fff;
+      border-bottom: 2px solid #000;
+      box-shadow: none;
+      padding: 8px 20px;
+    }
+    body.vista-clasica .brand-name {
+      color: #000;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    body.vista-clasica .brand-sub {
+      color: #555;
+      font-size: 10px;
+    }
+    body.vista-clasica .nav-link {
+      color: #000;
+      text-decoration: underline;
+    }
+
+    /* Classic banner — only visible in classic mode */
+    .clasica-banner { display: none; }
+    body.vista-clasica .clasica-banner {
+      display: block;
+      background: #fffbe6;
+      border: 1px solid #bbb;
+      border-left: 4px solid #000;
+      padding: 8px 14px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: #333;
+    }
+    .clasica-banner strong { color: #000; }
+
+    /* Quote header: flat, no decoration */
+    body.vista-clasica .quote-header h1 code {
+      font-family: Arial, Helvetica, sans-serif;
+      background: none;
+      border: none;
+      font-size: 15px;
+      font-weight: bold;
+      color: #000;
+      padding: 0;
+    }
+    body.vista-clasica .quote-meta { color: #000; }
+
+    /* Badges: black outline, no colour fill */
+    body.vista-clasica .badge,
+    body.vista-clasica .incoterm {
+      background: #fff;
+      border: 1px solid #000;
+      color: #000;
+      border-radius: 0;
+      font-size: 11px;
+    }
+
+    /* Status pills: plain black box */
+    body.vista-clasica .status-pill {
+      background: #fff !important;
+      color: #000 !important;
+      border: 1px solid #000;
+      border-radius: 0;
+      font-weight: bold;
+    }
+
+    /* Approval gate: plain bordered box */
+    body.vista-clasica .approval-gate {
+      background: #fff;
+      border: 1px solid #000;
+      border-left: 1px solid #000;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    body.vista-clasica .approval-gate h2 { color: #000; font-size: 13px; }
+    body.vista-clasica .approval-gate p  { color: #000; }
+
+    /* Buttons: plain bordered */
+    body.vista-clasica .btn,
+    body.vista-clasica .btn-approve,
+    body.vista-clasica .btn-reject,
+    body.vista-clasica .btn-send,
+    body.vista-clasica .btn-primary,
+    body.vista-clasica .btn-secondary {
+      background: #fff;
+      color: #000;
+      border: 1px solid #000;
+      border-radius: 0;
+      font-size: 12px;
+      box-shadow: none;
+    }
+
+    /* Detail sections: black border, no shadow, no colour accent */
+    body.vista-clasica .detail-section {
+      background: #fff;
+      border: 1px solid #000;
+      border-left: 1px solid #000;
+      border-radius: 0;
+      box-shadow: none;
+      margin-bottom: 10px;
+      padding: 12px 16px;
+    }
+    body.vista-clasica .detail-section h2 {
+      color: #000;
+      font-size: 12px;
+      text-transform: uppercase;
+      border-bottom: 1px solid #000;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+    body.vista-clasica .section-venta,
+    body.vista-clasica .section-costeo {
+      border-left: 1px solid #000;
+    }
+    body.vista-clasica .tag {
+      background: #fff;
+      border: 1px solid #000;
+      color: #000;
+      border-radius: 0;
+      font-size: 10px;
+    }
+
+    /* Detail rows: plain dividers */
+    body.vista-clasica .detail-row {
+      border-bottom: 1px solid #ddd;
+      padding: 4px 0;
+    }
+    body.vista-clasica .detail-row span { color: #000; }
+
+    /* Cost table: Excel-style — black borders, grey header, no colour footer */
+    body.vista-clasica .cost-table {
+      border: 1px solid #000;
+      border-collapse: collapse;
+    }
+    body.vista-clasica .cost-table thead tr {
+      background: #d9d9d9;  /* Excel grey header */
+      color: #000;
+    }
+    body.vista-clasica .cost-table thead th {
+      border: 1px solid #000;
+      font-size: 11px;
+      padding: 5px 8px;
+      text-transform: none;
+    }
+    body.vista-clasica .cost-table tbody tr { background: #fff; }
+    body.vista-clasica .cost-table tbody tr:nth-child(even) { background: #f2f2f2; }
+    body.vista-clasica .cost-table tbody td {
+      border: 1px solid #999;
+      padding: 4px 8px;
+      color: #000;
+    }
+    body.vista-clasica .cost-table tfoot tr {
+      background: #fff;
+      color: #000;
+    }
+    body.vista-clasica .cost-table tfoot td {
+      border: 2px solid #000;
+      padding: 5px 8px;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    body.vista-clasica .validity-note {
+      background: #fff !important;
+      color: #555;
+      font-size: 10px;
+    }
+
+    /* Audit table: plain */
+    body.vista-clasica .audit-table { border: 1px solid #000; }
+    body.vista-clasica .audit-table thead tr { background: #d9d9d9; }
+    body.vista-clasica .audit-table thead th {
+      border: 1px solid #000;
+      color: #000;
+      text-transform: none;
+      font-size: 11px;
+      padding: 4px 8px;
+    }
+    body.vista-clasica .audit-table tbody td {
+      border: 1px solid #ddd;
+      font-size: 11px;
+    }
+    body.vista-clasica .event-type { color: #000; font-weight: bold; }
+
+    /* Inputs in forms */
+    body.vista-clasica .input-sm {
+      border: 1px solid #000;
+      border-radius: 0;
+      font-size: 12px;
+    }
+
+    /* Cost note */
+    body.vista-clasica .cost-note {
+      background: #f2f2f2;
+      border: 1px solid #ccc;
+      border-radius: 0;
+      font-size: 11px;
+      color: #000;
+    }
+
+    /* Footer: plain */
+    body.vista-clasica footer {
+      background: #fff;
+      border-top: 1px solid #000;
+      color: #000;
+    }
+
+    /* ── Warnings ───────────────────────────────────────────────────────── */
+    .warnings-section { border-left: 4px solid #E8471C; }
+    .warning-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+    }
+    .warning-row:last-child { border-bottom: none; }
+    .warning-red  { color: #c00; }
+    .warning-yellow { color: #856404; }
+    .warning-code {
+      margin-left: auto;
+      font-size: 10px;
+      color: #999;
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .red-block-notice {
+      background: #fff0f0;
+      border: 1px solid #ffcccc;
+      border-left: 4px solid #c00;
+      padding: 10px 14px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #c00;
+      font-weight: 600;
+    }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    /* ── Action buttons ─────────────────────────────────────────────────── */
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Toggle button — always visible, always the same position */
+    .vista-toggle-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .vista-toggle-btn button {
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: #f8f9fa;
+      color: #333;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .vista-toggle-btn button:hover { background: #e9ecef; }
+    .vista-toggle-btn .vista-label {
+      font-size: 10px;
+      color: #888;
+      text-align: right;
+    }
+    body.vista-clasica .vista-toggle-btn button {
+      background: #fff;
+      border: 1px solid #000;
+      color: #000;
+      border-radius: 0;
+      font-size: 12px;
+    }
+    body.vista-clasica .vista-toggle-btn .vista-label {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-name">Global Transport SAC</span>
+    <span class="brand-sub">Cotizador · Pipeline #1</span>
+  </div>
+  <nav>
+    <a href="{{ url_for('cotizador.dashboard') }}" class="nav-link">← Dashboard</a>
+  </nav>
+</header>
+
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- Quote header -->
+  <div class="quote-header">
+    <div>
+      <h1><code>{{ quote.reference_code }}</code></h1>
+      <p class="quote-meta">
+        <span class="badge badge-{{ quote.mode }}">{{ quote.mode | upper }}</span>
+        <span class="incoterm">{{ quote.incoterm }}</span>
+        &middot; {{ quote.origin }} → {{ quote.destination }}
+        &middot; Creada {{ quote.created_at[:10] }}
+      </p>
+    </div>
+    <div class="quote-status-block" style="display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
+      <span class="status-pill status-{{ quote.status | lower }} status-lg">
+        {{ quote.status }}
+      </span>
+      <!-- Demo toggle -->
+      <div class="vista-toggle-btn" onclick="toggleVista()">
+        <button id="vistaBtn" type="button">📊 Ver como Excel actual →</button>
+        <span class="vista-label" id="vistaLabel">Vista Moderna activa</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Classic-mode banner — hidden in modern mode -->
+  <div class="clasica-banner">
+    <strong>VISTA CLÁSICA — así se hace hoy (manual en Excel)</strong><br>
+    Mismos datos, misma cotización. Esta es la vista que JP y el equipo conocen.
+    Haga clic en el botón arriba para ver el sistema nuevo.
+  </div>
+
+  <!-- WARNINGS ──────────────────────────────────────────────────────────── -->
+  {% if warnings %}
+  <section class="detail-section warnings-section">
+    <h2>Alertas de Revisión</h2>
+    {% for w in warnings %}
+    <div class="warning-row warning-{{ w.level }}">
+      <span class="warning-icon">{% if w.level == 'red' %}🔴{% else %}🟡{% endif %}</span>
+      <span class="warning-msg">{{ w.message }}</span>
+      <code class="warning-code">{{ w.code }}</code>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <!-- APPROVAL GATE ─────────────────────────────────────────────────────── -->
+  {% if quote.status == 'PENDING' %}
+  <section class="approval-gate gate-pending">
+    <h2>🔒 Aprobación Requerida</h2>
+    <p>Esta cotización está pendiente de revisión. Revise el costeo (interno) y la venta antes de aprobar.</p>
+    {% if has_red %}
+    <div class="red-block-notice">
+      ⛔ Hay errores críticos que deben resolverse antes de aprobar. Corrija las alertas rojas arriba.
+    </div>
+    {% endif %}
+    <div class="gate-actions">
+      <form method="POST" action="{{ url_for('cotizador.approve_quote', ref_code=quote.reference_code) }}"
+            class="inline-form">
+        <input type="text" name="actor" placeholder="Tu nombre" required class="input-sm">
+        <input type="text" name="notes" placeholder="Notas (opcional)" class="input-sm">
+        <button type="submit" class="btn btn-approve" {% if has_red %}disabled title="Resolver alertas rojas primero"{% endif %}>✓ Aprobar</button>
+      </form>
+      <form method="POST" action="{{ url_for('cotizador.reject_quote', ref_code=quote.reference_code) }}"
+            class="inline-form">
+        <input type="text" name="actor" placeholder="Tu nombre" required class="input-sm">
+        <input type="text" name="notes" placeholder="Motivo del rechazo" required class="input-sm">
+        <button type="submit" class="btn btn-reject">✗ Rechazar</button>
+      </form>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if quote.status == 'APPROVED' %}
+  <section class="approval-gate gate-approved">
+    <h2>✓ Aprobada — Lista para Enviar</h2>
+    <p>Aprobada por <strong>{{ quote.approved_by }}</strong> el {{ quote.approved_at[:10] if quote.approved_at else '—' }}.</p>
+    <p><strong>Acción requerida:</strong> Envíe el PDF al cliente desde su cuenta de Outlook personal, luego marque como enviada aquí.</p>
+    <div class="gate-actions">
+      <form method="POST" action="{{ url_for('cotizador.mark_sent', ref_code=quote.reference_code) }}"
+            class="inline-form">
+        <input type="text" name="actor" placeholder="Tu nombre" required class="input-sm">
+        <button type="submit" class="btn btn-send">📨 Marcar como Enviada</button>
+      </form>
+      <form method="POST" action="{{ url_for('cotizador.reject_quote', ref_code=quote.reference_code) }}"
+            class="inline-form">
+        <input type="text" name="actor" placeholder="Tu nombre" required class="input-sm">
+        <input type="text" name="notes" placeholder="Motivo" required class="input-sm">
+        <button type="submit" class="btn btn-reject btn-sm">✗ Rechazar</button>
+      </form>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if quote.status == 'SENT' %}
+  <section class="approval-gate gate-sent">
+    <h2>✓ Enviada</h2>
+    <p>Marcada como enviada el {{ quote.sent_at[:10] if quote.sent_at else '—' }}.</p>
+  </section>
+  {% endif %}
+
+  {% if quote.status == 'REJECTED' %}
+  <section class="approval-gate gate-rejected">
+    <h2>✗ Rechazada</h2>
+    {% if quote.notes %}<p>Motivo: {{ quote.notes }}</p>{% endif %}
+  </section>
+  {% endif %}
+
+  <!-- Client info -->
+  <section class="detail-section">
+    <h2>Información del Cliente</h2>
+    <div class="detail-grid">
+      <div class="detail-row"><span>Cliente</span><strong>{{ quote.client_name }}</strong></div>
+      <div class="detail-row"><span>Origen</span><strong>{{ quote.origin }}</strong></div>
+      <div class="detail-row"><span>Destino</span><strong>{{ quote.destination }}</strong></div>
+      <div class="detail-row"><span>Incoterm</span><strong>{{ quote.incoterm }}</strong></div>
+      <div class="detail-row"><span>Modo</span><strong>{{ quote.mode | upper }}</strong></div>
+      <div class="detail-row"><span>Idioma</span><strong>{{ quote.language | upper }}</strong></div>
+      {% if quote.cargo_description %}
+      <div class="detail-row"><span>Mercancía</span><strong>{{ quote.cargo_description }}</strong></div>
+      {% endif %}
+      {% if quote.weight_kg %}
+      <div class="detail-row"><span>Peso</span><strong>{{ quote.weight_kg }} kg</strong></div>
+      {% endif %}
+      {% if quote.volume_cbm %}
+      <div class="detail-row"><span>Volumen</span><strong>{{ "%.4f"|format(quote.volume_cbm) }} CBM</strong></div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- VENTA (client-facing) -->
+  {% if quote.venta_json %}
+  <section class="detail-section section-venta">
+    <h2>Venta <span class="tag tag-client">→ Cliente</span></h2>
+    <table class="cost-table">
+      <thead>
+        <tr>
+          <th>Concepto</th>
+          <th class="num">Cant.</th>
+          <th class="num">Precio Unit.</th>
+          <th class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in quote.venta_json.line_items %}
+        <tr>
+          <td>{{ item.description }}</td>
+          <td class="num">{{ item.quantity }}</td>
+          <td class="num">USD {{ "%.2f"|format(item.unit_price) }}</td>
+          <td class="num">USD {{ "%.2f"|format(item.total) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td colspan="3"><strong>TOTAL</strong></td>
+          <td class="num"><strong>USD {{ "%.2f"|format(quote.venta_json.total_usd) }}</strong></td>
+        </tr>
+        <tr>
+          <td colspan="4" class="validity-note">
+            Validez: {{ quote.venta_json.validity_days }} días · Margen: {{ "%.1f"|format(quote.venta_json.margin_pct * 100) }}%
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </section>
+  {% endif %}
+
+  <!-- COSTEO (internal only — NEVER show to client) -->
+  {% if quote.costeo_json %}
+  <section class="detail-section section-costeo">
+    <h2>Costeo <span class="tag tag-internal">⚠ Solo Interno — No Enviar al Cliente</span></h2>
+    <div class="detail-grid">
+      <div class="detail-row">
+        <span>Flete Internacional</span>
+        <strong>USD {{ "%.2f"|format(quote.costeo_json.flete_internacional_usd) }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Visto Bueno ({{ quote.costeo_json.consolidator or '—' }})</span>
+        <strong>USD {{ "%.2f"|format(quote.costeo_json.visto_bueno_usd) }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Agente de Aduana ({{ quote.costeo_json.customs_agent }})</span>
+        <strong>USD {{ "%.2f"|format(quote.costeo_json.customs_agent_usd) }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Transporte Local</span>
+        <strong>
+          USD {{ "%.2f"|format(quote.costeo_json.transport_usd) }}
+          (S/ {{ "%.2f"|format(quote.costeo_json.transport_soles) }})
+        </strong>
+      </div>
+      <div class="detail-row total-row">
+        <span><strong>TOTAL COSTEO</strong></span>
+        <strong>USD {{ "%.2f"|format(quote.costeo_json.total_usd) }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Tipo de cambio (SBS)</span>
+        <strong>S/ {{ "%.4f"|format(quote.exchange_rate) }}</strong>
+      </div>
+    </div>
+    {% if quote.costeo_json.transport_detail %}
+    <p class="cost-note">
+      Transporte: {{ quote.costeo_json.transport_detail.weight_kg }} kg /
+      {{ quote.costeo_json.transport_detail.cbm }} CBM →
+      base por <strong>{{ quote.costeo_json.transport_detail.basis }}</strong>
+      (max de S/{{ quote.costeo_json.transport_detail.weight_rate_soles }} peso
+      vs S/{{ quote.costeo_json.transport_detail.cbm_rate_soles }} volumen)
+    </p>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <!-- Action buttons -->
+  <section class="detail-section">
+    <h2>Acciones</h2>
+    <div class="action-buttons">
+      <a href="{{ url_for('cotizador.provider_emails_page', ref_code=quote.reference_code) }}"
+         class="btn btn-secondary">📧 Correos a Proveedores</a>
+      {% if quote.status in ('APPROVED', 'SENT') %}
+      <a href="{{ url_for('cotizador.sintad_export', ref_code=quote.reference_code) }}"
+         class="btn btn-secondary">📊 Exportar a SINTAD</a>
+      {% else %}
+      <button class="btn btn-secondary" disabled title="Solo disponible cuando la cotización está aprobada">
+        📊 Exportar a SINTAD
+      </button>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Audit trail -->
+  <section class="detail-section">
+    <h2>Historial de Auditoría</h2>
+    {% if audit_log %}
+    <table class="audit-table">
+      <thead>
+        <tr><th>Timestamp</th><th>Evento</th><th>Actor</th><th>Detalle</th></tr>
+      </thead>
+      <tbody>
+        {% for entry in audit_log %}
+        <tr>
+          <td><code>{{ entry.ts }}</code></td>
+          <td><span class="event-type">{{ entry.event_type }}</span></td>
+          <td>{{ entry.actor or '—' }}</td>
+          <td><code class="detail-json">{{ entry.detail_json }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No hay entradas en el log.</p>
+    {% endif %}
+  </section>
+
+</main>
+
+<footer>
+  <p>Global Transport SAC &middot; BASC &amp; ISO 9001 Certified &middot; GT Cotizador v1.0</p>
+</footer>
+
+<script>
+  const STORAGE_KEY = 'gt_vista_preference';
+  const btn   = document.getElementById('vistaBtn');
+  const label = document.getElementById('vistaLabel');
+
+  function applyVista(mode) {
+    if (mode === 'clasica') {
+      document.body.classList.add('vista-clasica');
+      btn.textContent   = '✨ Ver sistema nuevo →';
+      label.textContent = 'Vista Clásica activa (estilo Excel actual)';
+    } else {
+      document.body.classList.remove('vista-clasica');
+      btn.textContent   = '📊 Ver como Excel actual →';
+      label.textContent = 'Vista Moderna activa';
+    }
+  }
+
+  function toggleVista() {
+    const current = localStorage.getItem(STORAGE_KEY) || 'moderna';
+    const next    = current === 'moderna' ? 'clasica' : 'moderna';
+    localStorage.setItem(STORAGE_KEY, next);
+    applyVista(next);
+  }
+
+  // Restore preference on load
+  applyVista(localStorage.getItem(STORAGE_KEY) || 'moderna');
+</script>
+</body>
+</html>

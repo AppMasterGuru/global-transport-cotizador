@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="60">
+  <title>GT Cotizador — Monitor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* ── Monitor-specific styles ── */
+    .internal-banner {
+      background: #1B3A6B;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.75rem;
+      text-align: center;
+      padding: 0.3rem;
+      letter-spacing: 0.08em;
+    }
+    .internal-banner strong { color: #fff; }
+
+    .monitor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .svc-card {
+      border-radius: 8px;
+      padding: 1.25rem;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+    }
+    .svc-card .svc-name { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: #718096; font-weight: 700; }
+    .svc-card .svc-status { font-size: 1.5rem; font-weight: 700; margin: 0.4rem 0 0.2rem; }
+    .svc-card .svc-detail { font-size: 0.8rem; color: #718096; }
+    .status-ok       { color: #2d7a3a; }
+    .status-down     { color: #c53030; }
+    .status-degraded { color: #c05621; }
+    .status-critical { color: #c53030; }
+    .status-healthy  { color: #2d7a3a; }
+    .status-nc       { color: #718096; }
+
+    .overall-banner {
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      margin-top: 1.5rem;
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .banner-healthy  { background: #f0fff4; border: 1.5px solid #68d391; color: #276749; }
+    .banner-degraded { background: #fffaf0; border: 1.5px solid #f6ad55; color: #744210; }
+    .banner-critical { background: #fff5f5; border: 1.5px solid #fc8181; color: #742a2a; }
+
+    .section-title { font-size: 0.85rem; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.06em; margin: 2rem 0 0.75rem; }
+
+    .anomaly-list { list-style: none; padding: 0; margin: 0; }
+    .anomaly-item { background: #fffbeb; border: 1px solid #f6c90e; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; font-size: 0.87rem; }
+    .anomaly-item.critical { background: #fff5f5; border-color: #fc8181; }
+    .anomaly-type { font-weight: 700; color: #744210; }
+    .anomaly-item.critical .anomaly-type { color: #742a2a; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+    .stat-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem; text-align: center; }
+    .stat-num { font-size: 1.8rem; font-weight: 700; color: #1B3A6B; }
+    .stat-lbl { font-size: 0.72rem; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem; }
+
+    .recent-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; margin-top: 0.75rem; }
+    .recent-table th { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 2px solid #e2e8f0; color: #718096; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .recent-table td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #f7fafc; color: #4a5568; }
+
+    .refresh-note { font-size: 0.78rem; color: #a0aec0; margin-top: 1.5rem; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="internal-banner">
+  <strong>Internal monitoring dashboard — TimeBack AI</strong> &nbsp;·&nbsp; Not shown to client
+</div>
+
+<header>
+  <div class="brand">
+    <span class="brand-name">GT Cotizador</span>
+    <span class="brand-sub">Monitor</span>
+  </div>
+  <nav>
+    <a href="{{ url_for('cotizador.dashboard') }}" class="nav-link">App</a>
+    <a href="{{ url_for('cotizador.audit_log_page') }}" class="nav-link">Audit Log</a>
+    <a href="{{ url_for('cotizador.monitor_dashboard') }}" class="nav-link active">Monitor</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- Overall status banner -->
+  {% set overall = health.overall %}
+  {% if overall == 'healthy' %}
+    <div class="overall-banner banner-healthy">✅ HEALTHY — All systems operational</div>
+  {% elif overall == 'degraded' %}
+    <div class="overall-banner banner-degraded">⚠️ DEGRADED — One or more services impaired</div>
+  {% else %}
+    <div class="overall-banner banner-critical">🔴 CRITICAL — Flask or database is down</div>
+  {% endif %}
+
+  <div style="font-size:0.8rem; color:#a0aec0; margin-top:0.5rem;">
+    Last checked: {{ health.timestamp_lima }}
+  </div>
+
+  <!-- Service cards -->
+  <div class="monitor-grid">
+
+    <!-- Flask -->
+    {% set f = health.flask %}
+    <div class="svc-card">
+      <div class="svc-name">Flask App</div>
+      <div class="svc-status {% if f.status == 'ok' %}status-ok{% else %}status-down{% endif %}">
+        {{ f.status | upper }}
+      </div>
+      <div class="svc-detail">
+        {% if f.response_time_ms is not none %}{{ f.response_time_ms }}ms{% endif %}
+        {% if f.error %}<br><span style="color:#c53030;">{{ f.error }}</span>{% endif %}
+      </div>
+    </div>
+
+    <!-- Database -->
+    {% set d = health.database %}
+    <div class="svc-card">
+      <div class="svc-name">Database (SQLite)</div>
+      <div class="svc-status {% if d.status == 'ok' %}status-ok{% else %}status-down{% endif %}">
+        {{ d.status | upper }}
+      </div>
+      <div class="svc-detail">
+        {% if d.quote_count is not none %}{{ d.quote_count }} quotes{% endif %}
+        {% if d.error %}<br><span style="color:#c53030;">{{ d.error }}</span>{% endif %}
+      </div>
+    </div>
+
+    <!-- SharePoint -->
+    {% set sp = health.sharepoint %}
+    <div class="svc-card">
+      <div class="svc-name">SharePoint / Graph</div>
+      <div class="svc-status
+        {% if sp.status == 'ok' %}status-ok
+        {% elif sp.status == 'not_configured' %}status-nc
+        {% else %}status-down{% endif %}">
+        {{ sp.status | upper | replace('_', ' ') }}
+      </div>
+      <div class="svc-detail">
+        {% if sp.file_count is defined %}{{ sp.file_count }} files in TARIFAS{% endif %}
+        {% if sp.error %}<span style="color:#c53030;">{{ sp.error }}</span>{% endif %}
+        {% if sp.status == 'not_configured' %}Admin consent pending{% endif %}
+      </div>
+    </div>
+
+    <!-- SMTP -->
+    {% set sm = health.smtp %}
+    <div class="svc-card">
+      <div class="svc-name">SMTP (Email)</div>
+      <div class="svc-status
+        {% if sm.status == 'ok' %}status-ok
+        {% elif sm.status == 'not_configured' %}status-nc
+        {% else %}status-down{% endif %}">
+        {{ sm.status | upper | replace('_', ' ') }}
+      </div>
+      <div class="svc-detail">
+        {% if sm.status == 'not_configured' %}Credentials pending (Vania){% endif %}
+        {% if sm.error %}<span style="color:#c53030;">{{ sm.error }}</span>{% endif %}
+      </div>
+    </div>
+
+  </div><!-- .monitor-grid -->
+
+  <!-- Anomalies -->
+  <div class="section-title">⚠️ Anomalies</div>
+  {% if anomalies %}
+    <ul class="anomaly-list">
+      {% for a in anomalies %}
+        <li class="anomaly-item {% if a.severity == 'critical' %}critical{% endif %}">
+          <span class="anomaly-type">{{ a.type }}</span> —
+          {{ a.message }}
+          {% if a.count %}<em>(count: {{ a.count }})</em>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p style="color:#2d7a3a; font-size:0.87rem;">✅ No anomalies detected in last 60 minutes.</p>
+  {% endif %}
+
+  <!-- 24h stats -->
+  <div class="section-title">📊 Last 24 Hours</div>
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num">{{ digest.quotes_generated }}</div>
+      <div class="stat-lbl">Quotes Generated</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">{{ digest.quotes_approved }}</div>
+      <div class="stat-lbl">Approved</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">{{ digest.quotes_sent }}</div>
+      <div class="stat-lbl">Sent</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">{{ digest.acks_sent }}</div>
+      <div class="stat-lbl">Acks Sent</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">{{ digest.errors | length }}</div>
+      <div class="stat-lbl">Errors</div>
+    </div>
+  </div>
+
+  <!-- Recent audit events -->
+  <div class="section-title">🕐 Recent Events</div>
+  {% if recent_events %}
+    <table class="recent-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Event</th>
+          <th>Reference</th>
+          <th>Actor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ev in recent_events %}
+          <tr>
+            <td>{{ ev.ts }}</td>
+            <td>{{ ev.event_type }}</td>
+            <td>{{ ev.quote_reference or '—' }}</td>
+            <td>{{ ev.actor or '—' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="color:#718096; font-size:0.87rem;">No recent events.</p>
+  {% endif %}
+
+  <div class="refresh-note">Auto-refreshes every 60 seconds · Internal — TimeBack AI</div>
+
+</main>
+
+</body>
+</html>

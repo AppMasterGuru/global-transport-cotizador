@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    /* ── GT Brand ── #E8471C orange, #1B3A6B navy */
+    @page {
+      size: A4;
+      margin: 10mm 12mm 12mm 12mm;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+      color: #1a1a1a;
+      background: #fff;
+    }
+
+    /* ── Header bar ── */
+    .header-bar {
+      background: #1B3A6B;
+      color: #fff;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .company-name {
+      font-size: 14pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+    .company-tagline {
+      font-size: 7pt;
+      color: #E8471C;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .doc-label {
+      text-align: right;
+    }
+    .doc-label h1 {
+      font-size: 16pt;
+      color: #E8471C;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .doc-label .ref {
+      font-size: 8pt;
+      color: #ccc;
+    }
+
+    /* ── Orange divider ── */
+    .divider {
+      height: 3px;
+      background: #E8471C;
+      margin: 0;
+    }
+
+    /* ── Info grid ── */
+    .info-section {
+      display: flex;
+      gap: 16px;
+      padding: 10px 14px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    .info-block {
+      flex: 1;
+    }
+    .info-block h3 {
+      font-size: 7pt;
+      text-transform: uppercase;
+      color: #E8471C;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid #E8471C;
+      padding-bottom: 2px;
+    }
+    .info-row {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 2px;
+    }
+    .info-label {
+      color: #666;
+      min-width: 80px;
+      font-size: 8pt;
+    }
+    .info-value {
+      font-weight: bold;
+      font-size: 8.5pt;
+    }
+
+    /* ── Freight details ── */
+    .freight-section {
+      padding: 6px 14px;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      gap: 20px;
+    }
+    .freight-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .freight-item span:first-child {
+      font-size: 7pt;
+      color: #666;
+      text-transform: uppercase;
+    }
+    .freight-item span:last-child {
+      font-weight: bold;
+      font-size: 9pt;
+    }
+
+    /* ── Charges table ── */
+    .charges-section {
+      padding: 10px 14px;
+    }
+    .charges-section h3 {
+      font-size: 8pt;
+      text-transform: uppercase;
+      color: #1B3A6B;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    table.charges {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+    }
+    table.charges thead tr {
+      background: #1B3A6B;
+      color: #fff;
+    }
+    table.charges thead th {
+      padding: 5px 8px;
+      text-align: left;
+      font-weight: bold;
+      font-size: 7.5pt;
+      text-transform: uppercase;
+    }
+    table.charges thead th.num {
+      text-align: right;
+    }
+    table.charges tbody tr:nth-child(even) {
+      background: #f5f7fa;
+    }
+    table.charges tbody td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    table.charges tbody td.num {
+      text-align: right;
+    }
+    table.charges tfoot tr {
+      background: #E8471C;
+      color: #fff;
+    }
+    table.charges tfoot td {
+      padding: 6px 8px;
+      font-weight: bold;
+      font-size: 9pt;
+    }
+    table.charges tfoot td.num {
+      text-align: right;
+    }
+
+    /* ── Footer notes ── */
+    .notes-section {
+      padding: 8px 14px;
+      border-top: 1px solid #e5e5e5;
+      font-size: 7.5pt;
+      color: #555;
+    }
+    .notes-section p {
+      margin-bottom: 3px;
+    }
+
+    /* ── Signature strip ── */
+    .signature-bar {
+      background: #1B3A6B;
+      color: #fff;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 8pt;
+    }
+    .sig-name {
+      font-weight: bold;
+      font-size: 9pt;
+    }
+    .basc-badge {
+      font-size: 7pt;
+      color: #E8471C;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header-bar">
+  <div>
+    <div class="company-name">Global Transport SAC</div>
+    <div class="company-tagline">Agente de Carga Internacional · BASC &amp; ISO 9001</div>
+  </div>
+  <div class="doc-label">
+    <h1>Proforma</h1>
+    <div class="ref">{{REFERENCE}}</div>
+  </div>
+</div>
+<div class="divider"></div>
+
+<!-- CLIENT / SHIPMENT INFO -->
+<div class="info-section">
+  <div class="info-block">
+    <h3>Cliente</h3>
+    <div class="info-row">
+      <span class="info-label">Empresa</span>
+      <span class="info-value">{{CLIENT_NAME}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Fecha</span>
+      <span class="info-value">{{DATE}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Validez</span>
+      <span class="info-value">{{VALIDITY_DATE}} ({{VALIDITY_DAYS}} días)</span>
+    </div>
+  </div>
+
+  <div class="info-block">
+    <h3>Embarque</h3>
+    <div class="info-row">
+      <span class="info-label">Origen</span>
+      <span class="info-value">{{ORIGIN}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Destino</span>
+      <span class="info-value">{{DESTINATION}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Incoterm</span>
+      <span class="info-value">{{INCOTERM}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Modo</span>
+      <span class="info-value">{{MODE}}</span>
+    </div>
+  </div>
+
+  <div class="info-block">
+    <h3>Servicio</h3>
+    <div class="info-row">
+      <span class="info-label">Ruta</span>
+      <span class="info-value">{{ROUTE}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Tránsito</span>
+      <span class="info-value">{{TRANSIT_TIME}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Frecuencia</span>
+      <span class="info-value">{{FREQUENCY}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">T.C. SBS</span>
+      <span class="info-value">S/ {{EXCHANGE_RATE}}</span>
+    </div>
+  </div>
+</div>
+
+<!-- CHARGES TABLE -->
+<div class="charges-section">
+  <h3>Cargos y Tarifas (USD)</h3>
+  <table class="charges">
+    <thead>
+      <tr>
+        <th>Concepto</th>
+        <th class="num">Cant.</th>
+        <th class="num">Precio Unit.</th>
+        <th class="num">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{LINE_ITEMS}}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3">TOTAL</td>
+        <td class="num">USD {{TOTAL_USD}}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<!-- NOTES -->
+<div class="notes-section">
+  <p><strong>Notas:</strong> {{NOTES}}</p>
+  <p>· Todos los precios en USD · Sujeto a disponibilidad de espacio · Tarifas aplicables a la fecha de la cotización</p>
+  <p>· Esta proforma no constituye reserva confirmada · Global Transport SAC actúa como agente de carga intermediario</p>
+</div>
+
+<!-- SIGNATURE -->
+<div class="signature-bar">
+  <div>
+    <div class="sig-name">{{STAFF_NAME}}</div>
+    <div>{{STAFF_EMAIL}}</div>
+  </div>
+  <div class="basc-badge">BASC Certified · ISO 9001</div>
+</div>
+
+</body>
+</html>

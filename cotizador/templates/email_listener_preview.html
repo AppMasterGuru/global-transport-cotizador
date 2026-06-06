@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GT Cotizador — Email Listener Preview</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .preview-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-top: 1.5rem; }
+    .email-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; }
+    .email-card-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; }
+    .lang-badge { background: #1B3A6B; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .mode-badge { background: #E8471C; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 4px; }
+    .direction-badge { background: #2d7a3a; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 4px; }
+    .email-subject { font-size: 1rem; font-weight: 600; color: #1B3A6B; }
+    .email-from { font-size: 0.85rem; color: #718096; }
+    .fields-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+    .field-item { background: #f7fafc; border-radius: 6px; padding: 0.6rem 0.8rem; }
+    .field-label { font-size: 0.7rem; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .field-value { font-size: 0.9rem; color: #2d3748; margin-top: 0.15rem; font-weight: 500; }
+    .field-value.missing { color: #c53030; font-style: italic; }
+    .stub-notice { background: #fffbeb; border: 1px solid #f6c90e; border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.85rem; color: #744210; margin-bottom: 1.5rem; }
+    .stub-notice strong { color: #92400e; }
+    .raw-toggle { cursor: pointer; color: #1B3A6B; font-size: 0.85rem; text-decoration: underline; background: none; border: none; padding: 0; margin-top: 0.75rem; }
+    .raw-body { display: none; background: #f7fafc; border-radius: 6px; padding: 1rem; margin-top: 0.5rem; font-size: 0.82rem; white-space: pre-wrap; color: #4a5568; border: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-name">Global Transport SAC</span>
+    <span class="brand-sub">Cotizador · Pipeline #1</span>
+  </div>
+  <nav>
+    <a href="{{ url_for('cotizador.dashboard') }}" class="nav-link">Dashboard</a>
+    <a href="{{ url_for('cotizador.audit_log_page') }}" class="nav-link">Auditoría</a>
+    <a href="{{ url_for('cotizador.acknowledgment_demo') }}" class="nav-link">Acuses Demo</a>
+    <a href="{{ url_for('cotizador.new_quote_form') }}" class="btn btn-primary">+ Nueva Cotización</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page-header">
+    <h1>Email Listener — Preview</h1>
+    <p style="color:#718096; margin-top:0.25rem;">
+      Muestra los {{ parsed_emails | length }} correos entrantes simulados y los campos extraídos por el sistema.
+    </p>
+  </div>
+
+  <div class="stub-notice">
+    <strong>Modo STUB activo.</strong>
+    fetch_pending_emails() retorna 3 correos de muestra. El parsing usa detección por palabras clave.
+    Cuando se reciban las credenciales SMTP de Vania, se reemplaza el stub por lectura IMAP real
+    y el parsing se hará con Claude API (claude-sonnet-4-20250514).
+  </div>
+
+  <div class="preview-grid">
+    {% for p in parsed_emails %}
+    <div class="email-card">
+      <div class="email-card-header">
+        <div style="flex:1">
+          <div class="email-subject">{{ p._email_subject or '(sin asunto)' }}</div>
+          <div class="email-from">De: {{ p._email_from or '(desconocido)' }}</div>
+        </div>
+        <span class="lang-badge">{{ (p.detected_language or 'es') | upper }}</span>
+        {% if p.service_type and p.service_type != 'unknown' %}
+          <span class="mode-badge">{{ p.service_type | upper }}</span>
+        {% endif %}
+        {% if p.direction and p.direction != 'unknown' %}
+          <span class="direction-badge">{{ p.direction | upper }}</span>
+        {% endif %}
+      </div>
+
+      <div class="fields-grid">
+
+        <div class="field-item">
+          <div class="field-label">Cliente</div>
+          <div class="field-value {% if not p.customer_name %}missing{% endif %}">
+            {{ p.customer_name or '— no detectado —' }}
+          </div>
+        </div>
+
+        <div class="field-item">
+          <div class="field-label">Email</div>
+          <div class="field-value {% if not p.customer_email %}missing{% endif %}">
+            {{ p.customer_email or '— no detectado —' }}
+          </div>
+        </div>
+
+        <div class="field-item">
+          <div class="field-label">Origen</div>
+          <div class="field-value {% if not p.origin_city %}missing{% endif %}">
+            {% if p.origin_city %}
+              {{ p.origin_city }}{% if p.origin_country %}, {{ p.origin_country }}{% endif %}
+            {% else %}
+              — no detectado —
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="field-item">
+          <div class="field-label">Destino</div>
+          <div class="field-value {% if not p.destination_city %}missing{% endif %}">
+            {% if p.destination_city %}
+              {{ p.destination_city }}{% if p.destination_country %}, {{ p.destination_country }}{% endif %}
+            {% else %}
+              — no detectado —
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="field-item">
+          <div class="field-label">Mercancía</div>
+          <div class="field-value {% if not p.commodity %}missing{% endif %}">
+            {{ p.commodity or '— no detectado —' }}
+          </div>
+        </div>
+
+        <div class="field-item">
+          <div class="field-label">Peso</div>
+          <div class="field-value {% if not p.weight_kg %}missing{% endif %}">
+            {% if p.weight_kg %}
+              {{ p.weight_kg }} {{ p.weight_unit or 'kg' }}
+            {% else %}
+              — no detectado —
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="field-item">
+          <div class="field-label">Volumen</div>
+          <div class="field-value {% if not p.volume_cbm %}missing{% endif %}">
+            {% if p.volume_cbm %}{{ p.volume_cbm }} CBM{% else %}— no detectado —{% endif %}
+          </div>
+        </div>
+
+        <div class="field-item">
+          <div class="field-label">Bultos</div>
+          <div class="field-value {% if not p.packages %}missing{% endif %}">
+            {% if p.packages %}{{ p.packages }}{% else %}— no detectado —{% endif %}
+          </div>
+        </div>
+
+        <div class="field-item">
+          <div class="field-label">Incoterm</div>
+          <div class="field-value {% if not p.incoterm %}missing{% endif %}">
+            {{ p.incoterm or '— no detectado —' }}
+          </div>
+        </div>
+
+        <div class="field-item">
+          <div class="field-label">Servicio</div>
+          <div class="field-value {% if not p.service_type or p.service_type == 'unknown' %}missing{% endif %}">
+            {{ p.service_type or '— no detectado —' }}
+          </div>
+        </div>
+
+        <div class="field-item">
+          <div class="field-label">Dirección</div>
+          <div class="field-value {% if not p.direction or p.direction == 'unknown' %}missing{% endif %}">
+            {{ p.direction or '— no detectado —' }}
+          </div>
+        </div>
+
+        <div class="field-item">
+          <div class="field-label">Urgencia</div>
+          <div class="field-value {% if not p.urgency or p.urgency == 'unknown' %}missing{% endif %}">
+            {{ p.urgency or '— no detectado —' }}
+          </div>
+        </div>
+
+      </div>
+
+      <button class="raw-toggle" onclick="toggleRaw(this)">Ver correo original ↓</button>
+      <pre class="raw-body">{{ p.raw_text or '' }}</pre>
+    </div>
+    {% else %}
+    <p style="color:#718096;">No hay correos entrantes disponibles.</p>
+    {% endfor %}
+  </div>
+</main>
+
+<script>
+function toggleRaw(btn) {
+  const pre = btn.nextElementSibling;
+  if (pre.style.display === 'block') {
+    pre.style.display = 'none';
+    btn.textContent = 'Ver correo original ↓';
+  } else {
+    pre.style.display = 'block';
+    btn.textContent = 'Ocultar correo original ↑';
+  }
+}
+</script>
+
+</body>
+</html>
