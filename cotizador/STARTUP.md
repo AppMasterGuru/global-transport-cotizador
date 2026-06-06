@@ -5,10 +5,11 @@
 **Terminal 1 — Flask app:**
 ```bash
 cd cotizador
-source .venv/bin/activate
-flask --app api.app run --debug
+PYTHONPATH=. APP_ENV=development python3 -m flask --app api.app run --port 8080
 ```
-Flask runs at: http://127.0.0.1:5000
+Flask runs at: http://127.0.0.1:8080
+
+> Use this exact command — `python3 -m flask` avoids PATH issues where the system flask binary is picked up instead of the venv one. `APP_ENV=development` enables /demo-reset.
 
 **Terminal 2 — Monitor daemon:**
 ```bash

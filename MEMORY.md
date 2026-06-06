@@ -1,88 +1,214 @@
 ## Unread Email Summary
-_Last updated: 2026-05-19 15:03 UTC (full (12mo) — 158 business threads | accounts: barney@timebackai.co, barney.elliott@gmail.com)_
+_Last updated: 2026-06-06 22:38 UTC (incremental — 143 business threads | accounts: barney@timebackai.co)_
 
-### ⚠️ NEEDS RESPONSE (11 threads)
+### ⚠️ NEEDS RESPONSE (20 threads)
 
-| Project | Age | From | Subject | Last snippet |
-|---------|-----|------|---------|-------------|
-| 🚢 GlobalTransport | **12.8d** | pricing@gt.com.pe | REUNIÓN GLOBAL TRANSPORT S.A.C. | TIMEBACK AI | ________________________________________________________________________________… |
-| 🚢 GlobalTransport | **12.0d** | ralvarez@gt.com.pe | RE: HOMOLOGACION | Bien!!! Best Regards / Saludos Cordiales Renato Alvarez General Manager Av. Mari… |
-| 🚢 GlobalTransport | **12.0d** | pricing@gt.com.pe | RV: Reunión operativa — arranque Pipeline #1 | De: Barney Elliott &lt;barney@timebackai.co&gt; Enviado el: miércoles, 6 de mayo… |
-| 🚢 GlobalTransport | **12.0d** | ralvarez@gt.com.pe | RV: IA | Best Regards / Saludos Cordiales Renato Alvarez General Manager Av. Mariscal La … |
-| 🚢 GlobalTransport | **11.9d** | executiveassistant@e.read.ai | 🗓 REUNIÓN GLOBAL TRANSPORT S.A.C. | TIMEBACK AI en… | La reunión definió el flujo operativo y los datos requeridos para construir una … |
-| 🚢 GlobalTransport | **7.0d** | comm.intel@gt.com.pe | FIRMA CORREOS || GLOBAL TRANSPORT S.A.C. | Buen día Barney, Te adjunto las imágenes de la firma como lo conversamos ayer. B… |
-| 🚢 GlobalTransport | **5.7d** | jparrue@gt.com.pe | Jean Paul Arrue ha compartido la carpeta "GLOBAL T… | Jean Paul Arrue compartió una carpeta contigo Aquí está la carpeta que Jean Paul… |
-| 🚢 GlobalTransport | **5.7d** | ralvarez@gt.com.pe | RE: SINTAD — aviso rápido antes de la reunión | ok Best Regards / Saludos Cordiales Renato Alvarez General Manager Av. Mariscal … |
-| 🚢 GlobalTransport | **5.0d** | jparrue@gt.com.pe | Jean Paul Arrue ha compartido la carpeta "GLOBAL T… | Jean Paul Arrue compartió una carpeta contigo Aquí está la carpeta que Jean Paul… |
-| 🚢 GlobalTransport | **5.0d** | comm.intel@gt.com.pe | RE: Solicitud de acceso como usuario externo — bar… | Buen día Barney, Como lo conversamos, la gestión ya está realizada, ya puedes ac… |
-| 🚢 GlobalTransport | **3.6d** | ralvarez@gt.com.pe | RE: Configuración SMTP — Sistema de Cotización Aut… | David, es conforme Best Regards / Saludos Cordiales Renato Alvarez General Manag… |
+**28.9d old · 🚢 GlobalTransport · REUNIÓN GLOBAL TRANSPORT S.A.C. | TIMEBACK AI (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-06 20:12 | ← | pricing@gt.com.pe | Renato Alvarez <ralvarez@gt.… | REUNIÓN GLOBAL TRANSPORT S.A.C. | TIMEBA… | ______________________________________________________________________… **← UNANSWERED** |
 
-### 🚢 GlobalTransport (24 total, 11 ⚠️ needs response — showing last 14d)
+**28.1d old · 🚢 GlobalTransport · RE: HOMOLOGACION (9 messages)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-06 17:50 | ← | ralvarez@gt.com.pe | comm.intel@gt.com.pe | HOMOLOGACION | Vania, pls homologar a Barney Elliot, quien sera el proveedor del proy… |
+| 2 | 2026-05-06 18:21 | → | barney.elliott@gmail.com | comm.intel@gt.com.pe | Re: HOMOLOGACION | Subject: Re: Homologación proveedor — TimeBack AI Vania, mucho gusto. … |
+| 3 | 2026-05-06 19:58 | ← | comm.intel@gt.com.pe | barney.elliott@gmail.com | RE: HOMOLOGACION | Buenas tardes Barney, Según lo conversado, como parte de nuestro proce… |
+| 4 | 2026-05-06 20:00 | ← | ralvarez@gt.com.pe | Vania Sac <comm.intel@gt.com… | RE: HOMOLOGACION | Según lo conversado, como parte de nuestro proceso BASC, agradeceré qu… |
+| 5 | 2026-05-06 23:19 | → | barney.elliott@gmail.com | comm.intel@gt.com.pe | Re: HOMOLOGACION | Subject: Re: Documentos de Seguridad BASC — TimeBack AI Estimada Vania… |
+| 6 | 2026-05-07 14:21 | ← | comm.intel@gt.com.pe | barney@timebackai.co | RE: HOMOLOGACION | Buen día Barney, Por favor completar todo lo indicado respecto a la Ve… |
+| 7 | 2026-05-07 14:50 | → | barney@timebackai.co | comm.intel@gt.com.pe | Re: HOMOLOGACION | Adjunto esta Vania Me avisa por cualquer cosa. Gracias On Thu, May 7, … |
+| 8 | 2026-05-07 15:59 | ← | comm.intel@gt.com.pe | barney@timebackai.co | RE: HOMOLOGACION | Listo Barney, Confirmo la revisión y aprobación de los documentos reci… |
+| 9 | 2026-05-07 16:00 | ← | ralvarez@gt.com.pe | Vania Sac <comm.intel@gt.com… | RE: HOMOLOGACION | Bien!!! Best Regards / Saludos Cordiales Renato Alvarez General Manage… **← UNANSWERED** |
 
-| Date | From | Subject | Snippet |
-|------|------|---------|---------|
-| 2026-05-18 | barney@timebackai.co | Fwd: Configuración SMTP — Sistema de Cotización Gl… | ---------- Forwarded message --------- From: Barney Elliott &lt;barney@timebacka… |
-| 2026-05-18 | barney@timebackai.co | Re: Integración externa con SCE Carga — consulta t… | Muchisimas gracias, Katherine. Nos vemos manana. On Mon, May 18, 2026 at 10:49 A… |
-| 2026-05-18 | kalzamora@sintad.pe | GLOBAL TRANSPORT | Reunión para revisar posible in… | ________________________________________________________________________________… |
-| 2026-05-16 ⚠️ | ralvarez@gt.com.pe | RE: Configuración SMTP — Sistema de Cotización Aut… | David, es conforme Best Regards / Saludos Cordiales Renato Alvarez General Manag… |
-| 2026-05-15 | barney@timebackai.co | Re: FW: RxH Barney | Mil gracias Luciana Acabo de averiguar, no esta depositado todavia pero me imagi… |
-| 2026-05-14 ⚠️ | comm.intel@gt.com.pe | RE: Solicitud de acceso como usuario externo — bar… | Buen día Barney, Como lo conversamos, la gestión ya está realizada, ya puedes ac… |
-| 2026-05-14 ⚠️ | jparrue@gt.com.pe | Jean Paul Arrue ha compartido la carpeta "GLOBAL T… | Jean Paul Arrue compartió una carpeta contigo Aquí está la carpeta que Jean Paul… |
-| 2026-05-13 ⚠️ | ralvarez@gt.com.pe | RE: SINTAD — aviso rápido antes de la reunión | ok Best Regards / Saludos Cordiales Renato Alvarez General Manager Av. Mariscal … |
-| 2026-05-13 ⚠️ | jparrue@gt.com.pe | Jean Paul Arrue ha compartido la carpeta "GLOBAL T… | Jean Paul Arrue compartió una carpeta contigo Aquí está la carpeta que Jean Paul… |
-| 2026-05-13 | barney@timebackai.co | Acceso a Google Drive — sigo esperando | Hola Renato, Una cosa rápida — todavía no tengo acceso al Google Drive. Sin eso … |
-| 2026-05-12 ⚠️ | comm.intel@gt.com.pe | FIRMA CORREOS || GLOBAL TRANSPORT S.A.C. | Buen día Barney, Te adjunto las imágenes de la firma como lo conversamos ayer. B… |
-| 2026-05-08 | barney@timebackai.co | Re: Especificación Técnica Lista + 3 Preguntas par… | Renato, Recibí tu email con las respuestas — perfecto, todo claro. También ya co… |
-| 2026-05-08 | barney@timebackai.co | Re: Falta parte de gravacion | Mil gracias Abel te agredezco Pregunta, hay transciption que vienew con esto? Yo… |
-| 2026-05-07 | barney.elliott@gmail.com | Re: Reunión operativa — arranque Pipeline #1 | Hola Abel Me me puede pasar el enlace Para bajar la Grabación de hoy? Gracias Ba… |
-| 2026-05-07 ⚠️ | executiveassistant@e.read.ai | 🗓 REUNIÓN GLOBAL TRANSPORT S.A.C. | TIMEBACK AI en… | La reunión definió el flujo operativo y los datos requeridos para construir una … |
-| 2026-05-07 ⚠️ | ralvarez@gt.com.pe | RV: IA | Best Regards / Saludos Cordiales Renato Alvarez General Manager Av. Mariscal La … |
-| 2026-05-07 ⚠️ | pricing@gt.com.pe | RV: Reunión operativa — arranque Pipeline #1 | De: Barney Elliott &lt;barney@timebackai.co&gt; Enviado el: miércoles, 6 de mayo… |
-| 2026-05-07 ⚠️ | ralvarez@gt.com.pe | RE: HOMOLOGACION | Bien!!! Best Regards / Saludos Cordiales Renato Alvarez General Manager Av. Mari… |
-| 2026-05-07 | calendar-notification@google.c… | Notification: REUNIÓN GLOBAL TRANSPORT S.A.C. | TI… | REUNIÓN GLOBAL TRANSPORT SAC | TIMEBACK AI _____________________________________… |
-| 2026-05-06 | barney@timebackai.co | DNI / Correo Correcto | Hola Vania, Olvidé adjuntar mi DNI, disculpa por eso. Asimismo, de ahora en adel… |
-| 2026-05-06 | barney@timebackai.co | DNI |  |
-| 2026-05-06 | barney@timebackai.co | Re: Reunión operativa — arranque Pipeline #1 | Sale, Nos vemos On Wed, May 6, 2026 at 3:10 PM Renato Alvarez &lt;ralvarez@gt.co… |
-| 2026-05-06 ⚠️ | pricing@gt.com.pe | REUNIÓN GLOBAL TRANSPORT S.A.C. | TIMEBACK AI | ________________________________________________________________________________… |
-| 2026-05-06 | barney.elliott@gmail.com | Re: IA | Subject: Re: Propuesta Pipeline #1 — Cotizador con IA Renato — excelente, adelan… |
+**28.1d old · 🚢 GlobalTransport · RV: Reunión operativa — arranque Pipeline #1 (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-07 16:06 | ← | pricing@gt.com.pe | barney@timebackai.co | RV: Reunión operativa — arranque Pipelin… | De: Barney Elliott &lt;barney@timebackai.co&gt; Enviado el: miércoles,… **← UNANSWERED** |
 
-### 📬 Other (55 total, 7 ⚠️ needs response — showing last 14d)
+**28.1d old · 🚢 GlobalTransport · RV: IA (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-07 16:08 | ← | ralvarez@gt.com.pe | barney@timebackai.co | RV: IA | Best Regards / Saludos Cordiales Renato Alvarez General Manager Av. Ma… **← UNANSWERED** |
 
-| Date | From | Subject | Snippet |
-|------|------|---------|---------|
-| 2026-05-18 | calendar-notification@google.c… | Notification: Standup PTSD <> Giggle @ Mon May 18,… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been invited by th… |
-| 2026-05-18 | payments-noreply@google.com | Google: We've received your payment for 9567-2137-… | Google Cloud Platform &amp; APIs Payment received Your payment amount of $10.00 … |
-| 2026-05-18 | googlecloud@google.com | You have upgraded to a paid Google Cloud account | Explore full access to Google Cloud ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ ﻿ … |
-| 2026-05-18 | googlecloud@google.com | Welcome to your Google Cloud Free Trial | Get started fast – and see what&#39;s available on Google Cloud. Google Cloud Go… |
-| 2026-05-15 | calendar-notification@google.c… | Notification: Standup PTSD <> Giggle @ Fri May 15,… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been invited by th… |
-| 2026-05-14 | calendar-notification@google.c… | Notification: Standup PTSD <> Giggle @ Thu May 14,… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been invited by th… |
-| 2026-05-14 | barney@timebackai.co | s |  |
-| 2026-05-13 ⚠️ | support@upstash.com | Welcome to Upstash | Welcome to Upstash Check out our blog posts and documents to dive right into a v… |
-| 2026-05-13 | calendar-notification@google.c… | Notification: Standup PTSD <> Giggle @ Wed May 13,… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been invited by th… |
-| 2026-05-13 | calendar-notification@google.c… | Notification: Film shoot planning with Barney Elli… | Film shoot planning with Barney Elliot You have been invited by paul.keller@mark… |
-| 2026-05-13 | mailer-daemon@googlemail.com | Delivery Status Notification (Failure) | Address not found Your message wasn&#39;t delivered to patty@pattyarrevarra.com … |
-| 2026-05-13 | googlepay-noreply@google.com | Barney, you added a new card to use with Google Pa… | Discover how to quickly and safely pay online.‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ … |
-| 2026-05-13 | noreply@tm.openai.com | Your API usage limits have increased | Review your new rate limits in your account settings. Hi TimeBack AI, We&#39;re … |
-| 2026-05-13 | noreply@tm.openai.com | Your OpenAI API account has been funded | Hi TimeBack AI, We charged $10.88 to your credit card ending in 7108 to fund you… |
-| 2026-05-12 ⚠️ | team@m.ngrok.com | Welcome to ngrok! | 3 tips to get you started View in browser Welcome to ngrok. We&#39;re excited to… |
-| 2026-05-12 | no-reply@read.ai | Ask Read Anything | Try Ask Read today. Ask Read Anything Unlimited access to Ask Read is now availa… |
-| 2026-05-12 ⚠️ | paul.keller@markham.edu.pe | Invitation: Film shoot planning with Barney Elliot… | Film shoot planning with Barney Elliot You have been invited by Paul Keller to a… |
-| 2026-05-12 ⚠️ | aguirre.silvana@gmail.com | Re: Barter Issues | Hey, I followed the steps you sent. I was unable to upload the photo I wanted to… |
-| 2026-05-12 | calendar-notification@google.c… | Notification: Meeting with Barney Elliott and Mari… | Meeting with Barney Elliott and Marina at Solomon Page - Intro via Erika López H… |
-| 2026-05-12 | calendar-notification@google.c… | Notification: Standup PTSD <> Giggle @ Tue May 12,… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been invited by th… |
-| 2026-05-12 | noreply@tm.openai.com | Your temporary OpenAI verification code | Enter this temporary verification code to continue: 523005 Please ignore this em… |
-| 2026-05-12 | noreply@email.meta.com | The category of jaspers_market_plain_text_v1 was u… | The category of template jaspers_market_plain_text_v1 under the WhatsApp Busines… |
-| 2026-05-12 | notification@facebookmail.com | Your WhatsApp message template state has been chan… | Please see your template current state information. WhatsApp Manager The English… |
-| 2026-05-12 ⚠️ | workspace@google.com | [Action required] Set up billing for your Google W… | Your free trial is ending soon. Your free trial expires tomorrow. To use Google … |
-| 2026-05-11 | support@e.read.ai | Your free Enterprise trial is ending in 3 days | R… | Remember why you joined? ͏ ‌ ͏ ‌ ͏ ‌ ͏ ‌ ͏ ‌ ͏ ‌ ͏ ‌ ͏ ‌ ͏ ‌ ͏ ‌ ͏ ‌ ͏ ‌ ͏ ‌ ͏ ‌… |
-_… and more (showing 25 of 55)_
+**28.0d old · 🚢 GlobalTransport · 🗓 REUNIÓN GLOBAL TRANSPORT S.A.C. | TIMEBACK AI en May 7, 20… (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-07 17:17 | ← | executiveassistant@e.read.ai | barney@timebackai.co | 🗓 REUNIÓN GLOBAL TRANSPORT S.A.C. | TIME… | La reunión definió el flujo operativo y los datos requeridos para cons… **← UNANSWERED** |
+
+**23.1d old · 🚢 GlobalTransport · FIRMA CORREOS || GLOBAL TRANSPORT S.A.C. (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-12 15:18 | ← | comm.intel@gt.com.pe | barney@timebackai.co | FIRMA CORREOS || GLOBAL TRANSPORT S.A.C. | Buen día Barney, Te adjunto las imágenes de la firma como lo conversam… **← UNANSWERED** |
+
+**21.8d old · 🚢 GlobalTransport · Jean Paul Arrue ha compartido la carpeta "GLOBAL TRANSPORT -… (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-13 22:03 | ← | jparrue@gt.com.pe | barney@timebackai.co | Jean Paul Arrue ha compartido la carpeta… | Jean Paul Arrue compartió una carpeta contigo Aquí está la carpeta que… **← UNANSWERED** |
+
+**21.8d old · 🚢 GlobalTransport · RE: SINTAD — aviso rápido antes de la reunión (2 messages)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-13 12:18 | → | barney@timebackai.co | ralvarez@gt.com.pe | SINTAD — aviso rápido antes de la reunió… | Hola Amigo, Rápido aviso antes de la reunión con SINTAD. En su respues… |
+| 2 | 2026-05-13 22:03 | ← | ralvarez@gt.com.pe | barney@timebackai.co | RE: SINTAD — aviso rápido antes de la re… | ok Best Regards / Saludos Cordiales Renato Alvarez General Manager Av.… **← UNANSWERED** |
+
+**21.1d old · 🚢 GlobalTransport · Jean Paul Arrue ha compartido la carpeta "GLOBAL TRANSPORT -… (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-14 14:26 | ← | jparrue@gt.com.pe | barney.elliott@gmail.com | Jean Paul Arrue ha compartido la carpeta… | Jean Paul Arrue compartió una carpeta contigo Aquí está la carpeta que… **← UNANSWERED** |
+
+**21.1d old · 🚢 GlobalTransport · RE: Solicitud de acceso como usuario externo — barney@timeba… (2 messages)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-14 01:43 | → | barney@timebackai.co | comm.intel@gt.com.pe | Solicitud de acceso como usuario externo… | Estimada Vania, Jean Paul me compartió la carpeta &quot;GLOBAL TRANSPO… |
+| 2 | 2026-05-14 14:35 | ← | comm.intel@gt.com.pe | barney@timebackai.co | RE: Solicitud de acceso como usuario ext… | Buen día Barney, Como lo conversamos, la gestión ya está realizada, ya… **← UNANSWERED** |
+
+**19.7d old · 🚢 GlobalTransport · RE: Configuración SMTP — Sistema de Cotización Automatizado … (2 messages)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-15 21:43 | → | barney@timebackai.co | dduque@stconsac.com | Configuración SMTP — Sistema de Cotizaci… | Estimado equipo de STC, Mi nombre es Barney Elliott, soy el proveedor … |
+| 2 | 2026-05-16 00:25 | ← | ralvarez@gt.com.pe | barney <barney@timebackai.co… | RE: Configuración SMTP — Sistema de Coti… | David, es conforme Best Regards / Saludos Cordiales Renato Alvarez Gen… **← UNANSWERED** |
+
+**17.1d old · 🚢 GlobalTransport · GLOBAL TRANSPORT | Reunión para revisar posible interfaz (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-18 15:48 | ← | kalzamora@sintad.pe | "barney@timebackai.co" <barn… | GLOBAL TRANSPORT | Reunión para revisar … | ______________________________________________________________________… **← UNANSWERED** |
+
+**15.8d old · 🚢 GlobalTransport · RE: Resumen reunión SINTAD — próximos pasos (2 messages)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-19 21:47 | → | barney@timebackai.co | ralvarez@gt.com.pe | Resumen reunión SINTAD — próximos pasos | Amigo — buena reunión con el equipo de SINTAD hoy. Lo más importante: … |
+| 2 | 2026-05-19 21:50 | ← | ralvarez@gt.com.pe | barney@timebackai.co | RE: Resumen reunión SINTAD — próximos pa… | Procede a que te cotice Best Regards / Saludos Cordiales Renato Alvare… **← UNANSWERED** |
+
+**15.6d old · 🚢 GlobalTransport · Re: Fwd: Configuración SMTP — Sistema de Cotización Global T… (6 messages)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-18 15:22 | → | barney@timebackai.co |  | Configuración SMTP — Sistema de Cotizaci… | Hola Diego, Soy Barney de TimeBack AI. Estamos trabajando con Renato y… |
+| 2 | 2026-05-18 18:46 | → | barney@timebackai.co | dduque@stconsac.com | Fwd: Configuración SMTP — Sistema de Cot… | ---------- Forwarded message --------- From: Barney Elliott &lt;barney… |
+| 3 | 2026-05-19 15:07 | → | barney@timebackai.co | dduque@stconsac.com | Re: Configuración SMTP — Sistema de Coti… | Hola David, Gracias por tu mensaje de hoy. Quiero asegurarme de que es… |
+| 4 | 2026-05-19 15:30 | ← | dduque@stconsac.com | barney@timebackai.co | Re: Fwd: Configuración SMTP — Sistema de… | El 2026-05-18 13:46, Barney Elliott escribió: ---------- Forwarded mes… |
+| 5 | 2026-05-19 20:08 | → | barney@timebackai.co | dduque@stconsac.com | Re: Fwd: Configuración SMTP — Sistema de… | Hola David, Probamos las credenciales que nos enviaste y el servidor e… |
+| 6 | 2026-05-20 04:09 | ← | dduque@stconsac.com | barney@timebackai.co | Re: Fwd: Configuración SMTP — Sistema de… | Buena noche, se realizó la configuración de opción A. Obtener Outlook … **← UNANSWERED** |
+
+**15.3d old · 🚢 GlobalTransport · GT Cotizador — Graph API connection test (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-20 10:20 | ← | pricing@gt.com.pe | barney@timebackai.co | GT Cotizador — Graph API connection test | This is an automated connection test from the GT Cotizador system. If … **← UNANSWERED** |
+
+**15.1d old · 🚢 GlobalTransport · RE: Subject: Piloto WCA — dos cosas que necesito de ti (4 messages)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-20 11:11 | → | barney@timebackai.co | ralvarez@gt.com.pe | Subject: Piloto WCA — dos cosas que nece… | Hola Renato, Como mencioné en el correo anterior, el piloto WCA está l… |
+| 2 | 2026-05-20 14:35 | ← | ralvarez@gt.com.pe | barney@timebackai.co | RE: Subject: Piloto WCA — dos cosas que … | Como mencioné en el correo anterior, el piloto WCA está listo para arr… |
+| 3 | 2026-05-20 15:07 | → | barney@timebackai.co | ralvarez@gt.com.pe | Re: Subject: Piloto WCA — dos cosas que … | &quot;Perfecto Renato — copio a Vania para coordinar. Necesito acceso … |
+| 4 | 2026-05-20 15:20 | ← | comm.intel@gt.com.pe | barney@timebackai.co | RE: Subject: Piloto WCA — dos cosas que … | Aquí los accesos: Usuario: global Contraseña: Gtr@NSPORT2026 Best Rega… **← UNANSWERED** |
+
+**12.9d old · 🚢 GlobalTransport · RE: Preparación demo lunes — necesito tu ayuda con dos cosas… (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-22 20:18 | ← | pricing@gt.com.pe | barney@timebackai.co | RE: Preparación demo lunes — necesito tu… | CORREO CON EL AGENTE INTERNACIONAL CORREO CON EL COLOADER (CRAFT, SOLI… **← UNANSWERED** |
+
+**12.9d old · 🚢 GlobalTransport · GLOBAL TRANSPORT S.A.C. - ASIGNACIÓN DE NUEVO PUNTO DE CONTA… (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-22 20:22 | ← | comm.intel@gt.com.pe | barney@timebackai.co | GLOBAL TRANSPORT S.A.C. - ASIGNACIÓN DE … | Estimado proveedor BARNEY, Espero que se encuentren muy bien. Por medi… **← UNANSWERED** |
+
+**12.9d old · 🚢 GlobalTransport · RE: Preparación demo lunes — necesito tu ayuda con dos cosas… (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-22 20:25 | ← | pricing@gt.com.pe | barney@timebackai.co | RE: Preparación demo lunes — necesito tu… | CORREO DE SOLICITUD PDF DE COTIZACIÓN ENVIADO EN ESTE CASO SE CONSULTÓ… **← UNANSWERED** |
+
+**4.8d old · 🚢 GlobalTransport · Proforma Global Transport SAC — 26-05-002 Miami Foods Corp E… (1 message)**
+| # | Date | Dir | From | To | Subject | Snippet |
+|---|------|-----|------|----|---------|---------|
+| 1 | 2026-05-30 22:59 | ← | pricing@gt.com.pe | barney@timebackai.co | Proforma Global Transport SAC — 26-05-00… | Estimado/a Miami Foods Corp, Adjunto encontrará nuestra proforma de co… **← UNANSWERED** |
+
+### 🚢 GlobalTransport (44 total, 20 ⚠️ needs response — showing last 14d)
+
+| Date | Msgs | Dir | From | Subject | Snippet |
+|------|------|-----|------|---------|---------|
+| 2026-06-04 | 4 | ← | ralvarez@gt.com.pe | RE: Donde estamos — resumen rápido | Eso mi amigo, todo claro, gracias……. Best Regards / Saludos Cordiales … |
+| 2026-06-03 | 2 | ← | ralvarez@gt.com.pe | RE: olvide adjuntar | Si la recibí, pero no la lei completa…sorry .muy larga….. La leo. Best… |
+| 2026-06-03 | 1 | ← | comm.intel@gt.com.pe | Invitación a Charla BASC Perú – Gestión de Segur… | Estimados asociados de negocio: Con el objetivo de fortalecer la cultu… |
+| 2026-06-02 | 12 | ← | kalzamora@sintad.pe | RE: Análisis técnico API SCE Carga — campos requ… | Estimado Renato Buenas tardes Adjunto encontrará la cotización de la i… |
+| 2026-05-30 ⚠️ | 1 | ← | pricing@gt.com.pe | Proforma Global Transport SAC — 26-05-002 Miami … | Estimado/a Miami Foods Corp, Adjunto encontrará nuestra proforma de co… |
+| 2026-05-29 | 1 | → | barney@timebackai.co | SINTAD — Tenemos lo que necesitamos, necesito su… | Subject: SINTAD — Tenemos lo que necesitamos, necesito su luz verde Ho… |
+| 2026-05-29 | 1 | → | barney@timebackai.co | SINTAD — Tenemos lo que necesitamos, necesito su… | Hola Renato, hola Jean Paul, Buenas noticias en el frente de SINTAD. D… |
+| 2026-05-27 | 1 | → | barney.elliott@gmail.com | Transcript demo global transport | No. Okay. No, por favor. Uh... Okay, so... What was this? Okay, so it&… |
+| 2026-05-25 | 1 | → | barney@timebackai.co | Reunion de Demo | Hola Renato Estoy listo con el Demo para Uds. La hora que me propuso e… |
+
+### 🏢 Becamm (2 total — showing last 14d)
+
+| Date | Msgs | Dir | From | Subject | Snippet |
+|------|------|-----|------|---------|---------|
+| 2026-05-29 | 3 | → | barney@timebackai.co | Re: TimeBack AI — Propuesta Actualizada + Docume… | Jorge — Genial, gracias. De verdad aprecio la oportunidad y tengo much… |
+| 2026-05-27 | 1 | → | barney@timebackai.co | Becamm Proposal Final | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
+
+### 🍸 Rebara (4 total — showing last 14d)
+
+| Date | Msgs | Dir | From | Subject | Snippet |
+|------|------|-----|------|---------|---------|
+| 2026-06-04 | 1 | → | barney@timebackai.co |  | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
+| 2026-06-04 | 2 | ← | mailer-daemon@googlemail.com | Delivery Status Notification (Failure) | Address not found Your message wasn&#39;t delivered to patty@pattyarre… |
+
+### 📬 Other (93 total, 16 ⚠️ needs response — showing last 14d)
+
+| Date | Msgs | Dir | From | Subject | Snippet |
+|------|------|-----|------|---------|---------|
+| 2026-06-05 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Fri Jun 5… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-05 | 1 | ← | no-reply@accounts.google.com | Security alert | A new sign-in on Apple iPhone barney@timebackai.co We noticed a new si… |
+| 2026-06-04 | 1 | ← | noreply@google.com | Your Google data is ready to download | Your account, your data. We&#39;ve finished creating a copy of the Goo… |
+| 2026-06-04 | 1 | ← | no-reply@accounts.google.com | Archive of Google data requested | Archive of Google data requested for barney@timebackai.co You&#39;re g… |
+| 2026-06-04 | 1 | ← | no-reply@accounts.google.com | Security alert | A new sign-in on Mac barney@timebackai.co We noticed a new sign-in to … |
+| 2026-06-04 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu Jun 4… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-04 | 1 | ← | paul.keller@markham.edu.pe | Invitation: Script and blocking review  @ Wed Ju… | Script and blocking review You have been invited by Paul Keller to att… |
+| 2026-06-03 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Wed Jun 3… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-02 | 1 | ← | no-reply@accounts.google.com | Security alert | A new sign-in on Mac barney@timebackai.co We noticed a new sign-in to … |
+| 2026-06-02 | 2 | ← | noreply@tm.openai.com | Your temporary ChatGPT login code | Enter this temporary verification code to continue: 179055. ChatGPT Lo… |
+| 2026-06-02 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Tue Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-02 | 1 | ← | calendar-notification@google… | Notification: Barney shooting script meeting w/ … | Barney shooting script meeting w/ Group 4 You have been invited by pau… |
+| 2026-06-01 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-01 | 2 | ← | payments-noreply@google.com | Google Workspace: Your invoice is available for … | Google Workspace Your Google Workspace monthly invoice is available. P… |
+| 2026-06-01 ⚠️ | 1 | ← | support@upstash.com | Reminder: Upstash Redis Database Inactivity Firs… | Inactive Database Notice Hi there, We&#39;ve noticed that your free ti… |
+| 2026-05-31 ⚠️ | 1 | ← | team@m.ngrok.com | Hey barney@timebackai.co, your endpoint is open | Lock down your ngrok endpoint in 3 lines with Traffic Policy View in b… |
+| 2026-05-31 ⚠️ | 1 | ← | paul.keller@markham.edu.pe | Invitation: Barney shooting script meeting w/ Gr… | Barney shooting script meeting w/ Group 4 You have been invited by Pau… |
+| 2026-05-31 | 1 | → | barney.elliott@gmail.com | Ismael la rosa meet transcript | I would, &#39;cause you&#39;re saying put something together for me, w… |
+| 2026-05-29 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Fri May 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-05-28 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu May 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-05-27 | 1 | ← | no-reply@messaging.metamail.… | How enterprise leaders drive AI and messaging RO… | Discover what happens when AI meets messaging with new insights across… |
+| 2026-05-27 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Wed May 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-05-26 | 1 | ← | calendar-notification@google… | Notification: Shoot planning session @ Tue May 2… | Shoot planning session You have been invited by paul.keller@markham.ed… |
+| 2026-05-26 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Tue May 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-05-26 | 1 | ← | support@e.read.ai | Keep Going—Unlock Even More with Read AI | Keep working smarter with Read! Great things happen when Read AI joins… |
+_… and more (showing 25 of 93)_
 
 ### Personal email (barney.elliott@gmail.com)
-_Swept — results folded into buckets above._
+_⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --personal` to add it._
 
 
 ## Active Tasks
-**Last updated: 2026-05-19**
+**Last updated: 2026-06-06**
+
+### Completed this session (2026-06-06)
+- [x] Toast notifications — dashboard polls /api/dashboard/quotes every 15s, slide-in toast fires on new PENDING quote, GT orange/navy styling, auto-dismisses after 10s
+- [x] 273/273 tests restored (was 218 after core file restoration) — GT-P-016 validate_risk_score + GT-P-017 validate_risk_matrix_currency added to rules.py; TestValidateRiskScore (16) + TestValidateRiskMatrixCurrency (10) in test_procedures.py; 9 warnings + 4 email_sender tests in test_features.py; new test_sintad_export.py (16 tests)
+- [x] Margin override input restored in PENDING approval gate — editable % field pre-filled with current margin, live costeo/venta/ganancia display updates on keystroke, value submitted as override_margin_pct with Aprobar form
+- [x] Full demo flow verified end to end on production — quote created → detail shows margin widget → JP approved at 25% → MARGIN_OVERRIDE event in audit log → status APPROVED
+- [x] 54 core source files committed to git (296db70) — core/, api/, config/, procedures/, templates/, tests/ were untracked; now protected against git reset --hard
+- [x] Dockerfile and railway.toml committed to git
+- [x] Static assets (style.css, images) committed to git
+- [x] requirements.txt with gunicorn committed to git
+- [x] Railway connected to GitHub auto-deploy — push to main triggers deploy automatically; no more railway up needed
+- [x] GitHub repo renamed from gt-checklist to global-transport-cotizador
+- [x] Git remote updated to new URL
+- [x] All previous Railway/git pending issues resolved — production URL confirmed live
+
+### Pending / blocked (2026-06-06)
+- [ ] Abel virtual demo — NOT YET SCHEDULED — reschedule for this week
+- [ ] LISTENER_ENABLED flip to true — waiting for Abel to be on the call before enabling live email parsing
+- [ ] Railway upgrade to Hobby plan — 9 days left on free tier; do before demo
+- [ ] Three consecutive quotes approved by JP — WAITING (triggers USD 750 saldo)
+- [ ] WCA emails send — WAITING ON RENATO approval
 
 ### Completed this session (2026-05-19)
 - [x] English proforma template — bilingual routing live (proforma_es.html + proforma_en.html), language detected from meta.language, 234/234 tests
