@@ -31,7 +31,7 @@ import io
 import json
 import os
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from flask import (
     Blueprint, Response, flash, jsonify,
@@ -831,6 +831,52 @@ def _seed_demo_providers() -> int:
     return seed_providers(demo_contacts)
 
 
+def _seed_demo_provider_statuses(hamburg_ref: str) -> None:
+    """
+    Backdate provider contact + reply records for the Hamburg Importer demo quote
+    so the provider status panel shows all four states simultaneously:
+      MSL          contacted 48h ago, reply received → GREEN
+      CRAFT        contacted 12h ago, no reply       → ORANGE
+      SACO         contacted 36h ago, no reply       → RED (shows Enviar recordatorio)
+      VANGUARD     never contacted                   → GREY
+      ECU WORLDWIDE never contacted                  → GREY
+    """
+    now = datetime.now(timezone.utc)
+    contacts = [
+        ("MSL",   now - timedelta(hours=48)),
+        ("CRAFT", now - timedelta(hours=12)),
+        ("SACO",  now - timedelta(hours=36)),
+    ]
+    with get_connection() as conn:
+        for provider, ts in contacts:
+            conn.execute(
+                "INSERT INTO audit_log (event_type, quote_reference, actor, detail_json, ts)"
+                " VALUES (?, ?, ?, ?, ?)",
+                (
+                    "PROVIDER_EMAIL_SENT",
+                    hamburg_ref,
+                    "demo-seed",
+                    json.dumps({"provider": provider, "to": f"rates@{provider.lower().replace(' ', '')}.com"}),
+                    ts.isoformat(),
+                ),
+            )
+        # MSL reply: flete 480, visto bueno 160
+        conn.execute(
+            """INSERT INTO provider_replies
+               (quote_reference, provider_name, sender_email, email_subject,
+                flete_usd, visto_bueno_usd, transit_days, validity_days,
+                parse_status, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                hamburg_ref, "MSL", "rates@msl.com",
+                f"RE: {hamburg_ref} — Tarifa LCL Lima → Hamburgo",
+                480.0, 160.0, 21, 15, "parsed",
+                (now - timedelta(hours=6)).isoformat(),
+            ),
+        )
+        conn.commit()
+
+
 def _seed_demo_quotes() -> list[str]:
     """
     Pre-load 3 realistic demo quotes in different states.
@@ -1014,6 +1060,9 @@ def _seed_demo_quotes() -> list[str]:
             transition_status(quote_id, "SENT", "demo-seed")
 
         refs.append(ref)
+
+    # Seed provider contact + reply records for the Hamburg Importer (first ref, PENDING)
+    _seed_demo_provider_statuses(refs[0])
 
     return refs
 
