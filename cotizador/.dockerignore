@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+*.pyo
+.env
+.git
+*.db
+cotizador.db
+.venv/
+venv/
+pending_acks.jsonl
+credentials/

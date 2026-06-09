@@ -14,7 +14,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from flask import Flask
+
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 from api.routes import bp
 from core.db import init_db

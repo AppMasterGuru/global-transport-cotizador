@@ -1,0 +1,81 @@
+{
+  "simulation_ts": "2026-05-16T01:57:32.471472+00:00",
+  "exchange_rate": 3.419,
+  "all_pass": true,
+  "pass_count": 3,
+  "total_count": 3,
+  "quotes": [
+    {
+      "label": "Quote 1 — LCL Lima→Hamburg (PENDING)",
+      "client": "Hamburg Importer GmbH",
+      "mode": "lcl",
+      "origin": "Lima, Perú",
+      "destination": "Hamburgo, Alemania",
+      "checks": {
+        "costeo_venta": "PASS",
+        "db_insert": "PASS",
+        "provider_emails": "PASS (5 emails)",
+        "sintad_export": "SKIP (PENDING)"
+      },
+      "pass": true,
+      "costeo_total_usd": 465.84,
+      "venta_total_usd": 568.33,
+      "margin_pct": 22.0,
+      "exchange_rate": 3.419,
+      "transport_basis": "volume",
+      "transport_soles": 450.0,
+      "reference_code": "26-05-014 Hamburg Importer GmbH EXW GT-PC",
+      "quote_id": 1,
+      "provider_email_count": 5,
+      "final_status": "PENDING"
+    },
+    {
+      "label": "Quote 2 — Aéreo Lima→LAX (APPROVED)",
+      "client": "Miami Foods Corp",
+      "mode": "aereo",
+      "origin": "Lima, Perú",
+      "destination": "Los Angeles, CA, USA",
+      "checks": {
+        "costeo_venta": "PASS",
+        "db_insert": "PASS",
+        "provider_emails": "PASS (3 emails)",
+        "sintad_export": "PASS"
+      },
+      "pass": true,
+      "costeo_total_usd": 1426.34,
+      "venta_total_usd": 1711.61,
+      "margin_pct": 20.0,
+      "exchange_rate": 3.419,
+      "transport_basis": "volume",
+      "transport_soles": 250.0,
+      "reference_code": "26-05-015 Miami Foods Corp EXW GT-LOC",
+      "quote_id": 2,
+      "provider_email_count": 3,
+      "final_status": "APPROVED"
+    },
+    {
+      "label": "Quote 3 — FCL Manzanillo→Callao (SENT)",
+      "client": "Distribuidora Lima SAC",
+      "mode": "fcl",
+      "origin": "Manzanillo, México",
+      "destination": "Callao, Perú",
+      "checks": {
+        "costeo_venta": "PASS",
+        "db_insert": "PASS",
+        "provider_emails": "PASS (1 emails)",
+        "sintad_export": "PASS"
+      },
+      "pass": true,
+      "costeo_total_usd": 3104.91,
+      "venta_total_usd": 3663.79,
+      "margin_pct": 18.0,
+      "exchange_rate": 3.419,
+      "transport_basis": "volume",
+      "transport_soles": 840.0,
+      "reference_code": "26-05-016 Distribuidora Lima SAC DAP RENATO",
+      "quote_id": 3,
+      "provider_email_count": 1,
+      "final_status": "SENT"
+    }
+  ]
+}

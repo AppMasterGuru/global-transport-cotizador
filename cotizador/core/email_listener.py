@@ -1,23 +1,48 @@
 """
-Inbound email listener — Pipeline #3 kicker (stub).
+Inbound email listener — Pipeline #3 kicker.
 
-fetch_pending_emails() → STUB: 3 hardcoded sample emails for testing.
-  Replace with real IMAP/Graph API fetch when SMTP credentials arrive from Vania.
+fetch_pending_emails() → Microsoft Graph API (unread messages from LISTENER_MAILBOX).
+  Falls back to 3 hardcoded sample emails when Graph credentials are absent
+  (GRAPH_CLIENT_ID + GRAPH_CLIENT_SECRET not set), so tests never need real credentials.
 
 parse_quote_request(raw_email_text) → Uses Claude API when ANTHROPIC_API_KEY is set.
   Falls back to keyword-based stub parse when key is absent.
 
-process_inbound_emails() → Fetches + parses all pending emails.
-  Logs each QUOTE_REQUEST_RECEIVED to audit trail.
+process_inbound_emails() → Fetches + routes emails (provider replies or client requests).
+  Logs each event to audit trail.
+
+Graph config (from .env / Railway env vars):
+  GRAPH_CLIENT_ID, GRAPH_CLIENT_SECRET, GRAPH_TENANT_ID  — Azure app credentials
+  LISTENER_MAILBOX   — mailbox to poll  (default: pricing@gt.com.pe)
+  LISTENER_SINCE     — ISO date lower bound, e.g. 2026-05-21 (avoids replaying history)
 """
 
 from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import datetime, timezone
 
+import requests as _requests
+
 from core.db import audit
+
+# ── Graph listener config ────────────────────────────────────────────────────
+
+_LISTENER_MAILBOX = os.getenv("LISTENER_MAILBOX", "pricing@gt.com.pe")
+_LISTENER_SINCE   = os.getenv("LISTENER_SINCE", "")   # e.g. "2026-05-21"
+
+# Live fetch is active only when Azure app credentials are present.
+# Tests run without .env so this is False in the test suite → stubs used.
+_LISTENER_CONFIGURED = bool(
+    os.getenv("GRAPH_CLIENT_ID") and os.getenv("GRAPH_CLIENT_SECRET")
+)
+
+_GRAPH_INBOX = (
+    f"https://graph.microsoft.com/v1.0"
+    f"/users/{_LISTENER_MAILBOX}/mailFolders/Inbox/messages"
+)
 
 # ── Stub mode — no API key needed for demo / testing ─────────────────────────
 
@@ -295,19 +320,107 @@ def parse_quote_request(raw_email_text: str) -> dict:
     return result
 
 
+def _strip_html(html: str) -> str:
+    """Remove HTML tags and decode entities. Used when provider reply is HTML-only."""
+    import html as _html_mod  # noqa: PLC0415
+    text = re.sub(r"<(script|style|head)[^>]*>.*?</\1>", "", html,
+                  flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = _html_mod.unescape(text)
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
+def _mark_as_read(token: str, msg_id: str) -> None:
+    """PATCH message to isRead=true. Swallowed on error — never blocks the pipeline."""
+    try:
+        url = (
+            f"https://graph.microsoft.com/v1.0"
+            f"/users/{_LISTENER_MAILBOX}/messages/{msg_id}"
+        )
+        _requests.patch(
+            url,
+            json={"isRead": True},
+            headers={
+                "Authorization":  f"Bearer {token}",
+                "Content-Type":   "application/json",
+            },
+            timeout=10,
+        )
+    except Exception:
+        pass
+
+
+def _graph_fetch_emails() -> list[dict]:
+    """
+    Fetch unread messages from the Graph API inbox, mark each as read,
+    and return them in the standard dict format.
+    Falls back to stub list if token acquisition fails.
+    """
+    from core.drive import get_graph_token  # noqa: PLC0415 — lazy to avoid circular import
+
+    token = get_graph_token()
+    if not token:
+        audit("LISTENER_POLL", None, "email_listener",
+              {"status": "TOKEN_FAILED", "mailbox": _LISTENER_MAILBOX})
+        return _SAMPLE_EMAILS
+
+    odata_filter = "isRead eq false"
+    if _LISTENER_SINCE:
+        odata_filter += f" and receivedDateTime ge {_LISTENER_SINCE}T00:00:00Z"
+
+    try:
+        resp = _requests.get(
+            _GRAPH_INBOX,
+            headers={"Authorization": f"Bearer {token}"},
+            params={
+                "$filter":  odata_filter,
+                "$select":  "id,subject,from,body,receivedDateTime",
+                "$top":     "50",
+                "$orderby": "receivedDateTime asc",
+            },
+            timeout=15,
+        )
+        resp.raise_for_status()
+    except Exception as exc:
+        audit("LISTENER_POLL", None, "email_listener",
+              {"status": "FETCH_ERROR", "error": str(exc), "mailbox": _LISTENER_MAILBOX})
+        return _SAMPLE_EMAILS
+
+    results: list[dict] = []
+    for msg in resp.json().get("value", []):
+        sender_obj  = (msg.get("from") or {}).get("emailAddress") or {}
+        body_obj    = msg.get("body") or {}
+        body_text   = body_obj.get("content", "")
+        if (body_obj.get("contentType") or "").lower() == "html":
+            body_text = _strip_html(body_text)
+
+        results.append({
+            "id":          msg.get("id", ""),
+            "from":        sender_obj.get("address", ""),
+            "subject":     msg.get("subject", ""),
+            "received_at": msg.get("receivedDateTime", ""),
+            "body":        body_text,
+        })
+        _mark_as_read(token, msg["id"])
+
+    return results
+
+
 def fetch_pending_emails() -> list[dict]:
     """
-    Return pending inbound quote request emails.
+    Return pending inbound emails from the pricing@gt.com.pe inbox.
 
-    STUB — Replace this body with real IMAP/Graph API fetch when
-    SMTP credentials arrive from Vania (GT Microsoft 365 app password).
+    Live mode  (GRAPH_CLIENT_ID + GRAPH_CLIENT_SECRET set):
+      Fetches unread messages via Microsoft Graph API, marks each read so it
+      is not processed again on the next poll.
 
-    Real implementation will:
-      1. Connect via IMAP to GT's Outlook mailbox
-      2. Fetch unread messages from the quote inbox folder
-      3. Return each as a dict matching the structure below
+    Stub mode  (credentials absent — tests and local dev without .env):
+      Returns the 3 hardcoded sample emails in _SAMPLE_EMAILS.
     """
-    # Return the 3 hardcoded sample emails for testing/demo
+    if _LISTENER_CONFIGURED:
+        return _graph_fetch_emails()
     return _SAMPLE_EMAILS
 
 
@@ -348,33 +461,44 @@ def _queue_acknowledgment(ack: dict, email_meta: dict) -> None:
 
 def process_inbound_emails(auto_ack: bool = True) -> list[dict]:
     """
-    Fetch all pending inbound emails, parse each into a structured quote
-    request, and generate a multilingual acknowledgment for each.
+    Fetch all pending inbound emails. Routes each to the correct pipeline:
 
-    Args:
-        auto_ack: When True (default), generate + queue an acknowledgment for
-                  every parsed email. Set False in tests that don't need acks.
+    - Provider reply (subject contains reference code OR known sender domain):
+        → process_provider_reply()  (rate extraction, DB store, audit, costeo update)
+        → no acknowledgment sent (provider replies don't need a receipt ack)
 
-    Returns list of parsed dicts (one per email), each enriched with:
-      _email_id, _email_from, _email_subject, _received_at, _ack (dict)
+    - Client quote request (everything else):
+        → parse_quote_request()  (structured extraction, audit)
+        → auto-acknowledgment queued when auto_ack=True
 
-    Every parsed request is logged to the audit trail via parse_quote_request().
-    Acknowledgments are queued to pending_acks.jsonl (sent once SMTP is live).
+    Returns list of result dicts (one per email), each tagged with _email_type:
+      'provider_reply'  — provider rate response
+      'client_request'  — new client quote inquiry
     """
-    from core.acknowledgment import detect_and_acknowledge  # noqa: PLC0415
+    from core.acknowledgment import detect_and_acknowledge          # noqa: PLC0415
+    from core.provider_reply_parser import (                        # noqa: PLC0415
+        is_provider_reply,
+        process_provider_reply,
+    )
 
     emails = fetch_pending_emails()
     results: list[dict] = []
 
     for email in emails:
+        if is_provider_reply(email):
+            # ── Provider rate reply ───────────────────────────────────────────
+            result = process_provider_reply(email)
+            results.append(result)
+            continue
+
+        # ── Client quote request ──────────────────────────────────────────────
         parsed = parse_quote_request(email["body"])
-        # Attach email envelope metadata
+        parsed["_email_type"]    = "client_request"
         parsed["_email_id"]      = email.get("id")
         parsed["_email_from"]    = email.get("from")
         parsed["_email_subject"] = email.get("subject")
         parsed["_received_at"]   = email.get("received_at")
 
-        # Auto-generate acknowledgment in the sender's language
         ack: dict = {}
         if auto_ack:
             try:

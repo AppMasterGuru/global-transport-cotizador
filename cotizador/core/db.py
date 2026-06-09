@@ -176,6 +176,89 @@ def get_credit_registry(category: str | None = None) -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def store_provider_reply(data: dict) -> int:
+    """
+    Insert one provider reply row. Returns the new row id.
+    data keys: quote_reference, provider_name, sender_email, email_subject,
+               email_body, flete_usd, visto_bueno_usd, transit_days,
+               validity_days, currency, surcharges_json, parse_status,
+               raw_extract_json, needs_manual_review.
+    """
+    with get_connection() as conn:
+        cur = conn.execute(
+            """INSERT INTO provider_replies
+               (quote_reference, provider_name, sender_email, email_subject,
+                email_body, flete_usd, visto_bueno_usd, transit_days,
+                validity_days, currency, surcharges_json, parse_status,
+                raw_extract_json, needs_manual_review)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                data.get("quote_reference"),
+                data.get("provider_name") or "Unknown",
+                data.get("sender_email"),
+                data.get("email_subject"),
+                data.get("email_body"),
+                data.get("flete_usd"),
+                data.get("visto_bueno_usd"),
+                data.get("transit_days"),
+                data.get("validity_days"),
+                data.get("currency") or "USD",
+                data.get("surcharges_json"),
+                data.get("parse_status") or "parsed",
+                data.get("raw_extract_json"),
+                1 if data.get("needs_manual_review") else 0,
+            ),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+
+def get_provider_replies(quote_reference: str) -> list[dict]:
+    """All provider replies for a quote, ordered by flete_usd ascending (cheapest first)."""
+    with get_connection() as conn:
+        rows = conn.execute(
+            """SELECT * FROM provider_replies
+               WHERE quote_reference = ?
+               ORDER BY CASE WHEN flete_usd IS NULL THEN 1 ELSE 0 END,
+                        flete_usd ASC, created_at ASC""",
+            (quote_reference,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def update_quote_flete(quote_ref: str, flete_usd: float, vb_usd: float | None) -> bool:
+    """
+    Patch flete_internacional_usd (and optionally visto_bueno_usd) in
+    quote's costeo_json and recalculate the cost total.
+    Returns True if the quote was found and updated.
+    """
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT costeo_json FROM quotes WHERE reference_code = ?",
+            (quote_ref,),
+        ).fetchone()
+        if not row:
+            return False
+        costeo = json.loads(row["costeo_json"] or "{}")
+        costeo["flete_internacional_usd"] = round(flete_usd, 2)
+        if vb_usd is not None:
+            costeo["visto_bueno_usd"] = round(vb_usd, 2)
+        costeo["total_usd"] = round(
+            costeo.get("flete_internacional_usd", 0)
+            + costeo.get("visto_bueno_usd", 0)
+            + costeo.get("handling_aereo_usd", 0)
+            + costeo.get("customs_agent_usd", 0)
+            + costeo.get("transport_usd", 0),
+            2,
+        )
+        conn.execute(
+            "UPDATE quotes SET costeo_json = ?, updated_at = ? WHERE reference_code = ?",
+            (json.dumps(costeo), datetime.now(timezone.utc).isoformat(), quote_ref),
+        )
+        conn.commit()
+    return True
+
+
 def get_audit_trail(quote_reference: str) -> list[dict]:
     with get_connection() as conn:
         rows = conn.execute(

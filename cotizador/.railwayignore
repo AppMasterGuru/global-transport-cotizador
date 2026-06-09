@@ -1,0 +1,14 @@
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.DS_Store
+*.pyc
+*.pyo
+cotizador.db
+cotizador.db-shm
+cotizador.db-wal
+pending_acks.jsonl
+.env
+credentials/
+tests/

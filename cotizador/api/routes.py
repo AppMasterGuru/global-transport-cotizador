@@ -128,6 +128,31 @@ def run_listener():
         return jsonify({"status": "ERROR", "ts": ts, "error": str(exc)}), 500
 
 
+@bp.route("/run-listener-force", methods=["POST"])
+def run_listener_force():
+    """Dev-only: run the listener ignoring LISTENER_ENABLED. Guarded by APP_ENV=development."""
+    if os.environ.get("APP_ENV", "production") != "development":
+        return jsonify({"status": "FORBIDDEN", "detail": "only available in development"}), 403
+
+    ts = datetime.now(timezone.utc).isoformat()
+    try:
+        results  = process_inbound_emails(auto_ack=True)
+        n_emails = len(results)
+        n_acks   = sum(1 for r in results if r.get("ack_queued"))
+        audit("LISTENER_POLL", None, "run-listener-force", {
+            "status": "OK", "ts": ts,
+            "emails_processed": n_emails, "acks_queued": n_acks,
+            "forced": True,
+        })
+        return jsonify({"status": "OK", "ts": ts,
+                        "emails_processed": n_emails, "acks_queued": n_acks,
+                        "forced": True, "results": results})
+    except Exception as exc:
+        audit("LISTENER_POLL", None, "run-listener-force",
+              {"status": "ERROR", "ts": ts, "error": str(exc), "forced": True})
+        return jsonify({"status": "ERROR", "ts": ts, "error": str(exc)}), 500
+
+
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 
 @bp.route("/")

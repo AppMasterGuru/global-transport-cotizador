@@ -107,6 +107,32 @@ CREATE TABLE IF NOT EXISTS providers (
 );
 
 -- ──────────────────────────────────────────────
+-- ──────────────────────────────────────────────
+-- Provider rate replies
+-- One row per provider reply received for a quote.
+-- Multiple providers can reply to the same quote_reference.
+-- parse_status: 'parsed' | 'parse_failed' | 'manual_review'
+-- ──────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS provider_replies (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    quote_reference     TEXT    NOT NULL,
+    provider_name       TEXT    NOT NULL,
+    sender_email        TEXT,
+    email_subject       TEXT,
+    email_body          TEXT,
+    flete_usd           REAL,
+    visto_bueno_usd     REAL,
+    transit_days        INTEGER,
+    validity_days       INTEGER,
+    currency            TEXT    DEFAULT 'USD',
+    surcharges_json     TEXT,
+    parse_status        TEXT    NOT NULL DEFAULT 'parsed',
+    raw_extract_json    TEXT,
+    needs_manual_review INTEGER NOT NULL DEFAULT 0,
+    created_at          TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ──────────────────────────────────────────────
 -- Approved credit registry
 -- Seeded from LISTA CRÉDITOS.xlsx (SharePoint)
 -- Tracks GT's approved counterparties and credit terms
