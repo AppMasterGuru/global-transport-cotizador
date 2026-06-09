@@ -130,8 +130,8 @@ def run_listener():
 
 @bp.route("/run-listener-force", methods=["POST"])
 def run_listener_force():
-    """Dev-only: run the listener ignoring LISTENER_ENABLED. Guarded by APP_ENV=development."""
-    if os.environ.get("APP_ENV", "production") != "development":
+    """Dev-only: run the listener ignoring LISTENER_ENABLED. Guarded by FLASK_ENV=development."""
+    if os.environ.get("FLASK_ENV", "production") != "development":
         return jsonify({"status": "FORBIDDEN", "detail": "only available in development"}), 403
 
     ts = datetime.now(timezone.utc).isoformat()
@@ -541,7 +541,7 @@ def provider_emails_page(ref_code: str):
         return redirect(url_for("cotizador.dashboard"))
     quote     = _row_to_dict(row)
     emails    = generate_provider_emails(quote)
-    demo_mode = os.environ.get("APP_ENV", "production") == "development"
+    demo_mode = os.environ.get("FLASK_ENV", "production") == "development"
     audit("PROVIDER_EMAILS_GENERATED", ref_code, "system",
           {"count": len(emails), "mode": quote.get("mode")})
     return render_template("provider_emails.html",
@@ -752,7 +752,7 @@ def wca_pilot():
 # ── Demo reset (DEV ONLY) ─────────────────────────────────────────────────────
 # DEV ONLY — clears all test data before JP/Renato demo. Never expose in production.
 # Guard 1: ?password=gt2026 must be present.
-# Guard 2: APP_ENV environment variable must equal "development".
+# Guard 2: FLASK_ENV environment variable must equal "development".
 #
 # Optional: &seed=true — after clearing, pre-loads 3 demo quotes in different states:
 #   Quote 1 (LCL Lima→Hamburg, Hamburg Importer GmbH)   → PENDING
@@ -1011,9 +1011,9 @@ def _seed_demo_quotes() -> list[str]:
 def demo_reset():
     password = request.args.get("password", "")
     seed     = request.args.get("seed", "false").lower() == "true"
-    app_env  = os.environ.get("APP_ENV", "production")
+    flask_env = os.environ.get("FLASK_ENV", "production")
 
-    if password != "gt2026" or app_env != "development":
+    if password != "gt2026" or flask_env != "development":
         return jsonify({"error": "not allowed"}), 403
 
     n_quotes = _reset_db()
