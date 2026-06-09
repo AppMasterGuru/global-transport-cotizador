@@ -30,18 +30,64 @@ OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/tmp/gt_cotizador_output"))
 VALIDITY_DAYS = 15  # standard; Abel confirmed
 
 
-def _build_items_html(line_items: list[dict]) -> str:
+def _build_items_html(line_items: list[dict]) -> tuple[str, str]:
+    """Return (header_html, rows_html). Header adapts to factor vs flat layout."""
+    has_factor = any(item.get("factor_value") is not None for item in line_items)
+
+    if has_factor:
+        header = (
+            '<tr>'
+            '<th>Concepto</th>'
+            '<th class="num">Tarifa</th>'
+            '<th class="num">Factor</th>'
+            '<th class="num">Total</th>'
+            '</tr>'
+        )
+    else:
+        header = (
+            '<tr>'
+            '<th>Concepto</th>'
+            '<th class="num">Cant.</th>'
+            '<th class="num">Precio Unit.</th>'
+            '<th class="num">Total</th>'
+            '</tr>'
+        )
+
     rows = ""
     for item in line_items:
-        rows += (
-            f'<tr>'
-            f'<td>{item.get("description", "")}</td>'
-            f'<td class="num">{item.get("quantity", 1)}</td>'
-            f'<td class="num">USD {item.get("unit_price", 0):,.2f}</td>'
-            f'<td class="num">USD {item.get("total", 0):,.2f}</td>'
-            f'</tr>'
-        )
-    return rows
+        desc = item.get("description", "")
+        total = item.get("total") or 0
+        if has_factor and item.get("factor_value") is not None:
+            rate = item.get("unit_rate") or 0
+            fval = item.get("factor_value", 0)
+            funit = item.get("factor_unit", "")
+            rows += (
+                f'<tr>'
+                f'<td>{desc}</td>'
+                f'<td class="num">USD {rate:,.2f}/{funit}</td>'
+                f'<td class="num">{fval:.4g} {funit}</td>'
+                f'<td class="num">USD {total:,.2f}</td>'
+                f'</tr>'
+            )
+        elif has_factor:
+            rows += (
+                f'<tr>'
+                f'<td>{desc}</td>'
+                f'<td class="num">—</td>'
+                f'<td class="num">—</td>'
+                f'<td class="num">USD {total:,.2f}</td>'
+                f'</tr>'
+            )
+        else:
+            rows += (
+                f'<tr>'
+                f'<td>{desc}</td>'
+                f'<td class="num">{item.get("quantity", 1)}</td>'
+                f'<td class="num">USD {item.get("unit_price", 0):,.2f}</td>'
+                f'<td class="num">USD {total:,.2f}</td>'
+                f'</tr>'
+            )
+    return header, rows
 
 
 def render_html(venta: dict, meta: dict) -> str:
@@ -69,7 +115,8 @@ def render_html(venta: dict, meta: dict) -> str:
         "{{ROUTE}}":          meta.get("route", "Direct"),
         "{{FREQUENCY}}":      meta.get("frequency", "Weekly"),
         "{{EXCHANGE_RATE}}":  f"{meta.get('exchange_rate', 0):.4f}",
-        "{{LINE_ITEMS}}":     _build_items_html(venta.get("line_items", [])),
+        "{{LINE_ITEMS_HEADER}}": _build_items_html(venta.get("line_items", []))[0],
+        "{{LINE_ITEMS}}":     _build_items_html(venta.get("line_items", []))[1],
         "{{TOTAL_USD}}":      f"{venta.get('total_usd', 0):,.2f}",
         "{{NOTES}}":          meta.get("notes", ""),
         "{{STAFF_NAME}}":     get_signature(meta.get("staff_code", ""))["name"],

@@ -603,6 +603,7 @@
       <div class="detail-row"><span>Incoterm</span><strong>{{ quote.incoterm }}</strong></div>
       <div class="detail-row"><span>Modo</span><strong>{{ quote.mode | upper }}</strong></div>
       <div class="detail-row"><span>Idioma</span><strong>{{ quote.language | upper }}</strong></div>
+      <div class="detail-row"><span>Solicitante</span><strong>{{ quote.requester_type | capitalize if quote.requester_type else 'Cliente' }}</strong></div>
       {% if quote.cargo_description %}
       <div class="detail-row"><span>Mercancía</span><strong>{{ quote.cargo_description }}</strong></div>
       {% endif %}
@@ -619,12 +620,18 @@
   {% if quote.venta_json %}
   <section class="detail-section section-venta">
     <h2>Venta <span class="tag tag-client">→ Cliente</span></h2>
+    {% set has_factor = quote.venta_json.line_items | selectattr('factor_value', 'defined') | selectattr('factor_value') | list | length > 0 %}
     <table class="cost-table">
       <thead>
         <tr>
           <th>Concepto</th>
+          {% if has_factor %}
+          <th class="num">Tarifa</th>
+          <th class="num">Factor</th>
+          {% else %}
           <th class="num">Cant.</th>
           <th class="num">Precio Unit.</th>
+          {% endif %}
           <th class="num">Total</th>
         </tr>
       </thead>
@@ -632,8 +639,18 @@
         {% for item in quote.venta_json.line_items %}
         <tr>
           <td>{{ item.description }}</td>
+          {% if has_factor %}
+            {% if item.factor_value is defined and item.factor_value %}
+            <td class="num">USD {{ "%.2f"|format(item.unit_rate or 0) }}/{{ item.factor_unit or 'W/M' }}</td>
+            <td class="num">{{ "%.4g"|format(item.factor_value) }} {{ item.factor_unit or 'W/M' }}</td>
+            {% else %}
+            <td class="num">—</td>
+            <td class="num">—</td>
+            {% endif %}
+          {% else %}
           <td class="num">{{ item.quantity }}</td>
-          <td class="num">USD {{ "%.2f"|format(item.unit_price) }}</td>
+          <td class="num">USD {{ "%.2f"|format(item.unit_price or 0) }}</td>
+          {% endif %}
           <td class="num">USD {{ "%.2f"|format(item.total) }}</td>
         </tr>
         {% endfor %}

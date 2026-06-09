@@ -38,6 +38,13 @@
           <input type="text" name="client_name" required placeholder="Universal Cargo SA">
         </label>
         <label class="field">
+          <span class="label-text">Solicitante *</span>
+          <select name="requester_type" required>
+            <option value="cliente">Cliente</option>
+            <option value="agente">Agente</option>
+          </select>
+        </label>
+        <label class="field">
           <span class="label-text">Modo *</span>
           <select name="mode" required>
             <option value="lcl">LCL — Carga Suelta</option>
@@ -133,6 +140,11 @@
         <label class="field">
           <span class="label-text">Flete Internacional (USD)</span>
           <input type="number" name="flete_lcl" step="0.01" min="0" placeholder="Ej: 850.00">
+        </label>
+        <label class="field">
+          <span class="label-text">Tarifa Flete LCL (USD/W/M) <em style="font-weight:normal;color:#6b7280;">opcional</em></span>
+          <input type="number" name="flete_rate_lcl" step="0.01" min="0" placeholder="Ej: 95.00">
+          <span class="field-hint">Si se ingresa, el flete = tarifa × max(CBM, kg/1000). Deja vacío para usar monto fijo.</span>
         </label>
         <label class="field">
           <span class="label-text">Consolidador (LCL)</span>

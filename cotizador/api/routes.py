@@ -265,12 +265,21 @@ def create_quote():
         else float(f.get("volume_cbm", 0) or 0)
     )
 
-    flete_usd          = float(f.get("flete_lcl") or f.get("flete_usd") or 0)
+    flete_rate_lcl     = float(f.get("flete_rate_lcl") or 0)  # optional USD/W/M rate for LCL
+    if mode == "lcl" and flete_rate_lcl and (cbm or weight_kg):
+        wm_factor = round(max(cbm, weight_kg / 1000), 4)
+        flete_usd = round(flete_rate_lcl * wm_factor, 2)
+    else:
+        flete_rate_lcl = 0.0
+        wm_factor      = 0.0
+        flete_usd      = float(f.get("flete_lcl") or f.get("flete_usd") or 0)
     consolidator_name  = f.get("consolidator", "MSL").upper()
     airline            = f.get("airline", "").strip()   # aereo only
     requires_oea_basc  = f.get("requires_oea_basc") == "on"
     margin_pct_input   = float(f.get("margin_pct", 20) or 20) / 100
     margin_pct         = max(margin_pct_input, MARGIN_FLOOR)
+    requester_type_raw = f.get("requester_type", "cliente").strip()
+    requester_type     = requester_type_raw if requester_type_raw in ("cliente", "agente") else "cliente"
 
     exchange_rate = get_exchange_rate()
 
@@ -306,10 +315,10 @@ def create_quote():
             handling_aereo_info = fee
 
     costeo_total = flete_usd + vb_usd + customs_usd + transport_usd + handling_aereo_usd
-    venta_total  = costeo_total * (1 + margin_pct)
 
     costeo = {
         "flete_internacional_usd": flete_usd,
+        "flete_rate_lcl": flete_rate_lcl if flete_rate_lcl else None,
         "visto_bueno_usd": vb_usd,
         "handling_aereo_usd": handling_aereo_usd,
         "handling_aereo_detail": handling_aereo_info,
@@ -324,30 +333,45 @@ def create_quote():
         "customs_agent": agent["name"],
     }
 
-    venta_items = [
-        {
+    m = 1 + margin_pct
+    handling_fees_costeo = vb_usd + customs_usd + handling_aereo_usd
+
+    if mode == "lcl" and flete_rate_lcl:
+        flete_item: dict = {
+            "description": "International Freight",
+            "unit_rate": round(flete_rate_lcl * m, 2),
+            "factor_value": wm_factor,
+            "factor_unit": "W/M",
+            "total": round(flete_usd * m, 2),
+        }
+    else:
+        flete_item = {
             "description": "International Freight",
             "quantity": 1,
-            "unit_price": round(flete_usd, 2),
-            "total": round(flete_usd, 2),
-        },
+            "unit_price": round(flete_usd * m, 2),
+            "total": round(flete_usd * m, 2),
+        }
+
+    venta_items = [
+        flete_item,
         {
             "description": "Handling & Port Fees",
             "quantity": 1,
-            "unit_price": round(vb_usd + customs_usd + handling_aereo_usd, 2),
-            "total": round(vb_usd + customs_usd + handling_aereo_usd, 2),
+            "unit_price": round(handling_fees_costeo * m, 2),
+            "total": round(handling_fees_costeo * m, 2),
         },
         {
             "description": "Local Transport",
             "quantity": 1,
-            "unit_price": round(transport_usd, 2),
-            "total": round(transport_usd, 2),
+            "unit_price": round(transport_usd * m, 2),
+            "total": round(transport_usd * m, 2),
         },
     ]
+    venta_total = round(sum(item["total"] for item in venta_items), 2)
 
     venta = {
         "line_items": venta_items,
-        "total_usd": round(venta_total, 2),
+        "total_usd": venta_total,
         "margin_pct": margin_pct,
         "validity_days": 15,
     }
@@ -360,8 +384,8 @@ def create_quote():
               (reference_code, client_name, client_email, incoterm, mode, origin, destination,
                cargo_description, weight_kg, volume_cbm, dimensions_json,
                costeo_json, venta_json, margin_pct, exchange_rate,
-               status, staff_code, language)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PENDING',?,?)
+               status, staff_code, language, requester_type)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PENDING',?,?,?)
             """,
             (
                 ref, client_name, client_email or None, incoterm, mode, origin, destination,
@@ -373,6 +397,7 @@ def create_quote():
                 exchange_rate,
                 staff_code,
                 language,
+                requester_type,
             ),
         )
         conn.commit()
@@ -478,12 +503,19 @@ def approve_quote(ref_code: str):
             new_margin = round(float(override_raw) / 100, 6)
             old_margin = float(row["margin_pct"] or 0)
             if abs(new_margin - old_margin) > 0.0001:
-                costeo = json.loads(row["costeo_json"] or "{}")
-                venta  = json.loads(row["venta_json"]  or "{}")
-                costeo_total = float(costeo.get("total_usd", 0))
-                new_sell_price = round(costeo_total * (1 + new_margin), 2)
+                venta = json.loads(row["venta_json"] or "{}")
+                new_factor = (1 + new_margin) / (1 + old_margin) if (1 + old_margin) else 1
+                line_items = venta.get("line_items") or []
+                for item in line_items:
+                    for key in ("unit_price", "total", "unit_rate"):
+                        if item.get(key) is not None:
+                            item[key] = round(item[key] * new_factor, 2)
+                venta["line_items"] = line_items
+                new_sell_price = round(sum(i.get("total", 0) for i in line_items), 2)
                 venta["total_usd"]  = new_sell_price
                 venta["margin_pct"] = new_margin
+                costeo = json.loads(row["costeo_json"] or "{}")
+                costeo_total = float(costeo.get("total_usd", 0))
                 with get_connection() as conn:
                     conn.execute(
                         "UPDATE quotes SET margin_pct=?, venta_json=? WHERE id=?",
@@ -733,10 +765,17 @@ def preview_pdf(ref_code: str):
     override_raw = request.args.get("override_margin_pct", "").strip()
     if override_raw:
         try:
-            new_margin   = float(override_raw) / 100
-            costeo_total = float(costeo.get("total_usd", 0))
+            new_margin = float(override_raw) / 100
+            old_margin = float(venta.get("margin_pct") or 0)
             venta = dict(venta)
-            venta["total_usd"]  = round(costeo_total * (1 + new_margin), 2)
+            venta["line_items"] = [dict(i) for i in (venta.get("line_items") or [])]
+            if abs(new_margin - old_margin) > 0.0001 and (1 + old_margin):
+                new_factor = (1 + new_margin) / (1 + old_margin)
+                for item in venta["line_items"]:
+                    for key in ("unit_price", "total", "unit_rate"):
+                        if item.get(key) is not None:
+                            item[key] = round(item[key] * new_factor, 2)
+            venta["total_usd"]  = round(sum(i.get("total", 0) for i in venta["line_items"]), 2)
             venta["margin_pct"] = new_margin
         except (ValueError, TypeError):
             pass
@@ -1169,17 +1208,20 @@ def _seed_demo_quotes() -> list[str]:
             "customs_agent":           agent["name"],
         }
 
+        _m = 1 + margin_pct
+        _handling = vb_usd + customs_usd + handling_aereo_usd
+        _seed_items = [
+            {"description": "International Freight", "quantity": 1,
+             "unit_price": round(flete_usd * _m, 2), "total": round(flete_usd * _m, 2)},
+            {"description": "Handling & Port Fees",  "quantity": 1,
+             "unit_price": round(_handling * _m, 2), "total": round(_handling * _m, 2)},
+            {"description": "Local Transport",       "quantity": 1,
+             "unit_price": round(transport_usd * _m, 2), "total": round(transport_usd * _m, 2)},
+        ]
+        venta_total = round(sum(i["total"] for i in _seed_items), 2)
         venta = {
-            "line_items": [
-                {"description": "International Freight", "quantity": 1,
-                 "unit_price": round(flete_usd, 2), "total": round(flete_usd, 2)},
-                {"description": "Handling & Port Fees",  "quantity": 1,
-                 "unit_price": round(vb_usd + customs_usd + handling_aereo_usd, 2),
-                 "total":      round(vb_usd + customs_usd + handling_aereo_usd, 2)},
-                {"description": "Local Transport",       "quantity": 1,
-                 "unit_price": round(transport_usd, 2), "total": round(transport_usd, 2)},
-            ],
-            "total_usd":    round(venta_total, 2),
+            "line_items": _seed_items,
+            "total_usd":    venta_total,
             "margin_pct":   margin_pct,
             "validity_days": 15,
         }
@@ -1375,6 +1417,28 @@ def whatsapp_webhook_verify():
         return Response(hub_challenge, status=200, mimetype="text/plain")
 
     return Response("Forbidden", status=403, mimetype="text/plain")
+
+
+# ── Acknowledgment log (acuses) ───────────────────────────────────────────────
+
+@bp.route("/acuses")
+def acuses():
+    """Acknowledgment send log — lists every auto-ack queued or sent."""
+    import json as _json
+    from pathlib import Path as _Path
+
+    ack_path = _Path(__file__).parent.parent / "pending_acks.jsonl"
+    entries: list[dict] = []
+    if ack_path.exists():
+        for line in ack_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line:
+                try:
+                    entries.append(_json.loads(line))
+                except _json.JSONDecodeError:
+                    pass
+    entries.reverse()  # newest first
+    return render_template("acuses.html", entries=entries)
 
 
 @bp.route("/webhook/whatsapp", methods=["POST"])

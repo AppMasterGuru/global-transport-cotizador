@@ -13,7 +13,7 @@ so the ejecutivo only has to copy-paste, not re-type.
 
 Staff logic (from Meeting 3, 1:16:09):
   Ejecutivo comercial : Jean Paul (GT-PC / GT-WCA) | Renato (others)
-  Customer service    : Paulo Díaz (always)
+  Customer service    : Paulo Díaz (always)  # TODO confirm with Abel: Paolo / Pablo / Paulo — flagged 2026-06-09 demo
   Operativo           : Robin Lujan (imports) | Junior Loa (exports)
   Supervisor          : Kristel (always)
 """
@@ -113,7 +113,7 @@ def _staff(quote: dict) -> dict:
 
     return {
         "Ejecutivo Comercial": ejecutivo,
-        "Customer Service":    "Paulo Díaz",
+        "Customer Service":    "Paulo Díaz",  # TODO confirm with Abel: Paolo / Pablo / Paulo — flagged 2026-06-09 demo
         "Operativo":           operativo,
         "Supervisor":          "Kristel",
     }

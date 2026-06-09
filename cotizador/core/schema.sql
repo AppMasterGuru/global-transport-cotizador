@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS quotes (
                               CHECK(status IN ('PENDING','APPROVED','REJECTED','SENT')),
     staff_code        TEXT    NOT NULL,
     language          TEXT    DEFAULT 'es',
+    requester_type    TEXT    DEFAULT 'cliente',  -- 'cliente' | 'agente'
     created_at        TEXT    NOT NULL DEFAULT (datetime('now')),
     updated_at        TEXT    NOT NULL DEFAULT (datetime('now')),
     approved_by       TEXT,

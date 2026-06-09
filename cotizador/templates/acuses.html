@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acuses de Recibo — GT Cotizador</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .acuses-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .acuses-table th { background: #1B3A6B; color: #fff; padding: 8px 12px; text-align: left; }
+    .acuses-table td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    .acuses-table tr:hover td { background: #f9fafb; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.78rem; font-weight: 600; }
+    .badge-es { background: #dbeafe; color: #1e40af; }
+    .badge-en { background: #dcfce7; color: #166534; }
+    .badge-de { background: #fef9c3; color: #854d0e; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #6b7280; }
+    .empty-state h2 { font-size: 1.2rem; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+<nav class="topnav">
+  <a href="/" class="brand">GT Cotizador</a>
+  <a href="/audit">Auditoría</a>
+  <a href="/acuses" class="active">Acuses</a>
+</nav>
+
+<main class="container" style="max-width:1100px;margin:32px auto;padding:0 16px;">
+  <h1 style="font-size:1.5rem;margin-bottom:4px;">Acuses de Recibo</h1>
+  <p style="color:#6b7280;margin-bottom:24px;">Registro de confirmaciones automáticas enviadas a clientes.</p>
+
+  {% if entries %}
+  <table class="acuses-table">
+    <thead>
+      <tr>
+        <th>Fecha / Hora</th>
+        <th>Idioma</th>
+        <th>Asunto</th>
+        <th>Destinatario</th>
+        <th>Tema detectado</th>
+        <th>Resp. estimada</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in entries %}
+      <tr>
+        <td style="white-space:nowrap;">{{ e.ts[:19].replace('T',' ') if e.ts else '—' }}</td>
+        <td>
+          <span class="badge badge-{{ e.language or 'es' }}">{{ (e.language or 'es')|upper }}</span>
+        </td>
+        <td>{{ e.email_subject or e.subject or '—' }}</td>
+        <td style="font-size:0.82rem;color:#374151;">{{ e.recipient_email or '—' }}</td>
+        <td>{{ e.detected_topic or '—' }}</td>
+        <td style="text-align:center;">{{ e.response_hours or '—' }}h</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p style="margin-top:12px;color:#9ca3af;font-size:0.82rem;">
+    {{ entries|length }} acuse{{ 's' if entries|length != 1 else '' }} registrado{{ 's' if entries|length != 1 else '' }}.
+  </p>
+  {% else %}
+  <div class="empty-state">
+    <h2>Sin acuses registrados</h2>
+    <p>Cuando el sistema envíe confirmaciones automáticas, aparecerán aquí.</p>
+  </div>
+  {% endif %}
+</main>
+</body>
+</html>
