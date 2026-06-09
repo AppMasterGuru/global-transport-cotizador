@@ -42,10 +42,11 @@ from core.acknowledgment import (
     generate_acknowledgment,
     generate_acknowledgment_from_request,
 )
+from core.provider_status import build_chase_email, compute_provider_statuses
 from core.email_listener import process_inbound_emails
 from core.whatsapp_listener import process_whatsapp_message
 from core.monitor import check_audit_anomalies, generate_daily_digest, run_health_checks
-from core.db import audit, get_audit_trail, get_connection, get_quote_by_ref, transition_status
+from core.db import audit, get_audit_trail, get_connection, get_provider_replies, get_quote_by_ref, transition_status
 from core.email_sender import send_quote_email, send_provider_email, CREDENTIALS_ROTATED
 from core.pdf_generator import generate_pdf_bytes, WEASYPRINT_AVAILABLE
 from core.exchange_rate import get_exchange_rate, soles_to_usd
@@ -372,6 +373,15 @@ def quote_detail(ref_code: str):
     quote     = _row_to_dict(row)
     audit_log = get_audit_trail(ref_code)
     warnings  = check_quote_warnings(quote)
+
+    emails    = generate_provider_emails(quote)
+    expected  = [e["provider"] for e in emails]
+    replies   = get_provider_replies(ref_code)
+    provider_statuses = compute_provider_statuses(expected, audit_log, replies)
+    for ps in provider_statuses:
+        if ps["status"] == "red":
+            ps["chase"] = build_chase_email(ps["provider"], quote)
+
     return render_template(
         "quote_detail.html",
         quote=quote,
@@ -380,6 +390,7 @@ def quote_detail(ref_code: str):
         has_red=has_red_warnings(warnings),
         credentials_rotated=CREDENTIALS_ROTATED,
         min_margin_pct=MARGIN_FLOOR,
+        provider_statuses=provider_statuses,
     )
 
 

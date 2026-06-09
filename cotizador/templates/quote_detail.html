@@ -429,6 +429,53 @@
   </section>
   {% endif %}
 
+  <!-- PROVIDER STATUS ───────────────────────────────────────────────────── -->
+  {% if provider_statuses %}
+  <section class="detail-section provider-status-section">
+    <h2>Estado de Respuestas — Proveedores</h2>
+    <div class="ps-grid">
+      {% for p in provider_statuses %}
+      <div class="ps-row ps-{{ p.status }}">
+        <span class="ps-dot">
+          {% if p.status == 'green' %}🟢
+          {% elif p.status == 'orange' %}🟠
+          {% elif p.status == 'red' %}🔴
+          {% else %}⚪{% endif %}
+        </span>
+        <span class="ps-name">{{ p.provider }}</span>
+        <span class="ps-label">
+          {% if p.status == 'green' %}Tarifa recibida
+          {% elif p.status == 'orange' %}En espera
+          {% elif p.status == 'red' %}Sin respuesta
+          {% else %}Sin contactar{% endif %}
+        </span>
+        <span class="ps-meta">
+          {% if p.contacted_at %}
+            Contactado {{ p.contacted_at.strftime('%-d/%m %H:%M') }}
+          {% else %}—{% endif %}
+        </span>
+        {% if p.status == 'green' and p.reply %}
+        <span class="ps-rate">USD {{ "%.2f"|format(p.reply.flete_usd) if p.reply.flete_usd else "—" }}</span>
+        {% else %}
+        <span class="ps-rate"></span>
+        {% endif %}
+        <span class="ps-action">
+          {% if p.status == 'red' %}
+          <details class="chase-wrap">
+            <summary class="btn btn-sm btn-secondary">Enviar recordatorio</summary>
+            <div class="chase-popup">
+              <p class="chase-subject"><strong>Asunto:</strong> {{ p.chase.subject }}</p>
+              <textarea class="chase-body" rows="5" onclick="this.select()">{{ p.chase.body }}</textarea>
+            </div>
+          </details>
+          {% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
   <!-- APPROVAL GATE ─────────────────────────────────────────────────────── -->
   {% if quote.status == 'PENDING' %}
   <section class="approval-gate gate-pending">
