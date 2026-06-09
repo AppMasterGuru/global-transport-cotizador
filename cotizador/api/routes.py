@@ -186,6 +186,54 @@ def new_quote_form():
     return render_template("new_quote.html")
 
 
+def _auto_send_provider_emails(ref: str, quote: dict, actor: str) -> None:
+    """
+    Send provider rate-request emails immediately after quote creation.
+    Skips if SMTP credentials are not configured; never blocks quote creation.
+    """
+    try:
+        if not CREDENTIALS_ROTATED:
+            audit("PROVIDER_EMAILS_SKIPPED", ref, "system", {
+                "reason": "smtp credentials not configured",
+                "mode":   quote.get("mode"),
+            })
+            return
+
+        emails       = generate_provider_emails(quote)
+        sent_count   = 0
+        failed_count = 0
+        skipped      = 0
+
+        for email in emails:
+            to_list = email.get("to_emails") or []
+            if not to_list:
+                skipped += 1
+                continue
+            for to_addr in to_list:
+                ok, _ = send_provider_email(
+                    ref_code=ref,
+                    provider=email["provider"],
+                    to=to_addr,
+                    subject=email["subject"],
+                    body=email["body"],
+                    actor=actor,
+                )
+                if ok:
+                    sent_count += 1
+                else:
+                    failed_count += 1
+
+        audit("PROVIDER_EMAILS_AUTO_SENT", ref, actor, {
+            "sent":    sent_count,
+            "failed":  failed_count,
+            "skipped": skipped,
+            "mode":    quote.get("mode"),
+        })
+
+    except Exception as exc:  # noqa: BLE001
+        audit("PROVIDER_EMAILS_AUTO_FAILED", ref, "system", {"error": str(exc)})
+
+
 @bp.route("/quote/new", methods=["POST"])
 def create_quote():
     f = request.form
@@ -352,6 +400,20 @@ def create_quote():
         "procedure_version": PROCEDURE_VERSION,
         "procedure_violations": procedure_violations,
     })
+
+    _auto_send_provider_emails(ref, {
+        "reference_code":    ref,
+        "mode":              mode,
+        "origin":            origin,
+        "destination":       destination,
+        "incoterm":          incoterm,
+        "cargo_description": cargo_desc,
+        "weight_kg":         weight_kg,
+        "volume_cbm":        cbm,
+        "dimensions_json":   {"l": length_cm, "w": width_cm, "h": height_cm, "qty": quantity},
+        "staff_code":        staff_code,
+        "language":          language,
+    }, staff_code)
 
     flash(f"Cotización {ref} creada y pendiente de aprobación.", "success")
     return redirect(url_for("cotizador.quote_detail", ref_code=ref))
