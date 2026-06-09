@@ -127,7 +127,7 @@ class TestAutoSendSkippedWhenNoCredentials:
 
         events = _audit_events(ref)
         skipped = next(e for e in events if e["event_type"] == "PROVIDER_EMAILS_SKIPPED")
-        assert "reason" in skipped["detail"]
+        assert "graph credentials not configured" in skipped["detail"]["reason"]
 
 
 class TestAutoSendWhenCredentialsPresent:
@@ -287,7 +287,8 @@ class TestAutoSendNeverBlocksQuoteCreation:
 class TestStressFullQuoteCreation:
     """
     Create a real quote via POST /quote/new and confirm the auto-send audit
-    event is written. No SMTP credentials in test env → expects SKIPPED.
+    event is written. Tests that require SKIPPED explicitly patch credentials
+    out — .env may contain real Graph creds in CI/local environments.
     """
 
     def test_quote_created_successfully(self, client):
@@ -295,7 +296,9 @@ class TestStressFullQuoteCreation:
                            follow_redirects=False)
         assert resp.status_code == 302
 
-    def test_provider_emails_skipped_logged(self, client):
+    def test_provider_emails_skipped_logged(self, client, monkeypatch):
+        import api.routes as routes
+        monkeypatch.setattr(routes, "CREDENTIALS_ROTATED", False)
         client.post("/quote/new", data=_QUOTE_FORM, follow_redirects=False)
         assert "PROVIDER_EMAILS_SKIPPED" in _event_types()
 
@@ -303,13 +306,17 @@ class TestStressFullQuoteCreation:
         client.post("/quote/new", data=_QUOTE_FORM, follow_redirects=False)
         assert "QUOTE_CREATED" in _event_types()
 
-    def test_skipped_reason_is_credentials(self, client):
+    def test_skipped_reason_is_credentials(self, client, monkeypatch):
+        import api.routes as routes
+        monkeypatch.setattr(routes, "CREDENTIALS_ROTATED", False)
         client.post("/quote/new", data=_QUOTE_FORM, follow_redirects=False)
         events = _audit_events()
         ev = next(e for e in events if e["event_type"] == "PROVIDER_EMAILS_SKIPPED")
-        assert "smtp credentials not configured" in ev["detail"]["reason"]
+        assert "graph credentials not configured" in ev["detail"]["reason"]
 
-    def test_skipped_detail_includes_mode(self, client):
+    def test_skipped_detail_includes_mode(self, client, monkeypatch):
+        import api.routes as routes
+        monkeypatch.setattr(routes, "CREDENTIALS_ROTATED", False)
         client.post("/quote/new", data=_QUOTE_FORM, follow_redirects=False)
         events = _audit_events()
         ev = next(e for e in events if e["event_type"] == "PROVIDER_EMAILS_SKIPPED")

@@ -1,133 +1,127 @@
 """
-Email sender — stub implementation.
+Email sender — Microsoft Graph API implementation.
 
-STUB — swap _smtp_send() for real SMTP when Vania delivers credentials.
-Config comes from .env: GT_SMTP_SERVER, GT_SMTP_PORT, GT_EMAIL_ADDRESS, GT_EMAIL_PASSWORD
+Sends via Graph API when GRAPH_CLIENT_ID + GRAPH_CLIENT_SECRET + GRAPH_TENANT_ID
+are set. Falls back to stub (print-only) when credentials are absent, so tests
+and local dev never need real credentials.
 
-Both public functions log to the immutable audit_log via audit() from core.db
-so every send attempt (real or stub) is traceable for BASC compliance.
+Graph env vars (same as email_listener.py):
+  GRAPH_CLIENT_ID      — Azure app client ID
+  GRAPH_CLIENT_SECRET  — Azure app client secret
+  GRAPH_TENANT_ID      — Azure AD tenant ID
 
-When credentials arrive:
-  1. Set GT_SMTP_SERVER, GT_SMTP_PORT, GT_EMAIL_ADDRESS, GT_EMAIL_PASSWORD in .env
-  2. Uncomment _smtp_send() below and delete the stub body
-  3. Each ejecutivo sends from their own account — GT_EMAIL_ADDRESS will be
-     per-staff (Jean Paul / Abel / Daniela / Cielo). Rotate via the actor param.
+Ejecutivo → from-address map:
+  Abel / GT-PC        → pricing@gt.com.pe       (default)
+  Daniela / GT-LOC    → lognet.sales@gt.com.pe
+  Cielo               → wca.sales@gt.com.pe
+  JP                  → jparrue@gt.com.pe
+  Renato / RALVAREZ   → ralvarez@gt.com.pe
 """
 
 from __future__ import annotations
 
 import os
-import smtplib
 import traceback
-from email.message import EmailMessage
+
+import requests as _requests
 
 from core.db import audit
 
-# ── SMTP config (from .env — not hardcoded) ───────────────────────────────────
-_SMTP_SERVER  = os.getenv("GT_SMTP_SERVER",  "smtp.office365.com")
-_SMTP_PORT    = int(os.getenv("GT_SMTP_PORT", "587"))
-_FROM_ADDRESS = os.getenv("GT_EMAIL_ADDRESS", "")
-_FROM_PASSWORD = os.getenv("GT_EMAIL_PASSWORD", "")
+# ── Graph API config ──────────────────────────────────────────────────────────
 
-_STUB_MODE = not (_FROM_ADDRESS and _FROM_PASSWORD)
+_CLIENT_ID     = os.getenv("GRAPH_CLIENT_ID",     "")
+_CLIENT_SECRET = os.getenv("GRAPH_CLIENT_SECRET", "")
+_TENANT_ID     = os.getenv("GRAPH_TENANT_ID",     "")
 
-# True once SMTP credentials have been rotated to real values — checked by routes
-CREDENTIALS_ROTATED: bool = not _STUB_MODE
+GRAPH_MODE: bool = bool(_CLIENT_ID and _CLIENT_SECRET and _TENANT_ID)
+STUB_MODE:  bool = not GRAPH_MODE
 
+# Checked by routes to gate the manual "Send" button and auto-send logic.
+CREDENTIALS_ROTATED: bool = GRAPH_MODE
 
-# ── Real SMTP send (uncomment when Vania delivers credentials) ─────────────────
-#
-# def _smtp_send(to: str, subject: str, body: str,
-#                attachment_bytes: bytes | None = None,
-#                attachment_name: str | None = None) -> None:
-#     """Send one email via STARTTLS SMTP. Raises on failure."""
-#     msg = EmailMessage()
-#     msg["From"]    = _FROM_ADDRESS
-#     msg["To"]      = to
-#     msg["Subject"] = subject
-#     msg.set_content(body)
-#
-#     if attachment_bytes and attachment_name:
-#         msg.add_attachment(
-#             attachment_bytes,
-#             maintype="application",
-#             subtype="pdf",
-#             filename=attachment_name,
-#         )
-#
-#     with smtplib.SMTP(_SMTP_SERVER, _SMTP_PORT) as smtp:
-#         smtp.ehlo()
-#         smtp.starttls()
-#         smtp.login(_FROM_ADDRESS, _FROM_PASSWORD)
-#         smtp.send_message(msg)
+# ── Ejecutivo → sender address map ────────────────────────────────────────────
+
+_DEFAULT_FROM = "pricing@gt.com.pe"
+
+_EJECUTIVOS: dict[str, str] = {
+    "abel":     "pricing@gt.com.pe",
+    "gt-pc":    "pricing@gt.com.pe",
+    "daniela":  "lognet.sales@gt.com.pe",
+    "gt-loc":   "lognet.sales@gt.com.pe",
+    "cielo":    "wca.sales@gt.com.pe",
+    "jp":       "jparrue@gt.com.pe",
+    "renato":   "ralvarez@gt.com.pe",
+    "ralvarez": "ralvarez@gt.com.pe",
+}
 
 
-# ── Stub send (active until credentials arrive) ───────────────────────────────
+def resolve_from_address(actor: str) -> str:
+    """Map a staff code / name to its GT sender address."""
+    return _EJECUTIVOS.get((actor or "").lower(), _DEFAULT_FROM)
 
-def _stub_send(to: str, subject: str, body: str,
-               attachment_bytes: bytes | None = None,
-               attachment_name: str | None = None) -> None:
-    """
-    No-op stand-in for _smtp_send(). Logs what *would* be sent.
-    Replace with _smtp_send() call once GT_EMAIL_ADDRESS/PASSWORD are set.
-    """
+
+# ── Transport layer ───────────────────────────────────────────────────────────
+
+def _get_access_token() -> str:
+    """Acquire an OAuth2 client-credentials token from Azure AD."""
+    url = (
+        f"https://login.microsoftonline.com/{_TENANT_ID}"
+        f"/oauth2/v2.0/token"
+    )
+    resp = _requests.post(
+        url,
+        data={
+            "grant_type":    "client_credentials",
+            "client_id":     _CLIENT_ID,
+            "client_secret": _CLIENT_SECRET,
+            "scope":         "https://graph.microsoft.com/.default",
+        },
+        timeout=15,
+    )
+    resp.raise_for_status()
+    return resp.json()["access_token"]
+
+
+def _graph_send(from_address: str, to: str, subject: str, body: str) -> None:
+    """Send one email via Microsoft Graph API. Raises on failure."""
+    token = _get_access_token()
+    url   = f"https://graph.microsoft.com/v1.0/users/{from_address}/sendMail"
+    resp  = _requests.post(
+        url,
+        json={
+            "message": {
+                "subject": subject,
+                "body":    {"contentType": "Text", "content": body},
+                "toRecipients": [{"emailAddress": {"address": to}}],
+            },
+            "saveToSentItems": True,
+        },
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type":  "application/json",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+
+
+def _stub_send(to: str, subject: str, body: str, **_) -> None:
+    """No-op stand-in used when Graph credentials are absent."""
     preview = body[:120].replace("\n", " ")
     print(
-        f"[STUB EMAIL] To={to!r} Subject={subject!r} "
-        f"Body='{preview}...' Attachment={attachment_name!r}"
+        f"[STUB EMAIL] To={to!r} Subject={subject!r} Body='{preview}...'"
     )
+
+
+def _dispatch(from_address: str, to: str, subject: str, body: str) -> None:
+    """Route to Graph or stub depending on credential availability."""
+    if STUB_MODE:
+        _stub_send(to, subject, body)
+    else:
+        _graph_send(from_address, to, subject, body)
 
 
 # ── Public API ─────────────────────────────────────────────────────────────────
-
-def send_quote_email(
-    ref_code: str,
-    quote_id: int,
-    customer_email: str,
-    customer_name: str,
-    actor: str,
-    pdf_bytes: bytes | None = None,
-) -> tuple[bool, str]:
-    """
-    Send the proforma PDF to the client.
-
-    Returns (True, success_message) on success.
-    Returns (False, error_message) on failure.
-    Always logs QUOTE_SENT (or QUOTE_SEND_FAILED) to the audit trail.
-    """
-    subject = f"Proforma Global Transport SAC — {ref_code}"
-    body = (
-        f"Estimado/a {customer_name},\n\n"
-        f"Adjunto encontrará nuestra proforma de cotización para el envío "
-        f"referenciado como {ref_code}.\n\n"
-        f"La cotización tiene una validez de 15 días a partir de la fecha de emisión.\n"
-        f"Cualquier consulta, estamos a su disposición.\n\n"
-        f"Atentamente,\n{actor}\nGlobal Transport SAC\n"
-        f"comercial@globaltransportperu.com"
-    )
-    attachment_name = f"Proforma_{ref_code.replace(' ', '_')}.pdf" if pdf_bytes else None
-
-    try:
-        _stub_send(customer_email, subject, body, pdf_bytes, attachment_name)
-        audit("QUOTE_SENT", ref_code, actor, {
-            "to": customer_email,
-            "customer": customer_name,
-            "quote_id": quote_id,
-            "stub": _STUB_MODE,
-            "has_pdf": pdf_bytes is not None,
-        })
-        mode = "stub" if _STUB_MODE else "smtp"
-        return True, f"Cotización {ref_code} enviada a {customer_email} [{mode}]"
-
-    except Exception as exc:
-        error = str(exc)
-        audit("QUOTE_SEND_FAILED", ref_code, actor, {
-            "to": customer_email,
-            "error": error,
-            "traceback": traceback.format_exc()[-500:],
-        })
-        return False, f"Error al enviar {ref_code}: {error}"
-
 
 def send_provider_email(
     ref_code: str,
@@ -138,31 +132,83 @@ def send_provider_email(
     actor: str,
 ) -> tuple[bool, str]:
     """
-    Send a rate-request email to a provider/consolidator.
+    Send a rate-request email to a provider/consolidator via Graph API.
 
     Returns (True, success_message) on success.
     Returns (False, error_message) on failure.
     Always logs PROVIDER_EMAIL_SENT (or PROVIDER_EMAIL_FAILED) to the audit trail.
     """
+    from_address = resolve_from_address(actor)
     try:
-        _stub_send(to, subject, body)
+        _dispatch(from_address, to, subject, body)
         audit("PROVIDER_EMAIL_SENT", ref_code, actor, {
-            "to": to,
+            "to":       to,
+            "from":     from_address,
             "provider": provider,
-            "subject": subject,
-            "stub": _STUB_MODE,
+            "subject":  subject,
+            "stub":     STUB_MODE,
         })
-        mode = "stub" if _STUB_MODE else "smtp"
+        mode = "stub" if STUB_MODE else "graph"
         return True, f"Email enviado a {provider} ({to}) [{mode}]"
 
     except Exception as exc:
         error = str(exc)
         audit("PROVIDER_EMAIL_FAILED", ref_code, actor, {
-            "to": to,
-            "provider": provider,
-            "error": error,
+            "to":        to,
+            "provider":  provider,
+            "error":     error,
+            "traceback": traceback.format_exc()[-500:],
         })
         return False, f"Error al enviar a {provider}: {error}"
+
+
+def send_quote_email(
+    ref_code: str,
+    quote_id: int,
+    customer_email: str,
+    customer_name: str,
+    actor: str,
+    pdf_bytes: bytes | None = None,
+) -> tuple[bool, str]:
+    """
+    Send the proforma PDF to the client via Graph API.
+
+    Returns (True, success_message) on success.
+    Returns (False, error_message) on failure.
+    Always logs QUOTE_SENT (or QUOTE_SEND_FAILED) to the audit trail.
+    """
+    from_address = resolve_from_address(actor)
+    subject = f"Proforma Global Transport SAC — {ref_code}"
+    body = (
+        f"Estimado/a {customer_name},\n\n"
+        f"Adjunto encontrará nuestra proforma de cotización para el envío "
+        f"referenciado como {ref_code}.\n\n"
+        f"La cotización tiene una validez de 15 días a partir de la fecha de emisión.\n"
+        f"Cualquier consulta, estamos a su disposición.\n\n"
+        f"Atentamente,\n{actor}\nGlobal Transport SAC\n"
+        f"comercial@globaltransportperu.com"
+    )
+    try:
+        _dispatch(from_address, customer_email, subject, body)
+        audit("QUOTE_SENT", ref_code, actor, {
+            "to":       customer_email,
+            "from":     from_address,
+            "customer": customer_name,
+            "quote_id": quote_id,
+            "stub":     STUB_MODE,
+            "has_pdf":  pdf_bytes is not None,
+        })
+        mode = "stub" if STUB_MODE else "graph"
+        return True, f"Cotización {ref_code} enviada a {customer_email} [{mode}]"
+
+    except Exception as exc:
+        error = str(exc)
+        audit("QUOTE_SEND_FAILED", ref_code, actor, {
+            "to":        customer_email,
+            "error":     error,
+            "traceback": traceback.format_exc()[-500:],
+        })
+        return False, f"Error al enviar {ref_code}: {error}"
 
 
 def send_acknowledgment_email(
@@ -173,26 +219,28 @@ def send_acknowledgment_email(
     actor: str = "system",
 ) -> tuple[bool, str]:
     """
-    Send an auto-acknowledgment email.
+    Send an auto-acknowledgment email via Graph API.
 
     Returns (True, success_message) or (False, error_message).
     Always logs ACK_SENT (or ACK_SEND_FAILED) to the audit trail.
     """
+    from_address = resolve_from_address(actor)
     try:
-        _stub_send(recipient_email, subject, ack_text)
+        _dispatch(from_address, recipient_email, subject, ack_text)
         audit("ACK_SENT", None, actor, {
-            "to": recipient_email,
+            "to":        recipient_email,
+            "from":      from_address,
             "recipient": recipient_name,
-            "subject": subject,
-            "stub": _STUB_MODE,
+            "subject":   subject,
+            "stub":      STUB_MODE,
         })
-        mode = "stub" if _STUB_MODE else "smtp"
+        mode = "stub" if STUB_MODE else "graph"
         return True, f"Acuse enviado a {recipient_email} [{mode}]"
 
     except Exception as exc:
         error = str(exc)
         audit("ACK_SEND_FAILED", None, actor, {
-            "to": recipient_email,
+            "to":    recipient_email,
             "error": error,
         })
         return False, f"Error al enviar acuse a {recipient_email}: {error}"

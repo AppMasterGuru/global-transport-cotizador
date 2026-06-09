@@ -194,7 +194,7 @@ def _auto_send_provider_emails(ref: str, quote: dict, actor: str) -> None:
     try:
         if not CREDENTIALS_ROTATED:
             audit("PROVIDER_EMAILS_SKIPPED", ref, "system", {
-                "reason": "smtp credentials not configured",
+                "reason": "graph credentials not configured",
                 "mode":   quote.get("mode"),
             })
             return
