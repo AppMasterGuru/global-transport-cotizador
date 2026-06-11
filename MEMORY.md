@@ -1,5 +1,5 @@
 ## Unread Email Summary
-_Last updated: 2026-06-09 13:33 UTC (incremental — 151 business threads | accounts: barney@timebackai.co)_
+_Last updated: 2026-06-11 19:59 UTC (incremental — 157 business threads | accounts: barney@timebackai.co)_
 
 ### ⚠️ NEEDS RESPONSE (20 threads)
 
@@ -123,10 +123,11 @@ _Last updated: 2026-06-09 13:33 UTC (incremental — 151 business threads | acco
 |---|------|-----|------|----|---------|---------|
 | 1 | 2026-05-30 22:59 | ← | pricing@gt.com.pe | barney@timebackai.co | Proforma Global Transport SAC — 26-05-00… | Estimado/a Miami Foods Corp, Adjunto encontrará nuestra proforma de co… **← UNANSWERED** |
 
-### 🚢 GlobalTransport (45 total, 20 ⚠️ needs response — showing last 14d)
+### 🚢 GlobalTransport (46 total, 20 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-09 | 2 | ← | ralvarez@gt.com.pe | RE: Cotizador — listos para arrancar | Muy bien!! gracias AD JP Best Regards / Saludos Cordiales Renato Alvar… |
 | 2026-06-08 | 1 | → | barney.elliott@gmail.com | RE: 26-06-001 Hamburg Importer GmbH EXW GT-PC — … | Buenos días, adjunto nuestra tarifa para el embarque indicado. Flete i… |
 | 2026-06-04 | 4 | ← | ralvarez@gt.com.pe | RE: Donde estamos — resumen rápido | Eso mi amigo, todo claro, gracias……. Best Regards / Saludos Cordiales … |
 | 2026-06-03 | 2 | ← | ralvarez@gt.com.pe | RE: olvide adjuntar | Si la recibí, pero no la lei completa…sorry .muy larga….. La leo. Best… |
@@ -135,14 +136,12 @@ _Last updated: 2026-06-09 13:33 UTC (incremental — 151 business threads | acco
 | 2026-05-30 ⚠️ | 1 | ← | pricing@gt.com.pe | Proforma Global Transport SAC — 26-05-002 Miami … | Estimado/a Miami Foods Corp, Adjunto encontrará nuestra proforma de co… |
 | 2026-05-29 | 1 | → | barney@timebackai.co | SINTAD — Tenemos lo que necesitamos, necesito su… | Subject: SINTAD — Tenemos lo que necesitamos, necesito su luz verde Ho… |
 | 2026-05-29 | 1 | → | barney@timebackai.co | SINTAD — Tenemos lo que necesitamos, necesito su… | Hola Renato, hola Jean Paul, Buenas noticias en el frente de SINTAD. D… |
-| 2026-05-27 | 1 | → | barney.elliott@gmail.com | Transcript demo global transport | No. Okay. No, por favor. Uh... Okay, so... What was this? Okay, so it&… |
 
 ### 🏢 Becamm (2 total — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
 | 2026-05-29 | 3 | → | barney@timebackai.co | Re: TimeBack AI — Propuesta Actualizada + Docume… | Jorge — Genial, gracias. De verdad aprecio la oportunidad y tengo much… |
-| 2026-05-27 | 1 | → | barney@timebackai.co | Becamm Proposal Final | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
 
 ### 🍸 Rebara (4 total — showing last 14d)
 
@@ -151,10 +150,15 @@ _Last updated: 2026-06-09 13:33 UTC (incremental — 151 business threads | acco
 | 2026-06-04 | 1 | → | barney@timebackai.co |  | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
 | 2026-06-04 | 2 | ← | mailer-daemon@googlemail.com | Delivery Status Notification (Failure) | Address not found Your message wasn&#39;t delivered to patty@pattyarre… |
 
-### 📬 Other (100 total, 16 ⚠️ needs response — showing last 14d)
+### 📬 Other (105 total, 16 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-11 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-10 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Wed Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-10 | 1 | ← | calendar-notification@google… | Notification: Script and blocking review  @ Wed … | Script and blocking review You have been invited by paul.keller@markha… |
+| 2026-06-09 | 1 | → | barney.elliott@gmail.com | Susan transcript | No. , , , , , , , , , , , , , , , , , , , , , , , , , , , , , No, este… |
+| 2026-06-09 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Tue Jun 9… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-08 | 1 | → | barney.elliott@gmail.com | RE: 26-06-001 Hamburg Importer GmbH EXW GT-PC — … | Buenos días, adjunto nuestra tarifa para el embarque indicado. Flete i… |
 | 2026-06-08 | 1 | → | barney.elliott@gmail.com | RE: 26-06-001 Hamburg Importer GmbH — Tarifa LCL | Buenos días, adjunto nuestra tarifa: Flete USD 450, Visto Bueno USD 16… |
 | 2026-06-08 | 1 | ← | admin@mail.capcut.com | Start your video creation today with CapCut | Dear user4975331583450 Thank you so much for choosing CapCut as your v… |
@@ -175,19 +179,47 @@ _Last updated: 2026-06-09 13:33 UTC (incremental — 151 business threads | acco
 | 2026-06-02 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Tue Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-02 | 1 | ← | calendar-notification@google… | Notification: Barney shooting script meeting w/ … | Barney shooting script meeting w/ Group 4 You have been invited by pau… |
 | 2026-06-01 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-01 | 2 | ← | payments-noreply@google.com | Google Workspace: Your invoice is available for … | Google Workspace Your Google Workspace monthly invoice is available. P… |
-| 2026-06-01 ⚠️ | 1 | ← | support@upstash.com | Reminder: Upstash Redis Database Inactivity Firs… | Inactive Database Notice Hi there, We&#39;ve noticed that your free ti… |
-| 2026-05-31 ⚠️ | 1 | ← | team@m.ngrok.com | Hey barney@timebackai.co, your endpoint is open | Lock down your ngrok endpoint in 3 lines with Traffic Policy View in b… |
-| 2026-05-31 ⚠️ | 1 | ← | paul.keller@markham.edu.pe | Invitation: Barney shooting script meeting w/ Gr… | Barney shooting script meeting w/ Group 4 You have been invited by Pau… |
-| 2026-05-31 | 1 | → | barney.elliott@gmail.com | Ismael la rosa meet transcript | I would, &#39;cause you&#39;re saying put something together for me, w… |
-_… and more (showing 25 of 100)_
+_… and more (showing 25 of 105)_
 
 ### Personal email (barney.elliott@gmail.com)
 _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --personal` to add it._
 
 
 ## Active Tasks
-**Last updated: 2026-06-08**
+**Last updated: 2026-06-11**
+
+### Completed this session (2026-06-11)
+- [x] FIX 4 — DPU → DDU in incoterm dropdown (6f21cb6)
+- [x] FIX 5 — GT-LOC → GT-LOG staff code correction, 7 files (3d878a9)
+- [x] FIX 3 — Aerolínea/Consolidador conditional display by mode (JS IIFE)
+- [x] FIX 1 — CBM auto-calculation with mode-switching formulas (LCL: L×W×H/1M × qty; Aéreo: L×W×H×qty/6000)
+- [x] FIX 2 — Multi-package repeatable input with per-row CBM, "+ Agregar paquete" button, manual override
+- [x] FIX 6+7+8+9 — Two-section split: Costos de Flete Internacional (no IGV) + Gastos Locales (+ IGV 18%), applied to quote_detail Costeo, Venta, PDF proforma (ES+EN), SINTAD Costos+Venta sheets
+- [x] PDF download button restored for APPROVED/SENT quotes (fd223c7)
+- [x] PDF two-section bug fixed — _item_is_local() fallback added for old quotes without flags (e1b483c)
+- [x] Seed data rebuilt with correct is_international/is_local/igv_applicable flags (e61763b)
+- [x] 522/522 tests passing. Railway live and healthy.
+- [x] Abel confirmed "todo lo demás está conforme" — only PDF format was broken (now fixed)
+
+### Abel feedback from Demo 2 (2026-06-10/11)
+- Abel approved all form-side fixes (DDU, GT-LOG, conditional dropdowns, CBM, multi-package)
+- Abel approved two-section split in Costeo view
+- Abel requested config session to define: (a) default line items per quote, (b) auto-added items by rule, (c) transport local cost logic (address-based vs rate card bands)
+- Abel asked: "¿la IA lee directamente la dirección de solicitud y envía el costo?" — Answer: no, currently reads from Drive rate card bands (weight/volume). To discuss in config session.
+
+### Pending (2026-06-11)
+- [ ] Abel config session — TODAY — define default concepts, auto-add rules, transport logic. WhatsApp sent asking for time today.
+- [ ] Abel re-reviews PDF — link sent, waiting confirmation that two-section PDF is correct
+- [ ] 3 consecutive quotes approved by JP — CRITICAL — this triggers USD 750 saldo. Target: this week. Tomorrow is GT payday.
+- [ ] Renato/JP go-live session — 30 min to run acceptance criterion. Schedule after Abel config session.
+- [ ] LISTENER_ENABLED flip to true — after JP/Renato go-live approval
+- [ ] WCA pilot — waiting Renato go-ahead
+- [ ] Railway upgrade to Hobby plan — free tier running out
+
+### Key decisions made (2026-06-09)
+- `LISTENER_ENABLED=false` — listener off until JP/Renato give go-live approval after Abel demo (4pm today)
+- Auto-send provider emails on quote creation: BUILT and live — fires immediately via Graph API after `QUOTE_CREATED`
+- Email sent to JP and Renato: *"Cotizador — listos para arrancar"* — go-live pending Abel thumbs up
 
 ### Completed this session (2026-06-08)
 - [x] `core/provider_reply_parser.py` — NEW. Full provider reply parsing pipeline: detection by reference code in subject (`REFERENCE_PATTERN` `YY-MM-NNN`), sender domain matching (`_DOMAIN_MAP` 18 fragments), rate extraction via Claude API, quote cost field update, audit logging (`PROVIDER_REPLY_RECEIVED`, `PROVIDER_RATE_PARSED`, `PARSE_FAILED`)
@@ -304,8 +336,8 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
 ---
 
 # MEMORY.md — Global Transport
-**Last updated:** 2026-05-15, end of day (final)
-**Next update due:** After demo scheduled / SMTP credentials received
+**Last updated:** 2026-06-09, morning
+**Next update due:** After Abel demo (4pm today) — update with go/no-go outcome
 
 ---
 
@@ -661,7 +693,9 @@ Barney's family and Renato's family are close. Friday May 1 dinner at Renato's h
 | — | 2026-05-16 session 2 | Root cleanup (monitor_daemon.py → scripts/, STARTUP.md updated). Drive API wired live — GOOGLE_SERVICE_ACCOUNT_JSON in .env, credentials/ gitignored. Live read of ISO 9001 Drive folder confirmed: 25 items across 24 ISO 9001 sections. 9 key procedure documents downloaded and parsed (GT-COM-PR-002, GT-OP-PR-001, GT-LOG-PR-002, GT-GG-DG-001/002, GT-COM-PR-001/003, GT-SIG-PR-009). 5 new business rules codified (GT-P-011..015) from live documents. PROCEDURE_VERSION bumped to GT-PROC-1.1-2026-05-16. 179 → 202 tests. |
 | — | 2026-05-18 | ISO 9001 §6.1 Gestión de Riesgo — confirmed 11 files exist (was falsely flagged empty). Read GT-SIG-PR-002 (risk procedure .docx) + 2 risk matrix xlsx files. Extracted GT-P-016 (risk score P×I classification, threshold 9) and GT-P-017 (annual re-evaluation mandate). PROCEDURE_VERSION bumped to GT-PROC-1.2-2026-05-18. 8.5 Provisión del Servicio confirmed genuinely empty — flagged for JP at demo. 202 → 228 tests. |
 | — | 2026-06-08 | Provider reply parsing leg built. `core/provider_reply_parser.py` NEW — detection by `REFERENCE_PATTERN` (`YY-MM-NNN`) in subject OR known sender domain (`_DOMAIN_MAP` 18 fragments), rate extraction via Claude API stub, `update_quote_flete` (best-rate-wins logic), audit trail (`PROVIDER_REPLY_RECEIVED`, `PROVIDER_RATE_PARSED`, `PARSE_FAILED`, `RATES_READY`). `core/schema.sql` + `core/db.py`: `provider_replies` table + 3 new DB functions. `core/email_listener.py`: rewrote `fetch_pending_emails()` to call real Microsoft Graph API (GET unread → mark read); `process_inbound_emails()` now routes provider replies vs client requests. `api/app.py`: added `load_dotenv()` before blueprint import (fixes `_LISTENER_CONFIGURED=False` at import-time bug). `api/routes.py`: `/run-listener-force` (dev-only bypass of `LISTENER_ENABLED` gate). 64 + 23 new tests. 360/360 passing. Railway CLI deploy FAILED — active production is still June 6 version. |
+| `63124c5` | 2026-06-09 | Graph API email sender + provider auto-send + provider status panel. `core/email_sender.py` rewritten: SMTP stub → Graph API (`GRAPH_CLIENT_ID/SECRET/TENANT_ID`), per-ejecutivo from-address via `resolve_from_address()`. `core/provider_status.py` NEW: GREEN/ORANGE/RED/GREY status logic + chase email builder. `api/routes.py`: `_auto_send_provider_emails()` fires on every `POST /quote/new` after `QUOTE_CREATED`; `APP_ENV` → `FLASK_ENV` guard fix; demo seed adds backdated provider contact + MSL reply records for Hamburg Importer. `templates/quote_detail.html`: provider status panel between Alertas and Aprobación. Railway build failure fixed (`.venv`/`venv/` in ignore files; GitHub auto-deploy restored). 419/419 tests. End-to-end pipeline confirmed live with Abel test email. |
 | — | 2026-05-19 | Bilingual PDF routing (proforma_es.html + proforma_en.html, language routed via meta.language, 234 tests). WhatsApp listener scaffold (core/whatsapp_listener.py, GET/POST /webhook/whatsapp, Meta payload parsing, stub mode when credentials absent, 255 tests). SMTP diagnosed: tenant block (5.7.139 SmtpClientAuthentication disabled) — Graph API Mail.Send path chosen, email sent to David. SINTAD technical call completed: custom Java API on VB6 SCE Carga, token auth, ~20d build, cost TBD. Field list sent to jdiez@sintad.pe. Daniela email corrected in config/signatures.py (lognet.sales@gt.com.pe). 255/255 tests passing. |
+| 6f21cb6 → e61763b | 2026-06-11 | Abel Demo 2 polish: DPU→DDU, GT-LOC→GT-LOG, conditional dropdowns (Aerolínea/Consolidador by mode), CBM auto-calc with mode-switching formulas, multi-package repeatable input, two-section split (Flete Internacional + Gastos Locales + IGV 18%) across all 4 render surfaces, PDF download button restored, seed data flags fixed. 488→522 tests. |
 
 ---
 
