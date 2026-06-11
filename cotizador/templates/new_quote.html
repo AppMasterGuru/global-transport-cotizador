@@ -46,7 +46,7 @@
         </label>
         <label class="field">
           <span class="label-text">Modo *</span>
-          <select name="mode" required>
+          <select name="mode" id="mode-select" required>
             <option value="lcl">LCL — Carga Suelta</option>
             <option value="fcl">FCL — Contenedor Completo</option>
             <option value="aereo">Aéreo</option>
@@ -155,7 +155,7 @@
           <input type="number" name="thc_min" step="0.01" min="0" placeholder="Ej: 33.00">
           <span class="field-hint">Si THC tarifa × TN/M3 &lt; mínimo, se cobra el mínimo.</span>
         </label>
-        <label class="field">
+        <label class="field" id="row-consolidador">
           <span class="label-text">Consolidador (LCL)</span>
           <select name="consolidator">
             <option value="MSL">MSL — Visto bueno $180 + IGV</option>
@@ -164,7 +164,7 @@
             <option value="EQ">EQ — Visto bueno $170 + IGV</option>
           </select>
         </label>
-        <label class="field">
+        <label class="field" id="row-aerolinea">
           <span class="label-text">Aerolínea (Aéreo)</span>
           <select name="airline">
             <option value="">— Seleccionar —</option>
@@ -284,6 +284,21 @@
 
   document.getElementById('add-concepto-btn').addEventListener('click', addConcepto);
   window.removeConcepto = removeConcepto;
+})();
+
+(function () {
+  var modeSelect = document.getElementById('mode-select');
+  var rowConsolidador = document.getElementById('row-consolidador');
+  var rowAerolinea = document.getElementById('row-aerolinea');
+
+  function applyModeVisibility() {
+    var mode = modeSelect.value;
+    rowConsolidador.style.display = (mode === 'lcl') ? '' : 'none';
+    rowAerolinea.style.display = (mode === 'aereo') ? '' : 'none';
+  }
+
+  modeSelect.addEventListener('change', applyModeVisibility);
+  applyModeVisibility();
 })();
 </script>
 </body>
