@@ -5,6 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GT Cotizador — Nueva Cotización</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .pkg-table { margin: 12px 0 4px; }
+    .pkg-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 80px 110px 36px;
+      gap: 8px;
+      padding: 0 2px;
+      margin-bottom: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+    }
+    .pkg-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 80px 110px 36px;
+      gap: 8px;
+      margin-bottom: 6px;
+      align-items: center;
+    }
+    .pkg-row input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    .pkg-row .pkg-cbm { background: #f3f4f6; color: #374151; cursor: default; }
+    .pkg-del { padding: 6px 8px !important; font-size: 13px !important; }
+  </style>
 </head>
 <body>
 
@@ -107,30 +138,31 @@
             </select>
           </div>
         </label>
-        <label class="field">
-          <span class="label-text">Cantidad (bultos)</span>
-          <input type="number" name="quantity" min="1" value="1">
-        </label>
+      </div>
+      <!-- Repeatable package table -->
+      <div class="pkg-table">
+        <div class="pkg-header">
+          <span>Largo (cm)</span>
+          <span>Ancho (cm)</span>
+          <span>Alto (cm)</span>
+          <span>Cantidad</span>
+          <span>CBM</span>
+          <span></span>
+        </div>
+        <div id="pkg-rows"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;margin:6px 0 14px;">
+        <button type="button" class="btn btn-secondary" id="add-pkg-btn">+ Agregar paquete</button>
+        <span style="font-size:14px;color:#374151;">Total CBM: <strong id="total-cbm-display">—</strong></span>
       </div>
       <div class="form-grid">
         <label class="field">
-          <span class="label-text">Largo (cm)</span>
-          <input type="number" name="length_cm" step="0.1" min="0" placeholder="120">
-        </label>
-        <label class="field">
-          <span class="label-text">Ancho (cm)</span>
-          <input type="number" name="width_cm" step="0.1" min="0" placeholder="80">
-        </label>
-        <label class="field">
-          <span class="label-text">Alto (cm)</span>
-          <input type="number" name="height_cm" step="0.1" min="0" placeholder="60">
-        </label>
-        <label class="field">
           <span class="label-text">O ingrese CBM directo</span>
-          <input type="number" name="volume_cbm" step="0.001" min="0" placeholder="0.576">
-          <span class="field-hint" id="cbm-hint">Fórmula marítima: L×A×H (cm) ÷ 1,000,000 × bultos = CBM (m³)</span>
+          <input type="number" name="volume_cbm" id="cbm-direct" step="0.001" min="0" placeholder="0.576">
+          <span class="field-hint" id="cbm-hint">Fórmula marítima: L×A×H (cm) ÷ 1,000,000 × cantidad = CBM (m³)</span>
         </label>
       </div>
+      <input type="hidden" name="quantity" id="qty-hidden" value="1">
     </section>
 
     <!-- SECTION 3: Costs -->
@@ -302,55 +334,87 @@
 })();
 
 (function () {
-  var lengthInp = document.querySelector('[name="length_cm"]');
-  var widthInp  = document.querySelector('[name="width_cm"]');
-  var heightInp = document.querySelector('[name="height_cm"]');
-  var qtyInp    = document.querySelector('[name="quantity"]');
-  var cbmInp    = document.querySelector('[name="volume_cbm"]');
-  var modeEl    = document.getElementById('mode-select');
-  var hint      = document.getElementById('cbm-hint');
-
+  var pkgNextId  = 0;
   var manualOverride = false;
+  var modeEl    = document.getElementById('mode-select');
+  var cbmDirect = document.getElementById('cbm-direct');
+  var totalDisp = document.getElementById('total-cbm-display');
+  var hintEl    = document.getElementById('cbm-hint');
+  var qtyHidden = document.getElementById('qty-hidden');
 
-  function hintText(mode) {
+  function hintText() {
     if (manualOverride) return 'Valor ingresado manualmente (cálculo automático desactivado).';
-    if (mode === 'aereo') return 'Fórmula aérea: L×A×H (cm) × bultos ÷ 6,000 = Peso Volumétrico (kg)';
-    return 'Fórmula marítima: L×A×H (cm) ÷ 1,000,000 × bultos = CBM (m³)';
+    return modeEl.value === 'aereo'
+      ? 'Fórmula aérea: L×A×H (cm) × cantidad ÷ 6,000 = Peso Volumétrico (kg)'
+      : 'Fórmula marítima: L×A×H (cm) ÷ 1,000,000 × cantidad = CBM (m³)';
   }
 
-  function recalc() {
-    if (manualOverride) return;
-    var l   = parseFloat(lengthInp.value) || 0;
-    var w   = parseFloat(widthInp.value)  || 0;
-    var h   = parseFloat(heightInp.value) || 0;
-    var qty = parseFloat(qtyInp.value)    || 1;
-    var mode = modeEl.value;
-    hint.textContent = hintText(mode);
-    if (l <= 0 || w <= 0 || h <= 0) return;
-    var result = (mode === 'aereo')
+  function rowCBM(l, w, h, qty) {
+    if (!l || !w || !h) return 0;
+    return modeEl.value === 'aereo'
       ? (l * w * h * qty) / 6000
       : (l * w * h / 1000000) * qty;
-    cbmInp.value = result.toFixed(3);
   }
 
-  cbmInp.addEventListener('input', function () {
-    manualOverride = true;
-    hint.textContent = hintText(modeEl.value);
-  });
-
-  [lengthInp, widthInp, heightInp, qtyInp].forEach(function (inp) {
-    inp.addEventListener('input', function () {
-      manualOverride = false;
-      recalc();
+  function recalcAll() {
+    var total = 0, totalQty = 0;
+    document.querySelectorAll('.pkg-row').forEach(function (row) {
+      var l   = parseFloat(row.querySelector('.pkg-l').value) || 0;
+      var w   = parseFloat(row.querySelector('.pkg-w').value) || 0;
+      var h   = parseFloat(row.querySelector('.pkg-h').value) || 0;
+      var qty = parseFloat(row.querySelector('.pkg-q').value) || 1;
+      var cbm = rowCBM(l, w, h, qty);
+      row.querySelector('.pkg-cbm').value = cbm > 0 ? cbm.toFixed(3) : '';
+      total    += cbm;
+      totalQty += qty;
     });
+    totalDisp.textContent = total > 0 ? total.toFixed(3) + ' m³' : '—';
+    qtyHidden.value = Math.round(totalQty) || 1;
+    if (!manualOverride) {
+      cbmDirect.value = total > 0 ? total.toFixed(3) : '';
+    }
+    hintEl.textContent = hintText();
+  }
+
+  function addPkgRow() {
+    var id = pkgNextId++;
+    var div = document.createElement('div');
+    div.id = 'pkg-' + id;
+    div.className = 'pkg-row';
+    div.innerHTML =
+      '<input type="number" class="pkg-l" step="0.1" min="0" placeholder="120">' +
+      '<input type="number" class="pkg-w" step="0.1" min="0" placeholder="80">' +
+      '<input type="number" class="pkg-h" step="0.1" min="0" placeholder="60">' +
+      '<input type="number" class="pkg-q" step="1" min="1" value="1">' +
+      '<input type="text" class="pkg-cbm" readonly placeholder="—">' +
+      '<button type="button" class="btn btn-secondary pkg-del">✕</button>';
+    div.querySelector('.pkg-del').addEventListener('click', function () {
+      if (document.querySelectorAll('.pkg-row').length > 1) {
+        div.remove();
+        recalcAll();
+      }
+    });
+    div.querySelectorAll('input:not(.pkg-cbm)').forEach(function (inp) {
+      inp.addEventListener('input', function () { manualOverride = false; recalcAll(); });
+    });
+    document.getElementById('pkg-rows').appendChild(div);
+    recalcAll();
+  }
+
+  cbmDirect.addEventListener('input', function () {
+    manualOverride = cbmDirect.value.trim() !== '';
+    hintEl.textContent = hintText();
   });
 
   modeEl.addEventListener('change', function () {
-    hint.textContent = hintText(modeEl.value);
-    if (!manualOverride) recalc();
+    if (!manualOverride) recalcAll();
+    else hintEl.textContent = hintText();
   });
 
-  hint.textContent = hintText(modeEl.value);
+  document.getElementById('add-pkg-btn').addEventListener('click', addPkgRow);
+
+  addPkgRow();
+  hintEl.textContent = hintText();
 })();
 </script>
 </body>
