@@ -5,7 +5,7 @@ Runs 3 realistic quotes end-to-end using the same core logic as the live app.
 
 Quotes:
   1  LCL   EXW  Lima → Hamburg          Hamburg Importer GmbH     GT-PC  (Abel)    ES
-  2  Aéreo EXW  Lima → LAX              Miami Foods Corp          GT-LOC (Daniella) EN
+  2  Aéreo EXW  Lima → LAX              Miami Foods Corp          GT-LOG (Daniella) EN
   3  FCL   DAP  Manzanillo → Callao     Distribuidora Lima SAC    RENATO            ES
 
 Each quote is verified:
@@ -99,7 +99,7 @@ QUOTES = [
         "airline":           "LAN Airlines",
         "requires_oea_basc": False,
         "margin_pct":        0.20,
-        "staff_code":        "GT-LOC",
+        "staff_code":        "GT-LOG",
         "language":          "en",
         "label":             "Quote 2 — Aéreo Lima→LAX (APPROVED)",
     },

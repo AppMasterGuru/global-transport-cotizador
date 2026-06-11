@@ -12,7 +12,7 @@ Graph env vars (same as email_listener.py):
 
 Ejecutivo → from-address map:
   Abel / GT-PC        → pricing@gt.com.pe       (default)
-  Daniela / GT-LOC    → lognet.sales@gt.com.pe
+  Daniela / GT-LOG    → lognet.sales@gt.com.pe
   Cielo               → wca.sales@gt.com.pe
   JP                  → jparrue@gt.com.pe
   Renato / RALVAREZ   → ralvarez@gt.com.pe

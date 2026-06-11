@@ -1229,7 +1229,7 @@ def _seed_demo_quotes() -> list[str]:
             "consolidator":      "",
             "airline":           "LAN Airlines",
             "margin_pct":        0.20,
-            "staff_code":        "GT-LOC",
+            "staff_code":        "GT-LOG",
             "language":          "en",
             "target_status":     "APPROVED",
         },

@@ -1,7 +1,7 @@
 """
 GT Cotizador — Staff signature registry.
 
-Maps staff codes (GT-PC, GT-WCA, GT-LOC) and person keys to full contact
+Maps staff codes (GT-PC, GT-WCA, GT-LOG) and person keys to full contact
 blocks used in outbound emails, PDF proformas, and acknowledgments.
 
 Address shared by all staff:
@@ -33,7 +33,7 @@ _SIGNATURES: dict[str, dict] = {
         "address": _GT_ADDRESS,
         "website": _GT_WEBSITE,
     },
-    "GT-LOC": {
+    "GT-LOG": {
         "name":    "Daniella Leveau",
         "title":   "Lognet Sales",
         "phone":   "(+51) 923 098 958",

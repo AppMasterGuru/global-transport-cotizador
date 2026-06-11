@@ -15,7 +15,7 @@ groups by subject prefix.
 Staff codes:
   GT-PC   → pricing / commercial (default)
   GT-WCA  → WCA channel
-  GT-LOC  → Lognet channel
+  GT-LOG  → Lognet channel
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from datetime import datetime
 STAFF_CODES: dict[str, str] = {
     "pricing": "GT-PC",
     "wca": "GT-WCA",
-    "lognet": "GT-LOC",
+    "lognet": "GT-LOG",
 }
 
 DEFAULT_STAFF_CODE = "GT-PC"
