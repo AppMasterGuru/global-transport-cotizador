@@ -33,7 +33,7 @@ _LANG_KEYWORDS: dict[str, list[str]] = {
 # ── Regex patterns ────────────────────────────────────────────────────────────
 
 _INCOTERM_RE = re.compile(
-    r'\b(EXW|FCA|FOB|CFR|CIF|CPT|CIP|DAP|DPU|DDP)\b', re.IGNORECASE
+    r'\b(EXW|FCA|FOB|CFR|CIF|CPT|CIP|DAP|DDU|DDP)\b', re.IGNORECASE
 )
 
 _WEIGHT_RE = re.compile(

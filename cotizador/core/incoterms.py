@@ -20,7 +20,7 @@ class IncotermError(ValueError):
 
 VALID_INCOTERMS = frozenset([
     "EXW", "FCA", "FOB", "CFR", "CIF",
-    "CPT", "CIP", "DAP", "DPU", "DDP",
+    "CPT", "CIP", "DAP", "DDU", "DDP",
 ])
 
 
@@ -79,8 +79,8 @@ INCOTERM_COMPONENTS: dict[str, CostComponents] = {
         flete_internacional=False, visto_bueno=False, origen_charges=False,
         agente_aduana=False, transporte_local=False,
     ),
-    # DPU: DAP + unloading
-    "DPU": CostComponents(
+    # DDU: seller delivers to destination, buyer handles customs/import duties
+    "DDU": CostComponents(
         flete_internacional=False, visto_bueno=False, origen_charges=False,
         agente_aduana=False, transporte_local=False,
     ),

@@ -82,11 +82,11 @@ _INCOTERMS_BY_MODE: dict[str, frozenset[str]] = {
     "aereo": frozenset({"EXW", "FCA", "CPT", "CIP", "DAP", "DDP"}),
     "lcl":   frozenset({"EXW", "FCA", "FOB", "CFR", "CIF", "DAP", "DDP"}),
     "fcl":   frozenset({"EXW", "FCA", "FOB", "CFR", "CIF", "CPT", "CIP",
-                        "DAP", "DPU", "DDP"}),
+                        "DAP", "DDU", "DDP"}),
 }
 
 ALL_VALID_INCOTERMS: frozenset[str] = frozenset(
-    {"EXW", "FCA", "FOB", "CFR", "CIF", "CPT", "CIP", "DAP", "DPU", "DDP"}
+    {"EXW", "FCA", "FOB", "CFR", "CIF", "CPT", "CIP", "DAP", "DDU", "DDP"}
 )
 
 
