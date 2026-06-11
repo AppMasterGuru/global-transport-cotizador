@@ -34,6 +34,8 @@ VALIDITY_DAYS = 15  # standard; Abel confirmed
 _LOCAL_DESC = frozenset([
     "visto bueno", "agente de aduana", "transporte local",
     "handling aéreo", "handling aereo",
+    # Legacy bundle descriptions from pre-flag seed data
+    "handling & port fees", "local transport",
 ])
 
 

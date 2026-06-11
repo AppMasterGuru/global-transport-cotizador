@@ -1342,15 +1342,24 @@ def _seed_demo_quotes() -> list[str]:
         }
 
         _m = 1 + margin_pct
-        _handling = vb_usd + customs_usd + handling_aereo_usd
-        _seed_items = [
+        _SI = {"is_international": True,  "is_local": False, "igv_applicable": False}
+        _SL = {"is_international": False, "is_local": True,  "igv_applicable": True}
+        _seed_items: list[dict] = [
             {"description": "International Freight", "quantity": 1,
-             "unit_price": round(flete_usd * _m, 2), "total": round(flete_usd * _m, 2)},
-            {"description": "Handling & Port Fees",  "quantity": 1,
-             "unit_price": round(_handling * _m, 2), "total": round(_handling * _m, 2)},
-            {"description": "Local Transport",       "quantity": 1,
-             "unit_price": round(transport_usd * _m, 2), "total": round(transport_usd * _m, 2)},
+             "unit_price": round(flete_usd * _m, 2), "total": round(flete_usd * _m, 2), **_SI},
         ]
+        if vb_usd > 0:
+            _seed_items.append({"description": "Visto Bueno", "quantity": 1,
+                "unit_price": round(vb_usd * _m, 2), "total": round(vb_usd * _m, 2), **_SL})
+        if customs_usd > 0:
+            _seed_items.append({"description": "Agente de Aduana", "quantity": 1,
+                "unit_price": round(customs_usd * _m, 2), "total": round(customs_usd * _m, 2), **_SL})
+        if handling_aereo_usd > 0:
+            _seed_items.append({"description": "Handling Aéreo", "quantity": 1,
+                "unit_price": round(handling_aereo_usd * _m, 2), "total": round(handling_aereo_usd * _m, 2), **_SL})
+        if transport_usd > 0:
+            _seed_items.append({"description": "Transporte Local", "quantity": 1,
+                "unit_price": round(transport_usd * _m, 2), "total": round(transport_usd * _m, 2), **_SL})
         venta_total = round(sum(i["total"] for i in _seed_items), 2)
         venta = {
             "line_items": _seed_items,
