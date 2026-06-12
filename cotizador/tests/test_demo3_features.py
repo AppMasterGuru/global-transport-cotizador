@@ -103,8 +103,8 @@ class TestVbByConsolidatorAndOperation:
     def test_msl_import(self):
         assert visto_bueno_net_usd(get_consolidator("MSL"), "importacion") == 90.0
 
-    def test_kraft_export(self):
-        assert visto_bueno_net_usd(get_consolidator("KRAFT"), "exportacion") == 160.0
+    def test_craft_export(self):
+        assert visto_bueno_net_usd(get_consolidator("CRAFT"), "exportacion") == 160.0
 
     def test_saco_export(self):
         assert visto_bueno_net_usd(get_consolidator("SACO"), "exportacion") == 190.0

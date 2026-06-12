@@ -219,8 +219,8 @@ class TestTransport:
         assert c["visto_bueno_export_usd"] == 160.0
         assert c["visto_bueno_import_usd"] == 90.0
 
-    def test_get_consolidator_kraft(self):
-        c = get_consolidator("KRAFT")
+    def test_get_consolidator_craft(self):
+        c = get_consolidator("CRAFT")
         assert c["visto_bueno_export_usd"] == 160.0
 
     def test_get_consolidator_saco(self):

@@ -168,7 +168,7 @@ def generate_provider_emails(quote: dict) -> list[dict]:
     """
     Return one email draft per relevant provider for this quote's mode.
 
-    LCL   → 4 drafts (MSL, Kraft, Saco, EQ) in Spanish
+    LCL   → 4 drafts (MSL, Craft, Saco, EQ) in Spanish
     Aéreo → 3 drafts (LAN, AA, United) in English
     FCL   → 1 draft  (generic naviera) in Spanish
     """

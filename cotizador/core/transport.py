@@ -11,7 +11,7 @@ From the demo (36:06 – 47:17):
 
 Costs are in soles (PEN). Converted to USD in the final quote via SBS rate.
 
-LCL uses consolidators (MSL, Kraft, Saco, EQ) — NOT direct navieras.
+LCL uses consolidators (MSL, Craft, Saco, EQ) — NOT direct navieras.
 Abel: "Para un LCL no cotizamos con la naviera de manera directa."
 """
 
@@ -46,7 +46,7 @@ WEIGHT_BANDS: list[tuple[float, float]] = [
 # ── Consolidators (LCL only) ─────────────────────────────────────────────────
 # NET visto bueno rates (pre-IGV). IGV applied once by the PDF/display layer.
 # MSL import=90/export=160 confirmed by Abel 2026-06-12.
-# KRAFT/SACO/EQ import rates are TODO placeholders — confirm with Abel/Vania.
+# CRAFT/SACO/EQ import rates are TODO placeholders — confirm with Abel/Vania.
 
 CONSOLIDATORS: dict[str, dict] = {
     "MSL": {
@@ -54,10 +54,10 @@ CONSOLIDATORS: dict[str, dict] = {
         "visto_bueno_export_usd": 160.0,  # confirmed by Abel 2026-06-12
         "visto_bueno_import_usd": 90.0,   # confirmed by Abel 2026-06-12
     },
-    "KRAFT": {
-        "name": "Kraft",
+    "CRAFT": {
+        "name": "Craft",
         "visto_bueno_export_usd": 160.0,
-        # TODO: confirm KRAFT import VB with Abel/Vania — using export rate as placeholder
+        # TODO: confirm CRAFT import VB with Abel/Vania — using export rate as placeholder
         "visto_bueno_import_usd": 160.0,
     },
     "SACO": {
@@ -83,7 +83,7 @@ if _UNCONFIRMED_IMPORT_VB:
     warnings.warn(
         "CONSOLIDATOR WARNING — visto_bueno_import_usd is a placeholder (= export rate) for: "
         + ", ".join(_UNCONFIRMED_IMPORT_VB)
-        + ". Confirm with Abel/Vania before using these for import quotes.",
+        + ". Confirm with Abel/Vania before using for import quotes.",
         UserWarning,
         stacklevel=1,
     )

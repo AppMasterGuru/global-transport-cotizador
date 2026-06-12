@@ -261,7 +261,7 @@
           <span class="label-text">Consolidador (LCL)</span>
           <select name="consolidator" id="consolidator-select">
             <option value="MSL">MSL</option>
-            <option value="KRAFT">Kraft</option>
+            <option value="CRAFT">Craft</option>
             <option value="SACO">Saco</option>
             <option value="EQ">EQ</option>
           </select>
@@ -360,10 +360,10 @@
 
   // VB net rates by consolidator × operation — mirrors transport.py CONSOLIDATORS.
   // MSL import=90/export=160 confirmed by Abel 2026-06-12.
-  // KRAFT/SACO/EQ import rates are placeholders — confirm with Abel/Vania.
+  // CRAFT/SACO/EQ import rates are placeholders — confirm with Abel/Vania.
   var VB_RATES = {
     MSL:   { exportacion: 160, importacion: 90 },
-    KRAFT: { exportacion: 160, importacion: 160 },
+    CRAFT: { exportacion: 160, importacion: 160 },
     SACO:  { exportacion: 190, importacion: 190 },
     EQ:    { exportacion: 170, importacion: 170 }
   };
