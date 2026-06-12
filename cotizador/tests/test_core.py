@@ -215,24 +215,28 @@ class TestTransport:
 
     def test_get_consolidator_msl(self):
         c = get_consolidator("MSL")
-        assert c["visto_bueno_usd"] == 180.0
+        # VB rates split by operation (Bug 1 fix 2026-06-12)
+        assert c["visto_bueno_export_usd"] == 160.0
+        assert c["visto_bueno_import_usd"] == 90.0
 
     def test_get_consolidator_kraft(self):
         c = get_consolidator("KRAFT")
-        assert c["visto_bueno_usd"] == 160.0
+        assert c["visto_bueno_export_usd"] == 160.0
 
     def test_get_consolidator_saco(self):
         c = get_consolidator("SACO")
-        assert c["visto_bueno_usd"] == 190.0
+        assert c["visto_bueno_export_usd"] == 190.0
 
     def test_get_consolidator_unknown_raises(self):
         with pytest.raises(ValueError):
             get_consolidator("UNKNOWN_CO")
 
-    def test_visto_bueno_includes_igv(self):
+    def test_visto_bueno_returns_pre_igv_net(self):
+        # Bug 1 fix: visto_bueno_total_usd now returns NET pre-IGV (alias for export).
+        # IGV is applied once by the PDF layer, not here.
         msl = get_consolidator("MSL")
-        total = visto_bueno_total_usd(msl)
-        assert abs(total - 180.0 * 1.18) < 0.01
+        net = visto_bueno_total_usd(msl)
+        assert net == 160.0  # export net confirmed by Abel 2026-06-12
 
     def test_customs_default_is_alefero(self):
         agent = get_customs_agent(False)
@@ -242,11 +246,13 @@ class TestTransport:
         agent = get_customs_agent(True)
         assert agent["requires_oea_basc"] is True
 
-    def test_customs_total_includes_igv(self):
+    def test_customs_total_returns_pre_igv_net(self):
+        # Bug 1 fix: customs_total_usd now returns NET pre-IGV.
+        # IGV is applied once by the PDF layer.
         agent = get_customs_agent(False)
-        total = customs_total_usd(agent)
-        expected = (agent["commission_usd"] + agent["gastos_usd"]) * 1.18
-        assert abs(total - expected) < 0.01
+        net = customs_total_usd(agent)
+        expected_net = agent["commission_usd"] + agent["gastos_usd"]
+        assert abs(net - expected_net) < 0.01
 
 
 # ════════════════════════════════════════════════════════════════════
