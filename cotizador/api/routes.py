@@ -58,10 +58,10 @@ from core.reference import generate_reference
 from core.sintad_export import generate_sintad_excel
 from core.transport import (
     calculate_transport,
-    customs_total_usd,
+    customs_net_usd,
     get_consolidator,
     get_customs_agent,
-    visto_bueno_total_usd,
+    visto_bueno_net_usd,
 )
 from core.units import cbm_from_cm, parse_weight
 from core.wca_campaign import generate_wca_campaign, get_pilot_agents
@@ -294,6 +294,8 @@ def create_quote():
     margin_pct         = max(margin_pct_input, MARGIN_FLOOR)
     requester_type_raw = f.get("requester_type", "cliente").strip()
     requester_type     = requester_type_raw if requester_type_raw in ("cliente", "agente") else "cliente"
+    operation_raw      = f.get("operation", "exportacion").strip().lower()
+    operation          = operation_raw if operation_raw in ("exportacion", "importacion") else "exportacion"
 
     exchange_rate = get_exchange_rate()
 
@@ -305,17 +307,17 @@ def create_quote():
         transport_soles  = transport_result["charge_soles"]
     transport_usd = soles_to_usd(transport_soles, exchange_rate)
 
-    # Customs agent
+    # Customs agent — net pre-IGV cost (Bug 1 fix: IGV applied once by PDF)
     agent       = get_customs_agent(requires_oea_basc)
-    customs_usd = customs_total_usd(agent)
+    customs_usd = customs_net_usd(agent)
 
-    # Visto bueno (LCL only)
+    # Visto bueno (LCL only) — net pre-IGV, resolved by (consolidator × operation)
     vb_usd = 0.0
     consolidator_info = {}
     if mode == "lcl":
         try:
             consolidator_info = get_consolidator(consolidator_name)
-            vb_usd = visto_bueno_total_usd(consolidator_info)
+            vb_usd = visto_bueno_net_usd(consolidator_info, operation)
         except ValueError:
             flash(f"Unknown consolidator '{consolidator_name}' — defaulting to no visto bueno.", "warning")
 
@@ -328,7 +330,9 @@ def create_quote():
             handling_aereo_usd = fee["net_usd"]
             handling_aereo_info = fee
 
-    # User-defined coloader line items — submitted via "+ Agregar concepto" on the form
+    # User-defined coloader line items — submitted via Section 4 form buckets.
+    # Each item carries bucket="intl"|"local" (defaults "intl" for backward compat).
+    # CIF-calc items carry cif_calc=true + venta_neto (bypasses margin scaling).
     extra_costeo_items: list[dict] = []
     _extra_raw = f.get("extra_items_json", "[]")
     try:
@@ -337,6 +341,33 @@ def create_quote():
         _extra_input = []
     for _ei in _extra_input:
         _concept = str(_ei.get("concept", "")).strip()
+        _bucket  = _ei.get("bucket", "intl")  # "intl" | "local"
+        _is_cif  = bool(_ei.get("cif_calc"))
+
+        if _is_cif:
+            # CIF calc item: valor=costo_neto, venta_neto separate, no factor
+            _costo_neto  = float(_ei.get("valor") or 0)
+            _venta_neto  = float(_ei.get("venta_neto") or 0)
+            if not _concept:
+                continue
+            extra_costeo_items.append({
+                "concept":    _concept,
+                "bucket":     _bucket,
+                "cif_calc":   True,
+                "valor":      _costo_neto,
+                "venta_neto": _venta_neto,
+                "factor":     None,
+                "factor_unit": None,
+                "min_usd":    float(_ei.get("min_usd") or 0) or None,
+                "total":      _costo_neto,
+                "cif_detail": {
+                    "cif_usd":   float(_ei.get("cif_usd") or 0),
+                    "pct_costo": float(_ei.get("pct_costo") or 0),
+                    "pct_venta": float(_ei.get("pct_venta") or 0),
+                },
+            })
+            continue
+
         _valor = float(_ei.get("valor") or 0)
         _ei_min = float(_ei.get("min_usd") or 0) if _ei.get("min_usd") else None
         if not _concept or _valor <= 0:
@@ -351,10 +382,13 @@ def create_quote():
                 pass
         if _factor_f:
             _ei_total = round(max(_valor * _factor_f, _ei_min or 0.0), 2)
-            extra_costeo_items.append({"concept": _concept, "valor": _valor, "factor": _factor_f,
-                                       "factor_unit": flete_factor_unit, "min_usd": _ei_min, "total": _ei_total})
+            extra_costeo_items.append({"concept": _concept, "bucket": _bucket,
+                                       "valor": _valor, "factor": _factor_f,
+                                       "factor_unit": flete_factor_unit, "min_usd": _ei_min,
+                                       "total": _ei_total})
         else:
-            extra_costeo_items.append({"concept": _concept, "valor": _valor, "factor": None,
+            extra_costeo_items.append({"concept": _concept, "bucket": _bucket,
+                                       "valor": _valor, "factor": None,
                                        "factor_unit": None, "min_usd": None, "total": _valor})
     _extra_total = sum(ei["total"] for ei in extra_costeo_items)
 
@@ -380,6 +414,7 @@ def create_quote():
         "consolidator": consolidator_name if mode == "lcl" else None,
         "airline": airline if mode == "aereo" else None,
         "customs_agent": agent["name"],
+        "operation": operation,
         "extra_items": extra_costeo_items if extra_costeo_items else None,
     }
 
@@ -428,9 +463,19 @@ def create_quote():
                 **_FLAGS_INTL,
             }
 
-    # Local charges — always built as separate flagged items (both paths)
+    # Descriptions of local items that may already be in Section 4 local bucket.
+    # When they are, suppress the auto-generated consolidator/customs items to avoid duplication.
+    _extra_local_descs = {
+        ei["concept"].strip().lower()
+        for ei in extra_costeo_items
+        if ei.get("bucket") == "local"
+    }
+    _CUSTOMS_DESCS = {"agente de aduana", "customs broker", "customs broker / agente de aduana"}
+
+    # Local charges — added only when NOT already covered by Section 4 local bucket.
+    # Bug 1 fix: store NET (pre-IGV) amounts; IGV is applied once by PDF/display layer.
     local_venta_items: list[dict] = []
-    if vb_usd > 0:
+    if vb_usd > 0 and "visto bueno" not in _extra_local_descs:
         local_venta_items.append({
             "description": "Visto Bueno",
             "quantity": 1,
@@ -438,7 +483,7 @@ def create_quote():
             "total": round(vb_usd * m, 2),
             **_FLAGS_LOCAL,
         })
-    if customs_usd > 0:
+    if customs_usd > 0 and not _CUSTOMS_DESCS.intersection(_extra_local_descs):
         local_venta_items.append({
             "description": "Agente de Aduana",
             "quantity": 1,
@@ -464,17 +509,31 @@ def create_quote():
         })
 
     if extra_costeo_items:
-        # Dynamic mode: coloader-driven items — proforma mirrors what consolidator quoted
+        # Dynamic mode: coloader-driven items — proforma mirrors what consolidator quoted.
+        # bucket=="local" items use _FLAGS_LOCAL; others use _FLAGS_INTL.
+        # CIF-calc items use venta_neto directly (margin already encoded in pct spread).
         venta_items = [flete_item]
         for ei in extra_costeo_items:
-            if ei["factor"] is not None:
+            bucket = ei.get("bucket", "intl")
+            flags  = _FLAGS_LOCAL if bucket == "local" else _FLAGS_INTL
+            if ei.get("cif_calc") and ei.get("venta_neto") is not None:
+                # CIF calculator: venta_neto bypasses margin (margin encoded in pct_venta vs pct_costo)
+                venta_total_ei = round(float(ei["venta_neto"]), 2)
+                venta_items.append({
+                    "description": ei["concept"],
+                    "quantity": 1,
+                    "unit_price": venta_total_ei,
+                    "total": venta_total_ei,
+                    **flags,
+                })
+            elif ei["factor"] is not None:
                 venta_items.append({
                     "description": ei["concept"],
                     "unit_rate": round(ei["valor"] * m, 2),
                     "factor_value": ei["factor"],
                     "factor_unit": ei["factor_unit"],
                     "total": round(ei["total"] * m, 2),
-                    **_FLAGS_INTL,
+                    **flags,
                 })
             else:
                 venta_items.append({
@@ -482,7 +541,7 @@ def create_quote():
                     "quantity": 1,
                     "unit_price": round(ei["total"] * m, 2),
                     "total": round(ei["total"] * m, 2),
-                    **_FLAGS_INTL,
+                    **flags,
                 })
         if thc_venta_item:
             venta_items.append(thc_venta_item)
@@ -510,8 +569,8 @@ def create_quote():
               (reference_code, client_name, client_email, incoterm, mode, origin, destination,
                cargo_description, weight_kg, volume_cbm, dimensions_json,
                costeo_json, venta_json, margin_pct, exchange_rate,
-               status, staff_code, language, requester_type)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PENDING',?,?,?)
+               status, staff_code, language, requester_type, operation)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PENDING',?,?,?,?)
             """,
             (
                 ref, client_name, client_email or None, incoterm, mode, origin, destination,
@@ -524,6 +583,7 @@ def create_quote():
                 staff_code,
                 language,
                 requester_type,
+                operation,
             ),
         )
         conn.commit()
@@ -544,6 +604,7 @@ def create_quote():
         "client": client_name,
         "mode": mode,
         "incoterm": incoterm,
+        "operation": operation,
         "costeo_total_usd": round(costeo_total, 2),
         "venta_total_usd": round(venta_total, 2),
         "margin_pct": margin_pct,
@@ -943,7 +1004,7 @@ def new_version(ref_code: str):
         row = conn.execute(
             "SELECT client_name, client_email, incoterm, mode, origin, destination, "
             "cargo_description, weight_kg, volume_cbm, dimensions_json, "
-            "costeo_json, venta_json, margin_pct, exchange_rate, staff_code, language "
+            "costeo_json, venta_json, margin_pct, exchange_rate, staff_code, language, operation "
             "FROM quotes WHERE reference_code = ? AND status IN ('SENT','REJECTED')",
             (ref_code,),
         ).fetchone()
@@ -959,8 +1020,8 @@ def new_version(ref_code: str):
               (reference_code, client_name, client_email, incoterm, mode, origin, destination,
                cargo_description, weight_kg, volume_cbm, dimensions_json,
                costeo_json, venta_json, margin_pct, exchange_rate,
-               status, staff_code, language)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PENDING',?,?)
+               status, staff_code, language, operation)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PENDING',?,?,?)
             """,
             (
                 new_ref,
@@ -970,6 +1031,7 @@ def new_version(ref_code: str):
                 row["dimensions_json"], row["costeo_json"], row["venta_json"],
                 row["margin_pct"], row["exchange_rate"],
                 row["staff_code"], row["language"],
+                row["operation"] or "exportacion",
             ),
         )
         conn.commit()
@@ -1217,8 +1279,8 @@ def _seed_demo_quotes() -> list[str]:
     from core.exchange_rate import get_exchange_rate, soles_to_usd
     from core.reference import generate_reference
     from core.transport import (
-        calculate_transport, customs_total_usd,
-        get_customs_agent, get_consolidator, visto_bueno_total_usd,
+        calculate_transport, customs_net_usd,
+        get_customs_agent, get_consolidator, visto_bueno_net_usd,
     )
     from core.drive import get_air_handling_fee
 
@@ -1243,6 +1305,7 @@ def _seed_demo_quotes() -> list[str]:
             "margin_pct":        0.22,
             "staff_code":        "GT-PC",
             "language":          "es",
+            "operation":         "exportacion",
             "target_status":     "PENDING",
         },
         {
@@ -1261,6 +1324,7 @@ def _seed_demo_quotes() -> list[str]:
             "margin_pct":        0.20,
             "staff_code":        "GT-LOG",
             "language":          "en",
+            "operation":         "exportacion",
             "target_status":     "APPROVED",
         },
         {
@@ -1279,6 +1343,7 @@ def _seed_demo_quotes() -> list[str]:
             "margin_pct":        0.18,
             "staff_code":        "RENATO",
             "language":          "es",
+            "operation":         "importacion",
             "target_status":     "SENT",
         },
     ]
@@ -1290,19 +1355,20 @@ def _seed_demo_quotes() -> list[str]:
         flete_usd = spec["flete_usd"]
         weight_kg = spec["weight_kg"]
         cbm       = spec["volume_cbm"]
+        spec_op   = spec.get("operation", "exportacion")
 
         transport_result = calculate_transport(weight_kg, cbm)
         transport_soles  = transport_result["charge_soles"]
         transport_usd    = soles_to_usd(transport_soles, exchange_rate)
 
         agent       = get_customs_agent(False)
-        customs_usd = customs_total_usd(agent)
+        customs_usd = customs_net_usd(agent)
 
         vb_usd = 0.0
         if mode == "lcl" and spec["consolidator"]:
             try:
                 cons   = get_consolidator(spec["consolidator"])
-                vb_usd = visto_bueno_total_usd(cons)
+                vb_usd = visto_bueno_net_usd(cons, spec_op)
             except ValueError:
                 pass
 
@@ -1339,6 +1405,7 @@ def _seed_demo_quotes() -> list[str]:
             "consolidator":            spec["consolidator"] if mode == "lcl" else None,
             "airline":                 spec["airline"] if mode == "aereo" else None,
             "customs_agent":           agent["name"],
+            "operation":               spec_op,
         }
 
         _m = 1 + margin_pct
@@ -1377,8 +1444,8 @@ def _seed_demo_quotes() -> list[str]:
                    origin, destination, cargo_description,
                    weight_kg, volume_cbm, dimensions_json,
                    costeo_json, venta_json, margin_pct, exchange_rate,
-                   status, staff_code, language)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PENDING',?,?)
+                   status, staff_code, language, operation)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PENDING',?,?,?)
                 """,
                 (
                     ref, spec["client_name"], spec["client_email"],
@@ -1387,6 +1454,7 @@ def _seed_demo_quotes() -> list[str]:
                     json.dumps({"l": 0, "w": 0, "h": 0, "qty": 1}),
                     json.dumps(costeo), json.dumps(venta),
                     margin_pct, exchange_rate, spec["staff_code"], spec["language"],
+                    spec_op,
                 ),
             )
             conn.commit()
