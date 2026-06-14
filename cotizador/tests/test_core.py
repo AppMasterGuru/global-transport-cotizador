@@ -225,10 +225,12 @@ class TestTransport:
     def test_get_consolidator_craft(self):
         c = get_consolidator("CRAFT")
         assert c["visto_bueno_export_usd"] == 160.0
+        assert c["visto_bueno_import_usd"] == 90.0   # confirmed by Abel 2026-06-13
 
     def test_get_consolidator_saco(self):
         c = get_consolidator("SACO")
         assert c["visto_bueno_export_usd"] == 190.0
+        assert c["visto_bueno_import_usd"] == 90.0   # confirmed by Abel 2026-06-13
 
     def test_get_consolidator_unknown_raises(self):
         with pytest.raises(ValueError):

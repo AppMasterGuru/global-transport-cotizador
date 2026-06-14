@@ -110,7 +110,8 @@ class TestVbByConsolidatorAndOperation:
         assert visto_bueno_net_usd(get_consolidator("SACO"), "exportacion") == 190.0
 
     def test_eq_export(self):
-        assert visto_bueno_net_usd(get_consolidator("EQ"), "exportacion") == 170.0
+        # Updated 2026-06-13: Abel confirmed EQ export VB = 180 (was 170 — unverified placeholder)
+        assert visto_bueno_net_usd(get_consolidator("EQ"), "exportacion") == 180.0
 
     def test_default_operation_is_exportacion(self):
         cons = get_consolidator("MSL")

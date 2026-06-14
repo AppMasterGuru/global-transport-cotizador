@@ -47,30 +47,30 @@ WEIGHT_BANDS: list[tuple[float, float]] = [
 # ── Consolidators (LCL only) ─────────────────────────────────────────────────
 # NET visto bueno rates (pre-IGV). IGV applied once by the PDF/display layer.
 # None = rate not yet confirmed — quote must show blank VB + user warning.
-# MSL import=90/export=160 confirmed by Abel 2026-06-12.
-# All other import VBs are TODO — confirm with Abel/Vania before any import quote.
+# All values below confirmed by Abel 2026-06-13 except VANGUARD (no rate provided).
+# Import VB for all four confirmed consolidators = USD 90 net.
 
 CONSOLIDATORS: dict[str, dict] = {
     "MSL": {
         "name": "MSL",
-        "visto_bueno_export_usd": 160.0,  # confirmed by Abel 2026-06-12
+        "visto_bueno_export_usd": 160.0,  # confirmed by Abel 2026-06-12 (NOT 180 — stale sheet)
         "visto_bueno_import_usd": 90.0,   # confirmed by Abel 2026-06-12
     },
     "CRAFT": {
         "name": "Craft",
-        "visto_bueno_export_usd": 160.0,
-        "visto_bueno_import_usd": None,   # TODO: confirm with Abel/Vania
+        "visto_bueno_export_usd": 160.0,  # confirmed by Abel 2026-06-13
+        "visto_bueno_import_usd": 90.0,   # confirmed by Abel 2026-06-13
     },
     "SACO": {
         "name": "Saco",
-        "visto_bueno_export_usd": 190.0,
-        "visto_bueno_import_usd": None,   # TODO: confirm with Abel/Vania
+        "visto_bueno_export_usd": 190.0,  # confirmed by Abel 2026-06-13
+        "visto_bueno_import_usd": 90.0,   # confirmed by Abel 2026-06-13
     },
     "EQ": {
         # Canonical key for ECU Worldwide. Aliases: "ECU", "ECU WORLDWIDE" → "EQ".
         "name": "ECU Worldwide",
-        "visto_bueno_export_usd": 170.0,  # unverified — confirm with Abel/Vania
-        "visto_bueno_import_usd": None,   # TODO: confirm with Abel/Vania
+        "visto_bueno_export_usd": 180.0,  # confirmed by Abel 2026-06-13
+        "visto_bueno_import_usd": 90.0,   # confirmed by Abel 2026-06-13
     },
     "VANGUARD": {
         "name": "Vanguard",
