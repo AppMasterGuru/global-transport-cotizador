@@ -431,6 +431,15 @@
     Haga clic en el botón arriba para ver el sistema nuevo.
   </div>
 
+  <!-- DDP out-of-scope banner — shown whenever incoterm is DDP -->
+  {% if quote.incoterm == 'DDP' %}
+  <div class="alert alert-warning" style="margin-bottom:16px;padding:12px 16px;background:#fef9c3;border:1px solid #ca8a04;border-radius:6px;color:#713f12;">
+    <strong>Cotización DDP</strong> — el estimado de derechos e impuestos de aduana
+    (advalorem, IGV, IPM, percepción) <strong>NO está incluido automáticamente</strong>
+    en esta cotización. Agregar manualmente si aplica.
+  </div>
+  {% endif %}
+
   <!-- WARNINGS ──────────────────────────────────────────────────────────── -->
   {% if warnings %}
   <section class="detail-section warnings-section">
