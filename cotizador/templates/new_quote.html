@@ -388,19 +388,21 @@
   // ── CIF calculator helpers ─────────────────────────────────────────────────
 
   function recalcCif(row) {
-    var cifEl = row.querySelector('.xcif');
-    var pcEl  = row.querySelector('.xcif-pct-costo');
-    var pvEl  = row.querySelector('.xcif-pct-venta');
-    var minEl = row.querySelector('.xcif-min');
-    var crEl  = row.querySelector('.xcif-costo-result');
-    var vrEl  = row.querySelector('.xcif-venta-result');
+    var cifEl  = row.querySelector('.xcif');
+    var pcEl   = row.querySelector('.xcif-pct-costo');
+    var pvEl   = row.querySelector('.xcif-pct-venta');
+    var mcEl   = row.querySelector('.xcif-min-costo');
+    var mvEl   = row.querySelector('.xcif-min-venta');
+    var crEl   = row.querySelector('.xcif-costo-result');
+    var vrEl   = row.querySelector('.xcif-venta-result');
     if (!cifEl || !crEl) return;
-    var cif  = parseFloat(cifEl.value) || 0;
-    var pc   = parseFloat(pcEl && pcEl.value) || 0;
-    var pv   = parseFloat(pvEl && pvEl.value) || 0;
-    var minU = parseFloat(minEl && minEl.value) || 0;
-    var costo = Math.max(minU, (pc / 100) * cif);
-    var venta = Math.max(minU, (pv / 100) * cif);
+    var cif      = parseFloat(cifEl.value) || 0;
+    var pc       = parseFloat(pcEl && pcEl.value) || 0;
+    var pv       = parseFloat(pvEl && pvEl.value) || 0;
+    var minCosto = parseFloat(mcEl && mcEl.value) || 0;
+    var minVenta = parseFloat(mvEl && mvEl.value) || 0;
+    var costo = Math.max(minCosto, (pc / 100) * cif);
+    var venta = Math.max(minVenta, (pv / 100) * cif);
     crEl.textContent = cif > 0 ? 'USD ' + costo.toFixed(2) : '—';
     vrEl.textContent = cif > 0 ? 'USD ' + venta.toFixed(2) : '—';
   }
@@ -442,22 +444,29 @@
       '<label class="field"><span class="label-text">Mínimo USD <em style="font-weight:normal;color:#6b7280;">opt.</em></span>' +
       '<input type="number" class="xm" step="0.01" min="0" value="' + minUsd + '" placeholder="—"></label>';
 
-    // CIF calculator block (local only) — pct defaults confirmed by Abel (ask Abel/Vania)
-    var pctCosto = (prefill && prefill.pct_costo !== undefined) ? prefill.pct_costo : 0.30;
-    var pctVenta = (prefill && prefill.pct_venta !== undefined) ? prefill.pct_venta : 0.35;
-    var cifMin   = (prefill && prefill.min_usd   !== undefined) ? prefill.min_usd   : 100;
+    // CIF calculator block (local only) — pct/min defaults confirmed by Abel 2026-06-13
+    var pctCosto    = (prefill && prefill.pct_costo   !== undefined) ? prefill.pct_costo   : 0.30;
+    var pctVenta    = (prefill && prefill.pct_venta   !== undefined) ? prefill.pct_venta   : 0.35;
+    // Independent minimums: costo=70, venta=110 (Abel confirmed 2026-06-13).
+    // Fall back to legacy min_usd for quotes saved before this change.
+    var cifMinCosto = (prefill && prefill.min_costo !== undefined) ? prefill.min_costo
+                    : (prefill && prefill.min_usd   !== undefined) ? prefill.min_usd : 70;
+    var cifMinVenta = (prefill && prefill.min_venta !== undefined) ? prefill.min_venta
+                    : (prefill && prefill.min_usd   !== undefined) ? prefill.min_usd : 110;
     var cifHtml = bucket === 'local'
       ? '<div class="xcif-wrapper" style="grid-column:1/-1;display:' + (isCif ? 'block' : 'none') + ';">' +
         '<div class="cif-block">' +
         '<div class="cif-row">' +
         '<div><div class="cif-label">Valor CIF (USD)</div>' +
         '<input type="number" class="xcif" step="0.01" min="0" placeholder="50000"></div>' +
-        '<div><div class="cif-label">% Costo <span class="confirm-abel">confirmar c/Abel</span></div>' +
+        '<div><div class="cif-label">% Costo</div>' +
         '<input type="number" class="xcif-pct-costo" step="0.001" min="0" value="' + pctCosto + '"></div>' +
-        '<div><div class="cif-label">% Venta <span class="confirm-abel">confirmar c/Abel</span></div>' +
+        '<div><div class="cif-label">% Venta</div>' +
         '<input type="number" class="xcif-pct-venta" step="0.001" min="0" value="' + pctVenta + '"></div>' +
-        '<div><div class="cif-label">Mínimo USD <span class="confirm-abel">confirmar c/Abel</span></div>' +
-        '<input type="number" class="xcif-min" step="0.01" min="0" value="' + cifMin + '"></div>' +
+        '<div><div class="cif-label">Mín. Costo USD</div>' +
+        '<input type="number" class="xcif-min-costo" step="0.01" min="0" value="' + cifMinCosto + '"></div>' +
+        '<div><div class="cif-label">Mín. Venta USD</div>' +
+        '<input type="number" class="xcif-min-venta" step="0.01" min="0" value="' + cifMinVenta + '"></div>' +
         '</div>' +
         '<div class="cif-result-row">' +
         '<div><div class="cif-label">Costo Neto (calculado)</div><div class="cif-result xcif-costo-result">—</div></div>' +
@@ -490,7 +499,7 @@
     }
 
     // Wire live inputs
-    div.querySelectorAll('.xcif, .xcif-pct-costo, .xcif-pct-venta, .xcif-min').forEach(function (inp) {
+    div.querySelectorAll('.xcif, .xcif-pct-costo, .xcif-pct-venta, .xcif-min-costo, .xcif-min-venta').forEach(function (inp) {
       inp.addEventListener('input', function () { recalcCif(div); syncJson(); });
     });
     div.querySelectorAll('.xc, .xv, .xf, .xm').forEach(function (inp) {
@@ -529,17 +538,20 @@
         var cifEl = row.querySelector('.xcif');
         var pcEl  = row.querySelector('.xcif-pct-costo');
         var pvEl  = row.querySelector('.xcif-pct-venta');
-        var minEl = row.querySelector('.xcif-min');
-        var cif   = parseFloat(cifEl && cifEl.value) || 0;
-        var pc    = parseFloat(pcEl && pcEl.value) || 0;
-        var pv    = parseFloat(pvEl && pvEl.value) || 0;
-        var minU  = parseFloat(minEl && minEl.value) || 0;
-        var costo = Math.max(minU, (pc / 100) * cif);
-        var venta = Math.max(minU, (pv / 100) * cif);
+        var mcEl  = row.querySelector('.xcif-min-costo');
+        var mvEl  = row.querySelector('.xcif-min-venta');
+        var cif      = parseFloat(cifEl && cifEl.value) || 0;
+        var pc       = parseFloat(pcEl && pcEl.value) || 0;
+        var pv       = parseFloat(pvEl && pvEl.value) || 0;
+        var minCosto = parseFloat(mcEl && mcEl.value) || 0;
+        var minVenta = parseFloat(mvEl && mvEl.value) || 0;
+        var costo = Math.max(minCosto, (pc / 100) * cif);
+        var venta = Math.max(minVenta, (pv / 100) * cif);
         if (concept) {
           items.push({
             concept: concept, bucket: bucket, cif_calc: true,
-            cif_usd: cif, pct_costo: pc, pct_venta: pv, min_usd: minU,
+            cif_usd: cif, pct_costo: pc, pct_venta: pv,
+            min_costo: minCosto, min_venta: minVenta,
             valor: costo, venta_neto: venta, factor: null, total: costo
           });
         }
@@ -575,7 +587,7 @@
       addLocal({ concept: 'Visto Bueno',         valor: 90 });             // MSL import confirmed
       addLocal({ concept: 'Desconsolidación',    valor: 25, factor: '' }); // per ton, factor TBD
       addLocal({ concept: 'Almacén',             valor: 250 });
-      addLocal({ concept: 'Agente de Aduana',    cif_calc: true, pct_costo: 0.30, pct_venta: 0.35, min_usd: 100 });
+      addLocal({ concept: 'Agente de Aduana',    cif_calc: true, pct_costo: 0.30, pct_venta: 0.35, min_costo: 70, min_venta: 110 });
       addLocal({ concept: 'Operative Charge',    valor: 25 });
       addLocal({ concept: 'Delivery',            valor: 0 });
     } else {

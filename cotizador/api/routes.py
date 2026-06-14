@@ -242,6 +242,10 @@ def create_quote():
     client_name  = f.get("client_name", "").strip()
     client_email = f.get("client_email", "").strip()
     incoterm     = f.get("incoterm", "FOB").strip().upper()
+    # TODO(DDP-duties): When incoterm == "DDP", a duties & taxes estimate
+    # (Advalorem 10%, IGV 16%, IPM 2%, Percepción 3.5% of CIF) must be added.
+    # Not implemented in Pipeline #1 — requires a separate scoping decision with Barney.
+    # The quote_detail template shows a non-blocking banner when incoterm is DDP.
     mode         = f.get("mode", "lcl").strip().lower()
     origin       = f.get("origin", "").strip()
     destination  = f.get("destination", "").strip()
@@ -356,7 +360,9 @@ def create_quote():
         _is_cif  = bool(_ei.get("cif_calc"))
 
         if _is_cif:
-            # CIF calc item: valor=costo_neto, venta_neto separate, no factor
+            # CIF calc item: valor=costo_neto, venta_neto separate, no factor.
+            # min_costo and min_venta are independent (Abel confirmed 2026-06-13:
+            # costo floor=$70, venta floor=$110). Legacy min_usd field is ignored.
             _costo_neto  = float(_ei.get("valor") or 0)
             _venta_neto  = float(_ei.get("venta_neto") or 0)
             if not _concept:
@@ -369,12 +375,13 @@ def create_quote():
                 "venta_neto": _venta_neto,
                 "factor":     None,
                 "factor_unit": None,
-                "min_usd":    float(_ei.get("min_usd") or 0) or None,
                 "total":      _costo_neto,
                 "cif_detail": {
                     "cif_usd":   float(_ei.get("cif_usd") or 0),
                     "pct_costo": float(_ei.get("pct_costo") or 0),
                     "pct_venta": float(_ei.get("pct_venta") or 0),
+                    "min_costo": float(_ei.get("min_costo") or 0) or None,
+                    "min_venta": float(_ei.get("min_venta") or 0) or None,
                 },
             })
             continue
