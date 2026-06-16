@@ -767,9 +767,12 @@ def reject_quote(ref_code: str):
 def mark_sent(ref_code: str):
     """
     Human confirms the send action.
-    1. Transitions quote APPROVED → SENT (DB trigger enforces validity).
-    2. Fires send_quote_email() stub — logs QUOTE_SENT to audit trail.
-    Real SMTP activates automatically once GT_EMAIL_ADDRESS/PASSWORD are in .env.
+    1. Fires send_quote_email() — logs QUOTE_SENT to audit trail.
+    2. Transitions quote APPROVED → SENT only if the send actually succeeded
+       (DB trigger also enforces transition validity). A failed or raising
+       send leaves the quote APPROVED and logs SEND_FAILED instead — a
+       quote is never marked SENT unless the client was actually emailed.
+    Real SMTP activates automatically once Graph credentials are live.
     """
     actor = request.form.get("actor", "sender").strip()
     # recipient_email field allows send-time override (e.g. when client_email is blank)
@@ -777,18 +780,13 @@ def mark_sent(ref_code: str):
     with get_connection() as conn:
         row = conn.execute(
             "SELECT id, client_name, client_email, origin, destination, "
-            "staff_code, costeo_json, venta_json, language "
+            "staff_code, costeo_json, venta_json, language, mode, incoterm "
             "FROM quotes WHERE reference_code = ?",
             (ref_code,),
         ).fetchone()
     if row is None:
         flash("Cotización no encontrada.", "error")
         return redirect(url_for("cotizador.dashboard"))
-    try:
-        transition_status(row["id"], "SENT", actor)
-    except Exception as exc:
-        flash(f"No se pudo marcar como enviada: {exc}", "error")
-        return redirect(url_for("cotizador.quote_detail", ref_code=ref_code))
 
     customer_email = (recipient_override or row["client_email"] or "").strip()
     customer_name  = (row["client_name"]  or "").strip()
@@ -807,7 +805,10 @@ def mark_sent(ref_code: str):
                     "destination":  row["destination"] or "",
                     "staff_code":   row["staff_code"]  or "",
                     "language":     row["language"]    or "es",
-                    "mode":         costeo.get("mode", "lcl"),
+                    # mode/incoterm from the quotes table, not costeo_json —
+                    # see preview_pdf() for why.
+                    "mode":         row["mode"],
+                    "incoterm":     row["incoterm"],
                     "consolidator": costeo.get("consolidator", ""),
                     "airline":      costeo.get("airline", ""),
                     "exchange_rate": costeo.get("exchange_rate", 0),
@@ -816,19 +817,36 @@ def mark_sent(ref_code: str):
             except Exception:
                 pdf_bytes = None  # Send without attachment rather than fail
 
-        ok, msg = send_quote_email(
-            ref_code=ref_code,
-            quote_id=row["id"],
-            customer_email=customer_email,
-            customer_name=customer_name,
-            actor=actor,
-            pdf_bytes=pdf_bytes,
-            origin=row["origin"]      or "",
-            destination=row["destination"] or "",
-            staff_code=row["staff_code"]   or "",
-        )
+        # send_quote_email does not take origin/destination/staff_code —
+        # those were only ever needed for the PDF meta above. The call site
+        # used to pass them anyway, which raised TypeError on every send.
+        try:
+            ok, msg = send_quote_email(
+                ref_code=ref_code,
+                quote_id=row["id"],
+                customer_email=customer_email,
+                customer_name=customer_name,
+                actor=actor,
+                pdf_bytes=pdf_bytes,
+                from_staff_code=row["staff_code"] or None,
+            )
+        except Exception as exc:
+            ok, msg = False, f"Error al enviar {ref_code}: {exc}"
+            audit("SEND_FAILED", ref_code, actor, {"error": str(exc)})
+
+        if ok:
+            try:
+                transition_status(row["id"], "SENT", actor)
+            except Exception as exc:
+                flash(f"Envío realizado pero no se pudo actualizar el estado: {exc}", "error")
+                return redirect(url_for("cotizador.quote_detail", ref_code=ref_code))
         flash(msg, "success" if ok else "error")
     else:
+        try:
+            transition_status(row["id"], "SENT", actor)
+        except Exception as exc:
+            flash(f"No se pudo marcar como enviada: {exc}", "error")
+            return redirect(url_for("cotizador.quote_detail", ref_code=ref_code))
         flash(
             f"Cotización {ref_code} marcada como enviada. "
             f"Sin email de cliente — envíe manualmente.",
@@ -958,7 +976,7 @@ def preview_pdf(ref_code: str):
     with get_connection() as conn:
         row = conn.execute(
             "SELECT costeo_json, venta_json, client_name, origin, destination, "
-            "staff_code, language FROM quotes WHERE reference_code = ?",
+            "staff_code, language, mode, incoterm FROM quotes WHERE reference_code = ?",
             (ref_code,),
         ).fetchone()
     if row is None:
@@ -992,7 +1010,12 @@ def preview_pdf(ref_code: str):
         "destination":  row["destination"] or "",
         "staff_code":   row["staff_code"]  or "",
         "language":     row["language"]    or "es",
-        "mode":         costeo.get("mode", "lcl"),
+        # mode/incoterm come from the quotes table (NOT NULL columns), not
+        # from costeo_json — costeo never stored a "mode" key, which is why
+        # every PDF used to silently default to "lcl" regardless of the
+        # quote's real mode.
+        "mode":         row["mode"],
+        "incoterm":     row["incoterm"],
         "consolidator": costeo.get("consolidator", ""),
         "airline":      costeo.get("airline", ""),
         "exchange_rate": costeo.get("exchange_rate", 0),

@@ -47,17 +47,37 @@ _EJECUTIVOS: dict[str, str] = {
     "abel":     "pricing@gt.com.pe",
     "gt-pc":    "pricing@gt.com.pe",
     "daniela":  "lognet.sales@gt.com.pe",
-    "gt-loc":   "lognet.sales@gt.com.pe",
+    "gt-log":   "lognet.sales@gt.com.pe",
     "cielo":    "wca.sales@gt.com.pe",
+    "gt-wca":   "wca.sales@gt.com.pe",
     "jp":       "jparrue@gt.com.pe",
     "renato":   "ralvarez@gt.com.pe",
     "ralvarez": "ralvarez@gt.com.pe",
 }
 
+# Non-person senders that legitimately operate from the shared commercial
+# inbox (LISTENER_MAILBOX=pricing@gt.com.pe in .env) — a deliberate system
+# identity, not a fallback for an unrecognized human.
+_SYSTEM_SENDERS = {"system", "email_listener"}
+
 
 def resolve_from_address(actor: str) -> str:
-    """Map a staff code / name to its GT sender address."""
-    return _EJECUTIVOS.get((actor or "").lower(), _DEFAULT_FROM)
+    """
+    Map a staff code / person name / system sender to its GT outbound address.
+
+    Raises ValueError for anything unrecognized. An unmatched actor must
+    never silently send as Abel (pricing@gt.com.pe) — that's an identity
+    bug (BASC/reputation risk), not a safe default.
+    """
+    key = (actor or "").strip().lower()
+    if key in _EJECUTIVOS:
+        return _EJECUTIVOS[key]
+    if key in _SYSTEM_SENDERS:
+        return _DEFAULT_FROM
+    raise ValueError(
+        f"resolve_from_address: unrecognized actor {actor!r} — "
+        "refusing to silently default to Abel's address"
+    )
 
 
 # ── Transport layer ───────────────────────────────────────────────────────────
@@ -169,15 +189,22 @@ def send_quote_email(
     customer_name: str,
     actor: str,
     pdf_bytes: bytes | None = None,
+    from_staff_code: str | None = None,
 ) -> tuple[bool, str]:
     """
     Send the proforma PDF to the client via Graph API.
+
+    `actor` is who confirmed the send (free text, used for the audit log
+    and the email's closing line). `from_staff_code`, when given, is the
+    quote's real staff code and takes priority for resolving the FROM
+    address — the FROM address must key off the quote's owner, not off
+    whatever name the approver happened to type.
 
     Returns (True, success_message) on success.
     Returns (False, error_message) on failure.
     Always logs QUOTE_SENT (or QUOTE_SEND_FAILED) to the audit trail.
     """
-    from_address = resolve_from_address(actor)
+    from_address = resolve_from_address(from_staff_code or actor)
     subject = f"Proforma Global Transport SAC — {ref_code}"
     body = (
         f"Estimado/a {customer_name},\n\n"

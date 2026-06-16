@@ -37,7 +37,7 @@ _SIGNATURES: dict[str, dict] = {
         "name":    "Daniella Leveau",
         "title":   "Lognet Sales",
         "phone":   "(+51) 923 098 958",
-        "email":   "wca.sales@gt.com.pe",
+        "email":   "lognet.sales@gt.com.pe",
         "address": _GT_ADDRESS,
         "website": _GT_WEBSITE,
     },
