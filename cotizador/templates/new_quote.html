@@ -359,14 +359,14 @@
 (function () {
   var nextId = 0;
 
-  // VB net rates by consolidator × operation — mirrors transport.py CONSOLIDATORS.
-  // MSL import=90/export=160 confirmed by Abel 2026-06-12.
-  // CRAFT/SACO/EQ import rates are placeholders — confirm with Abel/Vania.
+  // VB net rates by consolidator × operation — MUST mirror core/transport.py
+  // CONSOLIDATORS exactly (enforced by tests/test_vb_form_consistency.py).
+  // Confirmed by Abel 2026-06-18.
   var VB_RATES = {
     MSL:   { exportacion: 160, importacion: 90 },
     CRAFT: { exportacion: 160, importacion: 160 },
     SACO:  { exportacion: 190, importacion: 190 },
-    EQ:    { exportacion: 170, importacion: 170 }
+    EQ:    { exportacion: 180, importacion: 90 }
   };
 
   function currentOperation() {
@@ -576,6 +576,13 @@
     document.getElementById('intl-rows').innerHTML = '';
     document.getElementById('local-rows').innerHTML = '';
 
+    // VB default MUST come from VB_RATES (consolidator × operation) — never a
+    // bare literal. A bare literal silently overrides the engine's correct
+    // per-consolidator VB on submit (2026-06-18 CRAFT/SACO undercharge bug).
+    var cons    = (document.getElementById('consolidator-select') || {}).value || 'MSL';
+    var vbNet   = (VB_RATES[cons] || {})[op];
+    var vbValor = vbNet !== undefined ? vbNet : (op === 'importacion' ? 90 : 160);
+
     if (op === 'importacion') {
       // Internacional bucket defaults (import)
       addIntl({ concept: 'Flete Internacional', valor: 0 });
@@ -584,7 +591,7 @@
       addIntl({ concept: 'BL',                  valor: 0 });
       addIntl({ concept: 'Customs Broker',       valor: 0 });
       // Local bucket defaults (import)
-      addLocal({ concept: 'Visto Bueno',         valor: 90 });             // MSL import confirmed
+      addLocal({ concept: 'Visto Bueno',         valor: vbValor });        // per consolidator (VB_RATES)
       addLocal({ concept: 'Desconsolidación',    valor: 25, factor: '' }); // per ton, factor TBD
       addLocal({ concept: 'Almacén',             valor: 250 });
       addLocal({ concept: 'Agente de Aduana',    cif_calc: true, pct_costo: 0.30, pct_venta: 0.35, min_costo: 70, min_venta: 110 });
@@ -593,8 +600,8 @@
     } else {
       // Export — Flete Internacional handled in Section 3
       // Local bucket defaults (export)
-      addLocal({ concept: 'Visto Bueno',      valor: 160 }); // MSL export confirmed
-      addLocal({ concept: 'Agente de Aduana', valor: 50 });  // flat rate export (not CIF%)
+      addLocal({ concept: 'Visto Bueno',      valor: vbValor }); // per consolidator (VB_RATES)
+      addLocal({ concept: 'Agente de Aduana', valor: 50 });      // flat rate export (not CIF%)
       addLocal({ concept: 'Operative Charge', valor: 25 });
       addLocal({ concept: 'Delivery',         valor: 0 });
     }
@@ -613,7 +620,10 @@
     });
   }
   if (consSel) {
-    consSel.addEventListener('change', updateVbHint);
+    consSel.addEventListener('change', function () {
+      updateVbHint();
+      populateDefaults(currentOperation());
+    });
   }
 
   document.getElementById('add-intl-btn').addEventListener('click', function () { addIntl(null); });

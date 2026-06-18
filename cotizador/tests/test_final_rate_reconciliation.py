@@ -1,8 +1,8 @@
 """
-Regression tests for Abel-confirmed rate values (2026-06-13).
+Regression tests for Abel-confirmed rate values (2026-06-13, updated 2026-06-18).
 
 Covers:
-  - Import VB = USD 90 net for all four confirmed consolidators (MSL, CRAFT, SACO, EQ)
+  - Import VB (confirmed by Abel 2026-06-18): MSL=90, CRAFT=160, SACO=190, EQ=90
   - Export VB: MSL=160, CRAFT=160, SACO=190, EQ=180
   - VANGUARD still has no confirmed rate (None) and warns at startup
   - Startup warning lists ONLY VANGUARD as missing
@@ -74,27 +74,15 @@ def _post_and_fetch(client, overrides=None):
     return dict(row), ref
 
 
-# ── FIX 1: Import VB = $90 for all four confirmed consolidators ───────────────
+# ── FIX 1: Import VB confirmed per-consolidator (Abel 2026-06-18) ─────────────
 
 class TestImportVbNinety:
-    """All four confirmed consolidators must return USD 90 net for importacion."""
+    """MSL and EQ import VB remain USD 90 net (unchanged 2026-06-18)."""
 
     def test_msl_import_vb_is_90(self):
         c = get_consolidator("MSL")
         assert c["visto_bueno_import_usd"] == 90.0
         assert visto_bueno_net_usd(c, "importacion") == 90.0
-
-    def test_craft_import_vb_is_90(self):
-        c = get_consolidator("CRAFT")
-        assert c["visto_bueno_import_usd"] == 90.0
-        assert visto_bueno_net_usd(c, "importacion") == 90.0
-        assert vb_rate_missing(c, "importacion") is False
-
-    def test_saco_import_vb_is_90(self):
-        c = get_consolidator("SACO")
-        assert c["visto_bueno_import_usd"] == 90.0
-        assert visto_bueno_net_usd(c, "importacion") == 90.0
-        assert vb_rate_missing(c, "importacion") is False
 
     def test_eq_import_vb_is_90(self):
         c = get_consolidator("EQ")
@@ -105,6 +93,22 @@ class TestImportVbNinety:
     def test_eq_alias_ecu_import_vb_is_90(self):
         c = get_consolidator("ECU WORLDWIDE")
         assert c["visto_bueno_import_usd"] == 90.0
+
+
+class TestImportVbUpdated20260618:
+    """CRAFT and SACO import VB updated by Abel 2026-06-18 (were USD 90)."""
+
+    def test_craft_import_vb_is_160(self):
+        c = get_consolidator("CRAFT")
+        assert c["visto_bueno_import_usd"] == 160.0
+        assert visto_bueno_net_usd(c, "importacion") == 160.0
+        assert vb_rate_missing(c, "importacion") is False
+
+    def test_saco_import_vb_is_190(self):
+        c = get_consolidator("SACO")
+        assert c["visto_bueno_import_usd"] == 190.0
+        assert visto_bueno_net_usd(c, "importacion") == 190.0
+        assert vb_rate_missing(c, "importacion") is False
 
 
 # ── FIX 1: Export VB confirmed values ────────────────────────────────────────
