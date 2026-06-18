@@ -30,6 +30,45 @@ OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/tmp/gt_cotizador_output"))
 
 VALIDITY_DAYS = 15  # standard; Abel confirmed
 
+# ── DDP duties & taxes (client-facing proforma only — Abel confirmed 2026-06-18) ──
+# Verified against Abel's Excel formula bar: formula and his cell agree exactly,
+# no spreadsheet artifact. Worked example: Invoice 50,000 + Insurance 250 +
+# Freight 6,000 = CIF 56,250 -> Advalorem 5,625.00, IGV 9,900.00, IPM 1,237.50,
+# Percepcion 2,555.44, Subtotal B 19,317.94.
+ADVALOREM_PCT  = 0.10
+IGV_PCT        = 0.16
+IPM_PCT        = 0.02
+PERCEPCION_PCT = 0.035
+
+
+def compute_ddp_duties(invoice_usd: float, insurance_usd: float, freight_usd: float) -> dict:
+    """
+    DDP duties & taxes estimate, client-facing only (does not touch costeo).
+
+      CIF        = Invoice + Insurance + Freight
+      Advalorem  = ADVALOREM_PCT  x CIF
+      IGV        = IGV_PCT        x (CIF + Advalorem)
+      IPM        = IPM_PCT        x (CIF + Advalorem)
+      Percepcion = PERCEPCION_PCT x (CIF + Advalorem + IGV + IPM)
+    """
+    cif        = invoice_usd + insurance_usd + freight_usd
+    advalorem  = ADVALOREM_PCT * cif
+    igv        = IGV_PCT * (cif + advalorem)
+    ipm        = IPM_PCT * (cif + advalorem)
+    percepcion = PERCEPCION_PCT * (cif + advalorem + igv + ipm)
+    subtotal_b = advalorem + igv + ipm + percepcion
+    return {
+        "invoice_usd":    round(invoice_usd, 2),
+        "insurance_usd":  round(insurance_usd, 2),
+        "freight_usd":    round(freight_usd, 2),
+        "cif_usd":        round(cif, 2),
+        "advalorem_usd":  round(advalorem, 2),
+        "igv_usd":        round(igv, 2),
+        "ipm_usd":        round(ipm, 2),
+        "percepcion_usd": round(percepcion, 2),
+        "subtotal_b_usd": round(subtotal_b, 2),
+    }
+
 # Descriptions that identify local charges on quotes created before the is_local flag existed.
 _LOCAL_DESC = frozenset([
     "visto bueno", "agente de aduana", "transporte local",
@@ -151,6 +190,70 @@ def _build_local_table(local_items: list[dict], lang: str = "es") -> str:
     )
 
 
+def _build_cif_table(meta: dict, lang: str = "es") -> str:
+    """HTML table for Section A: CIF value (Invoice / Insurance / Freight). DDP only."""
+    if (meta.get("incoterm") or "").upper() != "DDP":
+        return ""
+    invoice   = float(meta.get("invoice_usd") or 0)
+    insurance = float(meta.get("insurance_usd") or 0)
+    freight   = float(meta.get("freight_usd") or 0)
+    cif = invoice + insurance + freight
+
+    hdr           = "Valor CIF" if lang == "es" else "CIF Value"
+    lbl_invoice   = "Valor Factura Comercial" if lang == "es" else "Commercial Invoice Value"
+    lbl_insurance = "Seguro Internacional" if lang == "es" else "International Insurance"
+    lbl_freight   = "Flete Internacional" if lang == "es" else "International Freight"
+    lbl_cif       = "Total CIF"
+
+    return (
+        f'<h3 class="charges-section-hdr">{hdr}</h3>'
+        f'<table class="charges">'
+        f'<tbody>'
+        f'<tr><td>{lbl_invoice}</td><td class="num">USD {invoice:,.2f}</td></tr>'
+        f'<tr><td>{lbl_insurance}</td><td class="num">USD {insurance:,.2f}</td></tr>'
+        f'<tr><td>{lbl_freight}</td><td class="num">USD {freight:,.2f}</td></tr>'
+        f'</tbody>'
+        f'<tfoot><tr><td><strong>{lbl_cif}</strong></td>'
+        f'<td class="num"><strong>USD {cif:,.2f}</strong></td></tr></tfoot>'
+        f'</table>'
+    )
+
+
+def _build_duties_table(subtotal_a: float, meta: dict, lang: str = "es") -> str:
+    """HTML table for Section C: duties & taxes (Advalorem/IGV/IPM/Percepcion). DDP only."""
+    if (meta.get("incoterm") or "").upper() != "DDP":
+        return ""
+    invoice   = float(meta.get("invoice_usd") or 0)
+    insurance = float(meta.get("insurance_usd") or 0)
+    freight   = float(meta.get("freight_usd") or 0)
+    d = compute_ddp_duties(invoice, insurance, freight)
+
+    hdr       = "Derechos y Tributos de Importación (DDP)" if lang == "es" else "Import Duties & Taxes (DDP)"
+    lbl_sub_a = "Subtotal A — Cargos de Servicio GT" if lang == "es" else "Subtotal A — GT Service Charges"
+    lbl_adv   = f"Advalorem ({ADVALOREM_PCT * 100:.0f}%)"
+    lbl_igv   = f"IGV ({IGV_PCT * 100:.0f}%)"
+    lbl_ipm   = f"IPM ({IPM_PCT * 100:.0f}%)"
+    lbl_perc  = (f"Percepción ({PERCEPCION_PCT * 100:.1f}%)" if lang == "es"
+                 else f"Perception Tax ({PERCEPCION_PCT * 100:.1f}%)")
+    lbl_sub_b = "Subtotal B — Derechos y Tributos" if lang == "es" else "Subtotal B — Duties & Taxes"
+
+    return (
+        f'<h3 class="charges-section-hdr">{hdr}</h3>'
+        f'<table class="charges">'
+        f'<tbody>'
+        f'<tr><td><strong>{lbl_sub_a}</strong></td>'
+        f'<td class="num"><strong>USD {subtotal_a:,.2f}</strong></td></tr>'
+        f'<tr><td>{lbl_adv}</td><td class="num">USD {d["advalorem_usd"]:,.2f}</td></tr>'
+        f'<tr><td>{lbl_igv}</td><td class="num">USD {d["igv_usd"]:,.2f}</td></tr>'
+        f'<tr><td>{lbl_ipm}</td><td class="num">USD {d["ipm_usd"]:,.2f}</td></tr>'
+        f'<tr><td>{lbl_perc}</td><td class="num">USD {d["percepcion_usd"]:,.2f}</td></tr>'
+        f'</tbody>'
+        f'<tfoot><tr><td><strong>{lbl_sub_b}</strong></td>'
+        f'<td class="num"><strong>USD {d["subtotal_b_usd"]:,.2f}</strong></td></tr></tfoot>'
+        f'</table>'
+    )
+
+
 def render_html(venta: dict, meta: dict) -> str:
     """
     Render the proforma HTML from venta data and metadata.
@@ -171,6 +274,16 @@ def render_html(venta: dict, meta: dict) -> str:
     local_neto    = sum(i.get("total") or 0 for i in local_items)
     grand_total   = intl_subtotal + local_neto * 1.18 if local_items else intl_subtotal + local_neto
 
+    is_ddp = (meta.get("incoterm") or "").upper() == "DDP"
+    final_total = grand_total
+    if is_ddp:
+        ddp_duties   = compute_ddp_duties(
+            float(meta.get("invoice_usd") or 0),
+            float(meta.get("insurance_usd") or 0),
+            float(meta.get("freight_usd") or 0),
+        )
+        final_total = grand_total + ddp_duties["subtotal_b_usd"]
+
     sig = get_signature(meta.get("staff_code", ""))
     placeholders = {
         "{{REFERENCE}}":     meta.get("reference", ""),
@@ -186,9 +299,11 @@ def render_html(venta: dict, meta: dict) -> str:
         "{{ROUTE}}":         meta.get("route", "Direct" if lang == "en" else "Directa"),
         "{{FREQUENCY}}":     meta.get("frequency", "Weekly" if lang == "en" else "Semanal"),
         "{{EXCHANGE_RATE}}": f"{meta.get('exchange_rate', 0):.4f}",
+        "{{CIF_TABLE}}":     _build_cif_table(meta, lang),
         "{{FLETE_TABLE}}":   _build_flete_table(intl_items, lang),
         "{{LOCAL_TABLE}}":   _build_local_table(local_items, lang),
-        "{{TOTAL_USD}}":     f"{grand_total:,.2f}",
+        "{{DUTIES_TABLE}}":  _build_duties_table(grand_total, meta, lang) if is_ddp else "",
+        "{{TOTAL_USD}}":     f"{final_total:,.2f}",
         "{{NOTES}}":         meta.get("notes", ""),
         "{{STAFF_NAME}}":    sig["name"],
         "{{STAFF_EMAIL}}":   sig["email"],
