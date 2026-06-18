@@ -303,6 +303,11 @@ def create_quote():
     operation_raw      = f.get("operation", "exportacion").strip().lower()
     operation          = operation_raw if operation_raw in ("exportacion", "importacion") else "exportacion"
 
+    # DDP duties CIF inputs (client-facing proforma only — Abel confirmed 2026-06-18).
+    # Freight reuses flete_usd computed below; only Invoice/Insurance are new entry.
+    invoice_usd   = float(f.get("invoice_usd") or 0) if incoterm == "DDP" else None
+    insurance_usd = float(f.get("insurance_usd") or 0) if incoterm == "DDP" else None
+
     exchange_rate = get_exchange_rate()
 
     # Transport (weight vs volume — Abel's rule)
@@ -434,6 +439,8 @@ def create_quote():
         "customs_agent": agent["name"],
         "operation": operation,
         "extra_items": extra_costeo_items if extra_costeo_items else None,
+        "invoice_usd": invoice_usd,
+        "insurance_usd": insurance_usd,
     }
 
     m = 1 + margin_pct
@@ -812,6 +819,9 @@ def mark_sent(ref_code: str):
                     "consolidator": costeo.get("consolidator", ""),
                     "airline":      costeo.get("airline", ""),
                     "exchange_rate": costeo.get("exchange_rate", 0),
+                    "invoice_usd":   costeo.get("invoice_usd") or 0,
+                    "insurance_usd": costeo.get("insurance_usd") or 0,
+                    "freight_usd":   costeo.get("flete_internacional_usd") or 0,
                 }
                 pdf_bytes = generate_pdf_bytes(venta, meta)
             except Exception:
@@ -1019,6 +1029,9 @@ def preview_pdf(ref_code: str):
         "consolidator": costeo.get("consolidator", ""),
         "airline":      costeo.get("airline", ""),
         "exchange_rate": costeo.get("exchange_rate", 0),
+        "invoice_usd":   costeo.get("invoice_usd") or 0,
+        "insurance_usd": costeo.get("insurance_usd") or 0,
+        "freight_usd":   costeo.get("flete_internacional_usd") or 0,
     }
 
     if WEASYPRINT_AVAILABLE:

@@ -155,7 +155,7 @@
         </label>
         <label class="field">
           <span class="label-text">Incoterm *</span>
-          <select name="incoterm" required>
+          <select name="incoterm" id="incoterm-select" required>
             <option value="FOB">FOB — Free On Board</option>
             <option value="CIF">CIF — Cost, Insurance &amp; Freight</option>
             <option value="DDP">DDP — Delivered Duty Paid</option>
@@ -168,6 +168,16 @@
             <option value="DDU">DDU — Delivered Duty Unpaid</option>
           </select>
         </label>
+        <div id="ddp-cif-fields" style="display:none;">
+          <label class="field">
+            <span class="label-text">Valor Factura Comercial (USD) *</span>
+            <input type="number" name="invoice_usd" id="invoice-usd-input" step="0.01" min="0" placeholder="50000.00">
+          </label>
+          <label class="field">
+            <span class="label-text">Seguro Internacional (USD) *</span>
+            <input type="number" name="insurance_usd" id="insurance-usd-input" step="0.01" min="0" placeholder="250.00">
+          </label>
+        </div>
         <label class="field">
           <span class="label-text">Idioma del cliente</span>
           <select name="language">
@@ -610,8 +620,28 @@
 
   // ── Wire controls ──────────────────────────────────────────────────────────
 
-  var opSel   = document.getElementById('operation-select');
-  var consSel = document.getElementById('consolidator-select');
+  var opSel       = document.getElementById('operation-select');
+  var consSel     = document.getElementById('consolidator-select');
+  var incotermSel = document.getElementById('incoterm-select');
+  var ddpFields   = document.getElementById('ddp-cif-fields');
+
+  function updateDdpFieldsVisibility() {
+    if (!incotermSel || !ddpFields) return;
+    var isDdp = incotermSel.value === 'DDP';
+    ddpFields.style.display = isDdp ? 'flex' : 'none';
+    if (!isDdp) {
+      // Hidden inputs still submit with the form — clear them so a stale
+      // value typed while DDP was selected can't reach a non-DDP quote.
+      var invoiceInput   = document.getElementById('invoice-usd-input');
+      var insuranceInput = document.getElementById('insurance-usd-input');
+      if (invoiceInput)   invoiceInput.value = '';
+      if (insuranceInput) insuranceInput.value = '';
+    }
+  }
+  if (incotermSel) {
+    incotermSel.addEventListener('change', updateDdpFieldsVisibility);
+    updateDdpFieldsVisibility();
+  }
 
   if (opSel) {
     opSel.addEventListener('change', function () {
