@@ -58,10 +58,15 @@ from core.provider_emails import generate_provider_emails
 from core.reference import generate_reference
 from core.sintad_export import generate_sintad_excel
 from core.transport import (
+    AEREO_CONSOLIDADO_HANDLING_USD,
+    AEREO_CONSOLIDADO_TRANSMISSION_USD,
     calculate_transport,
+    customs_agent_venta_usd,
     customs_net_usd,
+    get_aereo_import_customs_agent,
     get_consolidator,
     get_customs_agent,
+    get_lcl_import_customs_agent,
     vb_rate_missing,
     visto_bueno_net_usd,
 )
@@ -333,7 +338,13 @@ def create_quote():
     transport_usd = soles_to_usd(transport_soles, exchange_rate)
 
     # Customs agent — net pre-IGV cost (Bug 1 fix: IGV applied once by PDF)
-    agent       = get_customs_agent(requires_oea_basc)
+    # Mode/operation-specific overrides (Abel Parte 2, 2026-06-19):
+    if mode == "aereo" and operation == "importacion":
+        agent = get_aereo_import_customs_agent(requires_oea_basc)
+    elif mode == "lcl" and operation == "importacion":
+        agent = get_lcl_import_customs_agent()
+    else:
+        agent = get_customs_agent(requires_oea_basc)
     customs_usd = customs_net_usd(agent)
 
     # Visto bueno (LCL only) — net pre-IGV, resolved by (consolidator × operation)
@@ -355,14 +366,25 @@ def create_quote():
             logging.warning("Unknown consolidator %r submitted — VB set to 0", consolidator_name)
             flash(f"Consolidador '{consolidator_name}' no reconocido — visto bueno no calculado.", "warning")
 
-    # Air handling fee (aereo only) — looked up from HANDLING AEREO.xlsx
+    # Air handling fee (aereo import only — Abel Parte 2, 2026-06-19,
+    # Escenario 2: "no hay costo de handling en exportación") — looked up
+    # from HANDLING AEREO.xlsx
     handling_aereo_usd = 0.0
     handling_aereo_info: dict = {}
-    if mode == "aereo" and airline:
+    if mode == "aereo" and airline and operation == "importacion":
         fee = get_air_handling_fee(airline)
         if fee:
             handling_aereo_usd = fee["net_usd"]
             handling_aereo_info = fee
+
+    # Aéreo consolidado (coloader) destination charges — Abel Parte 2,
+    # 2026-06-19: exactly two flat pass-through charges (no margin uplift)
+    # when working through a coloader. Reuses the existing consolidator
+    # field rather than building a dedicated modality selector this session.
+    # TODO(abel-Q6): confirm modality selection (user-selected vs inferred).
+    aereo_consolidado = mode == "aereo" and bool(consolidator_name.strip())
+    aereo_transmission_usd = AEREO_CONSOLIDADO_TRANSMISSION_USD if aereo_consolidado else 0.0
+    aereo_handling_destino_usd = AEREO_CONSOLIDADO_HANDLING_USD if aereo_consolidado else 0.0
 
     # User-defined coloader line items — submitted via Section 4 form buckets.
     # Each item carries bucket="intl"|"local" (defaults "intl" for backward compat).
@@ -445,7 +467,10 @@ def create_quote():
                                        "factor_unit": None, "min_usd": None, "total": _valor})
     _extra_total = sum(ei["total"] for ei in extra_costeo_items)
 
-    costeo_total = flete_usd + vb_usd + customs_usd + transport_usd + handling_aereo_usd + thc_usd + _extra_total
+    costeo_total = (
+        flete_usd + vb_usd + customs_usd + transport_usd + handling_aereo_usd
+        + thc_usd + _extra_total + aereo_transmission_usd + aereo_handling_destino_usd
+    )
 
     costeo = {
         "flete_internacional_usd": flete_usd,
@@ -460,6 +485,9 @@ def create_quote():
         "visto_bueno_usd": vb_usd,
         "handling_aereo_usd": handling_aereo_usd,
         "handling_aereo_detail": handling_aereo_info,
+        "aereo_consolidado": aereo_consolidado if mode == "aereo" else None,
+        "aereo_transmission_usd": aereo_transmission_usd if aereo_transmission_usd else None,
+        "aereo_handling_destino_usd": aereo_handling_destino_usd if aereo_handling_destino_usd else None,
         "customs_agent_usd": customs_usd,
         "transport_usd": transport_usd,
         "transport_soles": transport_soles,
@@ -550,11 +578,15 @@ def create_quote():
             **_FLAGS_LOCAL,
         })
     if customs_usd > 0 and not _CUSTOMS_DESCS.intersection(_extra_local_descs):
+        # Venta uses agent["venta_usd"] (fixed price point) when present —
+        # Abel Parte 2, 2026-06-19: OEA+BASC venta is pinned to the standard
+        # agent's venta, not derived from its own (lower) cost.
+        _customs_venta = customs_agent_venta_usd(agent, m)
         local_venta_items.append({
             "description": "Agente de Aduana",
             "quantity": 1,
-            "unit_price": round(customs_usd * m, 2),
-            "total": round(customs_usd * m, 2),
+            "unit_price": _customs_venta,
+            "total": _customs_venta,
             **_FLAGS_LOCAL,
         })
     if handling_aereo_usd > 0:
@@ -578,6 +610,23 @@ def create_quote():
             "quantity": 1,
             "unit_price": round(transport_usd * m, 2),
             "total": round(transport_usd * m, 2),
+            **_FLAGS_LOCAL,
+        })
+    if aereo_transmission_usd > 0:
+        # Flat pass-through, no margin uplift — same pattern as Handling Aéreo.
+        local_venta_items.append({
+            "description": "Transmission (Consolidado)",
+            "quantity": 1,
+            "unit_price": round(aereo_transmission_usd, 2),
+            "total": round(aereo_transmission_usd, 2),
+            **_FLAGS_LOCAL,
+        })
+    if aereo_handling_destino_usd > 0:
+        local_venta_items.append({
+            "description": "Handling Destino (Consolidado)",
+            "quantity": 1,
+            "unit_price": round(aereo_handling_destino_usd, 2),
+            "total": round(aereo_handling_destino_usd, 2),
             **_FLAGS_LOCAL,
         })
 

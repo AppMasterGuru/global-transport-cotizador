@@ -672,15 +672,23 @@
 
 // ── Mode visibility: consolidador / aerolínea rows ────────────────────────────
 (function () {
-  var modeSelect      = document.getElementById('mode-select');
-  var rowConsolidador = document.getElementById('row-consolidador');
-  var rowAerolinea    = document.getElementById('row-aerolinea');
-  var rowFleteLcl     = document.getElementById('row-flete-rate-lcl');
-  var rowFleteAereo   = document.getElementById('row-flete-rate-aereo');
+  var modeSelect       = document.getElementById('mode-select');
+  var rowConsolidador  = document.getElementById('row-consolidador');
+  var rowAerolinea     = document.getElementById('row-aerolinea');
+  var rowFleteLcl      = document.getElementById('row-flete-rate-lcl');
+  var rowFleteAereo    = document.getElementById('row-flete-rate-aereo');
+  var consolidadorSel  = document.getElementById('consolidator-select');
 
   function applyModeVisibility() {
     var mode = modeSelect.value;
-    rowConsolidador.style.display = (mode === 'lcl')   ? '' : 'none';
+    // Consolidador row is shown for both LCL (auto Visto Bueno) and Aéreo
+    // (consolidado destination charges — Transmission/Handling). Disabling
+    // it for FCL/other modes stops the hidden <select> from still submitting
+    // a stale default value, which would otherwise be misread server-side
+    // as "aereo consolidado" even when the field was never shown to the user.
+    var showConsolidador = (mode === 'lcl' || mode === 'aereo');
+    rowConsolidador.style.display = showConsolidador ? '' : 'none';
+    if (consolidadorSel) { consolidadorSel.disabled = !showConsolidador; }
     rowAerolinea.style.display    = (mode === 'aereo') ? '' : 'none';
     rowFleteLcl.style.display     = (mode === 'lcl')   ? '' : 'none';
     rowFleteAereo.style.display   = (mode === 'aereo') ? '' : 'none';

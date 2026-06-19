@@ -630,7 +630,7 @@ class TestAereoHandlingFee:
                                               "igv_usd": 16.92, "total_usd": 110.92})
         q = _post_aereo_quote(client, {
             "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
-            "flete_rate_aereo": "4.5", "airline": "TALMA",
+            "flete_rate_aereo": "4.5", "airline": "TALMA", "operation": "importacion",
         })
         costeo = json.loads(q["costeo_json"])
         assert costeo["handling_aereo_usd"] == pytest.approx(94.0, rel=0.001)
@@ -644,6 +644,7 @@ class TestAereoHandlingFee:
         q = _post_aereo_quote(client, {
             "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
             "flete_rate_aereo": "4.5", "airline": "TALMA", "margin_pct": "20",
+            "operation": "importacion",
         })
         venta = json.loads(q["venta_json"])
         handling = next(i for i in venta["line_items"] if i["description"] == "Handling Aéreo")
@@ -655,6 +656,7 @@ class TestAereoHandlingFee:
         q = _post_aereo_quote(client, {
             "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
             "flete_rate_aereo": "4.5", "airline": "UNKNOWN AIRLINE",
+            "operation": "importacion",
         })
         costeo = json.loads(q["costeo_json"])
         assert costeo["handling_aereo_usd"] == 0.0
@@ -698,3 +700,88 @@ class TestLclFreightDedup:
         # The duplicate freight extra item must not survive into costeo —
         # only the auto-computed flete_internacional_usd should carry it.
         assert not costeo.get("extra_items")
+
+
+# ── Aéreo config corrections (Abel Parte 2, 2026-06-19) ──────────────────────
+# Escenario 2 (export): no handling charge. Escenario 1 (standard, import):
+# cost 90+IGV / venta 110+IGV. Escenario 4 (OEA+BASC, import): cost net 80,
+# venta PINNED to the standard agent's venta (110), not derived from cost.
+# New rule: aereo consolidado destination charges (Transmission 35, Handling 45).
+
+class TestAereoExportNoHandling:
+    def test_no_handling_fee_on_export(self, client, monkeypatch):
+        import api.routes as routes_mod
+        monkeypatch.setattr(routes_mod, "get_air_handling_fee",
+                             lambda carrier: {"airline": carrier, "handler": "TALMA",
+                                              "counter": carrier, "net_usd": 94.0,
+                                              "igv_usd": 16.92, "total_usd": 110.92})
+        q = _post_aereo_quote(client, {"operation": "exportacion", "airline": "TALMA"})
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["handling_aereo_usd"] == 0.0
+
+
+class TestAereoImportStandardCustomsAgent:
+    def test_cost_net_90(self, client):
+        q = _post_aereo_quote(client, {"operation": "importacion", "requires_oea_basc": ""})
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["customs_agent_usd"] == pytest.approx(90.0, rel=0.001)
+
+    def test_venta_110(self, client):
+        q = _post_aereo_quote(client, {"operation": "importacion", "requires_oea_basc": ""})
+        venta = json.loads(q["venta_json"])
+        agent_item = next(i for i in venta["line_items"] if i["description"] == "Agente de Aduana")
+        assert agent_item["total"] == pytest.approx(110.0, rel=0.001)
+
+
+class TestAereoImportOeaBascCustomsAgent:
+    def test_cost_net_80(self, client):
+        q = _post_aereo_quote(client, {"operation": "importacion", "requires_oea_basc": "on"})
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["customs_agent_usd"] == pytest.approx(80.0, rel=0.001)
+
+    def test_venta_pinned_to_standard_agent_venta_not_derived_from_cost(self, client):
+        # OEA+BASC cost (80) is LOWER than standard (90), but venta must still
+        # be 110 — pinned to the standard agent's venta, not cost x margin.
+        q = _post_aereo_quote(client, {"operation": "importacion", "requires_oea_basc": "on",
+                                        "margin_pct": "50"})
+        venta = json.loads(q["venta_json"])
+        agent_item = next(i for i in venta["line_items"] if i["description"] == "Agente de Aduana")
+        assert agent_item["total"] == pytest.approx(110.0, rel=0.001)
+
+    def test_standard_and_oea_venta_are_equal_regardless_of_cost(self, client):
+        q_standard = _post_aereo_quote(client, {"operation": "importacion", "requires_oea_basc": ""})
+        q_oea      = _post_aereo_quote(client, {"operation": "importacion", "requires_oea_basc": "on"})
+        v_standard = json.loads(q_standard["venta_json"])
+        v_oea      = json.loads(q_oea["venta_json"])
+        i_standard = next(i for i in v_standard["line_items"] if i["description"] == "Agente de Aduana")
+        i_oea      = next(i for i in v_oea["line_items"] if i["description"] == "Agente de Aduana")
+        assert i_standard["total"] == i_oea["total"] == pytest.approx(110.0, rel=0.001)
+
+
+class TestAereoConsolidadoDestinationCharges:
+    def test_transmission_and_handling_present_when_consolidado(self, client):
+        q = _post_aereo_quote(client, {"consolidator": "MSL"})
+        venta = json.loads(q["venta_json"])
+        descriptions = [i["description"] for i in venta["line_items"]]
+        assert any("Transmission" in d for d in descriptions)
+        assert any("Handling" in d and "Destino" in d for d in descriptions)
+
+    def test_transmission_amount_is_35(self, client):
+        q = _post_aereo_quote(client, {"consolidator": "CRAFT"})
+        venta = json.loads(q["venta_json"])
+        item = next(i for i in venta["line_items"] if "Transmission" in i["description"])
+        assert item["total"] == pytest.approx(35.0, rel=0.001)
+
+    def test_handling_destino_amount_is_45(self, client):
+        q = _post_aereo_quote(client, {"consolidator": "EQ"})
+        venta = json.loads(q["venta_json"])
+        item = next(i for i in venta["line_items"] if "Handling" in i["description"] and "Destino" in i["description"])
+        assert item["total"] == pytest.approx(45.0, rel=0.001)
+
+    def test_no_destination_charges_when_no_consolidator(self, client):
+        # Direct-with-international-agent modality — out of scope this
+        # session (TODO abel-Q6) — no consolidator submitted means no charge.
+        q = _post_aereo_quote(client, {"consolidator": ""})
+        venta = json.loads(q["venta_json"])
+        descriptions = [i["description"] for i in venta["line_items"]]
+        assert not any("Transmission" in d for d in descriptions)

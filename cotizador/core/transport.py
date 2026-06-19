@@ -230,3 +230,79 @@ def visto_bueno_total_usd(consolidator: dict) -> float:
 def customs_total_usd(agent: dict) -> float:
     """DEPRECATED: returns net (pre-IGV). Use customs_net_usd() instead."""
     return customs_net_usd(agent)
+
+
+# ── Aéreo import customs agent (Abel Parte 2, 2026-06-19 — Escenario 1/4) ────
+# Standard agent: cost net USD 90, venta USD 110 (both + IGV at PDF render).
+# OEA+BASC agent: cost net USD 80 (lower) but its VENTA must PIN to the
+# standard agent's venta (110) — NOT derived from its own cost. Abel's words:
+# "monto venta lo mismo que el agente de aduanas que no tiene BASC y OEA."
+
+AEREO_IMPORT_CUSTOMS_AGENTS: dict[str, dict] = {
+    "ALEFERO": {
+        "name": "Alefero",
+        "commission_usd": 90.0,
+        "gastos_usd": 0.0,
+        "venta_usd": 110.0,
+        "requires_oea_basc": False,
+        "default": True,
+    },
+    "OEA_BASC": {
+        "name": "OEA+BASC Certified Agent",
+        "commission_usd": 80.0,
+        "gastos_usd": 0.0,
+        "venta_usd": 110.0,  # pinned to ALEFERO's venta — not derived from cost
+        "requires_oea_basc": True,
+        "default": False,
+    },
+}
+
+
+def get_aereo_import_customs_agent(client_requires_oea_basc: bool = False) -> dict:
+    """Select the aereo-import customs agent (Abel Parte 2, 2026-06-19)."""
+    if client_requires_oea_basc:
+        return AEREO_IMPORT_CUSTOMS_AGENTS["OEA_BASC"]
+    return AEREO_IMPORT_CUSTOMS_AGENTS["ALEFERO"]
+
+
+def customs_agent_venta_usd(agent: dict, margin_multiplier: float) -> float:
+    """
+    Venta for the Agente de Aduana line item.
+
+    Uses agent["venta_usd"] (a fixed price point) when present — this is a
+    deliberate pricing decision, not a margin calculation, and must NOT be
+    re-derived from cost x margin. Falls back to cost x margin for agents
+    without a pinned venta (legacy/export/generic path).
+    """
+    if agent.get("venta_usd") is not None:
+        return round(float(agent["venta_usd"]), 2)
+    return round(customs_net_usd(agent) * margin_multiplier, 2)
+
+
+# ── LCL import customs agent (Abel Parte 2, 2026-06-19 — Escenario 4) ───────
+LCL_IMPORT_CUSTOMS_AGENT: dict = {
+    "name": "Alefero",
+    "commission_usd": 350.0,
+    "gastos_usd": 0.0,
+    "requires_oea_basc": False,
+    "default": True,
+}
+
+
+def get_lcl_import_customs_agent() -> dict:
+    """LCL-import customs agent net (Abel Parte 2, 2026-06-19 — Escenario 4)."""
+    return LCL_IMPORT_CUSTOMS_AGENT
+
+
+# ── Aéreo consolidado (coloader) destination charges ─────────────────────────
+# Abel confirmed 2026-06-19: when working through a coloader (MSL/CRAFT/ECU/
+# etc — "consolidado"), exactly two destination charges apply, flat pass-
+# through (no margin uplift, same pattern as Handling Aéreo):
+#   Transmission USD 35 + IGV
+#   Handling     USD 45 + IGV
+# The direct-with-international-agent modality is a separate path — how the
+# system determines consolidado vs directo is unresolved this session.
+# TODO(abel-Q6): confirm aereo modality selection — user-selected vs inferred
+# from provider — before building a dedicated modality selector.
+AEREO_CONSOLIDADO_TRANSMISSION_USD = 35.0
+AEREO_CONSOLIDADO_HANDLING_USD = 45.0
