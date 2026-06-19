@@ -1,5 +1,5 @@
 ## Unread Email Summary
-_Last updated: 2026-06-19 19:10 UTC (incremental — 176 business threads | accounts: barney@timebackai.co)_
+_Last updated: 2026-06-19 22:31 UTC (incremental — 176 business threads | accounts: barney@timebackai.co)_
 
 ### ⚠️ NEEDS RESPONSE (20 threads)
 
@@ -127,8 +127,9 @@ _Last updated: 2026-06-19 19:10 UTC (incremental — 176 business threads | acco
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
-| 2026-06-19 | 1 | → | barney@timebackai.co | Una pregunta más (#13) — CRAFT importación Visto… | Hola Abel, Una sola pregunta adicional a las 12 que te mandé antes — e… |
-| 2026-06-19 | 5 | → | barney@timebackai.co | Re: Cotizador — validación completa (LCL, Aéreo,… | Subject: PARTE 2 — 12 puntos por confirmar (te dejo nuestro valor de t… |
+| 2026-06-19 | 13 | ← | kalzamora@sintad.pe | RE: Análisis técnico API SCE Carga — campos requ… | Estimado Renato Buenas tardes Es un gusto saludarlo nuevamente. El mot… |
+| 2026-06-19 | 2 | ← | pricing@gt.com.pe | RE: Una pregunta más (#13) — CRAFT importación V… | TE RESPONDO BARNEY, MONTO DE VISTO BUENO CRAFT EXPORTACIÓN ES à USD160… |
+| 2026-06-19 | 6 | ← | pricing@gt.com.pe | RE: Cotizador — validación completa (LCL, Aéreo,… | Hola Barney, Respondo a tus preguntas: LCL 1) Escenario 3 — almacén: m… |
 | 2026-06-19 | 1 | → | barney@timebackai.co | Rotación de credenciales — requisito BASC | Subject: Rotación de credenciales — requisito BASC Hola David, Espero … |
 | 2026-06-14 | 1 | → | barney@timebackai.co | Cotizador — validación final de tarifas (5 casos… | Abel, ya están listos todos los ajustes con tus números confirmados. T… |
 | 2026-06-13 | 1 | → | barney@timebackai.co |  | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
@@ -229,21 +230,28 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
 - [x] 638 → 709 tests (+71, all red-first). Full suite green throughout,
       6 clean commits with explicit file lists per fix area.
 
-### Pending (2026-06-19, carry forward)
-- [ ] **Confirm with Abel/GT: CRAFT import VB 160 vs 90** — see note above.
-      Resolve before next LCL quote using CRAFT import.
-- [ ] TODO(abel-Q1): LCL Esc3 Almacén correct value (current 250 flagged wrong)
-- [ ] TODO(abel-Q1b): LCL Esc3 Visto Bueno correct consolidator/value
-- [ ] TODO(abel-Q2): APM import 40' — 489.95 (in use) vs Abel's 498.95
-- [ ] TODO(abel-Q3): FCL import VB-import layer — stack vs replace THC+ISPS+MBL
-- [ ] TODO(abel-Q4): CMA/APL second THC row (65/70 vs 40/65) in G. LOCALES
-- [ ] TODO(abel-Q5): Hamburg Süd ISPS — bill USD 16 or convert EUR 13 at SBS
-- [ ] TODO(abel-Q6): aereo modality — consolidado vs directo selection mechanism
-- [ ] TODO(abel-Q7): FCL F1-F4 not yet run — wire port_costs/fcl_naviera_costs/
-      fcl_import_costs into routes.py + new_quote.html FCL form fields, then
-      run scenarios and hand results to Abel
-- [ ] Aéreo/LCL config corrections need their own Abel re-validation pass
-      before being treated as production-final
+### Completed this session (2026-06-19) — Abel Parte 2 Q&A confirmations
+- [x] CRAFT import VB reverted 160→90 (Q13 confirmed). (commit 40a5cad)
+- [x] LCL Esc3 almacén = USD 220+IGV (Q1 confirmed) — closes TODO(abel-Q1). (commit bdd9eb6)
+- [x] CMA/APL THC 65 + ISPS 39, both IGV-exempt (Q4 confirmed) — closes
+      TODO(abel-Q4). (commit 394b6f6)
+- [x] Hamburg Süd excluded from active naviera list (Q5 confirmed). (commit 993a156)
+- [x] FCL precinto Alefero = USD 10+IGV flat per container (Q8 confirmed). (commit 3f6623e)
+- [x] Aéreo almacén = manual input field, TALMA simulator link live (Q11
+      confirmed; SAASA link still pending from Abel — not invented). (commit f7295c8)
+- [x] Tests: 709 → 721, last commit f7295c8.
+
+### Pending (2026-06-19, carry forward to Saturday)
+- [ ] FCL import VB stacking layer (Q3)
+- [ ] FCL OEA+BASC tiered customs agent export (Q6)
+- [ ] Open Transport container zone table (Q7)
+- [ ] Aéreo modality dropdown consolidado/directo (Q9)
+- [ ] Wire FCL into live form (terminal/naviera/container selectors)
+- [ ] Abel to run F1–F4 once form is wired
+- [ ] JP go-live session — not yet scheduled
+- [ ] Still open from earlier in the session, not part of this Q&A round:
+      TODO(abel-Q1b) (LCL Esc3 Visto Bueno correct consolidator/value) and
+      TODO(abel-Q2) (APM import 40': 489.95 in use vs Abel's note 498.95)
 
 ### Completed this session (2026-06-18)
 - [x] Pre-launch verification — 10-task pass, surfaced 3 delivery-layer bugs + 1 signature finding
