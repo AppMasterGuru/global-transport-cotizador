@@ -1,5 +1,5 @@
 ## Unread Email Summary
-_Last updated: 2026-06-19 02:22 UTC (incremental — 174 business threads | accounts: barney@timebackai.co)_
+_Last updated: 2026-06-19 19:10 UTC (incremental — 176 business threads | accounts: barney@timebackai.co)_
 
 ### ⚠️ NEEDS RESPONSE (20 threads)
 
@@ -123,12 +123,13 @@ _Last updated: 2026-06-19 02:22 UTC (incremental — 174 business threads | acco
 |---|------|-----|------|----|---------|---------|
 | 1 | 2026-05-30 22:59 | ← | pricing@gt.com.pe | barney@timebackai.co | Proforma Global Transport SAC — 26-05-00… | Estimado/a Miami Foods Corp, Adjunto encontrará nuestra proforma de co… **← UNANSWERED** |
 
-### 🚢 GlobalTransport (50 total, 20 ⚠️ needs response — showing last 14d)
+### 🚢 GlobalTransport (51 total, 20 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-19 | 1 | → | barney@timebackai.co | Una pregunta más (#13) — CRAFT importación Visto… | Hola Abel, Una sola pregunta adicional a las 12 que te mandé antes — e… |
+| 2026-06-19 | 5 | → | barney@timebackai.co | Re: Cotizador — validación completa (LCL, Aéreo,… | Subject: PARTE 2 — 12 puntos por confirmar (te dejo nuestro valor de t… |
 | 2026-06-19 | 1 | → | barney@timebackai.co | Rotación de credenciales — requisito BASC | Subject: Rotación de credenciales — requisito BASC Hola David, Espero … |
-| 2026-06-18 | 2 | ← | pricing@gt.com.pe | RE: Cotizador — validación completa (LCL, Aéreo,… | Hola Barney, Voy avanzando con la parte 1 PARTE 1 — PREGUNTAS DE CONFI… |
 | 2026-06-14 | 1 | → | barney@timebackai.co | Cotizador — validación final de tarifas (5 casos… | Abel, ya están listos todos los ajustes con tus números confirmados. T… |
 | 2026-06-13 | 1 | → | barney@timebackai.co |  | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
 | 2026-06-09 | 2 | ← | ralvarez@gt.com.pe | RE: Cotizador — listos para arrancar | Muy bien!! gracias AD JP Best Regards / Saludos Cordiales Renato Alvar… |
@@ -138,10 +139,11 @@ _Last updated: 2026-06-19 02:22 UTC (incremental — 174 business threads | acco
 
 ### 🍸 Rebara (4 total, none in last 14d)
 
-### 📬 Other (118 total, 16 ⚠️ needs response — showing last 14d)
+### 📬 Other (119 total, 16 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-19 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Fri Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-18 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-17 | 1 | ← | calendar-notification@google… | Notification: Barney x ESCALA @ Wed Jun 17, 2026… | Barney x ESCALA Daniela Cortavarría is inviting you to a scheduled Zoo… |
 | 2026-06-17 | 1 | ← | info@sector3svg.org | Invitation: Barney x ESCALA @ Wed Jun 17, 2026 2… | Barney x ESCALA Daniela Cortavarría is inviting you to a scheduled Zoo… |
@@ -166,15 +168,82 @@ _Last updated: 2026-06-19 02:22 UTC (incremental — 174 business threads | acco
 | 2026-06-08 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 8… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-08 | 1 | ← | welcome@supabase.com | Welcome to Supabase | Hey there, Welcome to Supabase, the Postgres development platform. Sup… |
 | 2026-06-08 | 1 | ← | welcome@supabase.com | Confirm your email and launch your projects on S… | Confirm your email address to start building with Supabase You can sta… |
-| 2026-06-08 | 1 | ← | team@m.ngrok.com | Keep your app online under traffic spikes | Your first ngrok endpoint is live, awesome! The next step many teams h… |
-_… and more (showing 25 of 118)_
+_… and more (showing 25 of 119)_
 
 ### Personal email (barney.elliott@gmail.com)
 _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --personal` to add it._
 
 
 ## Active Tasks
-**Last updated: 2026-06-18**
+**Last updated: 2026-06-19**
+
+### Completed this session (2026-06-19) — Abel Parte 2 corrections + FCL build
+- [x] BUG 1 (critical) — aereo chargeable-weight freight fixed. Flete was
+      always USD 0.00 on every aereo scenario; now flete = flete_rate_aereo
+      x max(actual_kg, volumetric_kg). New form field, new costeo field
+      `chargeable_kg`. Also stopped applying margin to Handling Aereo
+      (flat pass-through, TALMA Esc1 = USD 94.00 + IGV exactly). (commit fff9173)
+- [x] BUG 2 — LCL duplicate international-freight block fixed. Coloader
+      Section 4 items that duplicate the auto freight line are now
+      suppressed. (commit fff9173)
+- [x] Aereo config corrections — Esc2 export: no handling charge (gated to
+      import only). Esc1 standard customs agent (import): cost 90+IGV /
+      venta 110+IGV. Esc4 OEA+BASC agent (import): cost net 80, venta
+      PINNED to 110 (not derived from cost) — `customs_agent_venta_usd()`.
+      New rule: aereo consolidado (coloader) destination charges —
+      Transmission 35+IGV, Handling 45+IGV — reuses existing consolidator
+      dropdown (now shown for aereo too, disabled when hidden to avoid a
+      stale-submit bug). TODO(abel-Q6): consolidado vs directo modality
+      selection still unresolved. (commit 94e29d2)
+- [x] LCL config corrections — Esc4 customs agent neto 350+IGV wired and
+      tested (commit eb38744). Esc3 Visto Bueno + Almacén left untouched
+      with TODO(abel-Q1)/TODO(abel-Q1b) — Abel's note named no consolidator
+      and the validation screenshots show inconsistent manual overrides
+      (108/160/192/228) that don't cleanly map to any CONSOLIDATORS entry;
+      confirmed with Barney not to guess. **Open question carried forward:
+      CRAFT import VB (currently 160, changed 06-18) may need to revert to
+      90 — strong circumstantial evidence (Section 3 screenshot shows MSL
+      import correctly hinting 90; CRAFT/SACO import were the only two
+      values changed the day before Parte 2 flagged an error) but Barney
+      wants to confirm with Abel/GT directly before touching it.**
+- [x] FCL build — three new, fully-tested cost modules, all cross-checked
+      against the real source files in `Client Data/Part 2_Abel/` (not just
+      synthetic test fixtures):
+      - `core/port_costs.py` — DPW/APM port costs by operation x container
+        type. TODO(abel-Q2): using 489.95 for APM import 40' (official
+        tariff) not Abel's note (498.95). (commit 92e8585)
+      - `core/fcl_naviera_costs.py` — export Visto Bueno (naviera-attributed
+        where identifiable) + Gate Out (almacen-keyed), parsed from
+        EXPORTACION-CALLAO sheet. Plus the 2nd-container +50%
+        customs-agent-commission surcharge rule. (commit eb2fe8c)
+      - `core/fcl_import_costs.py` — THC+ISPS+MBL only (Abel's explicit
+        written rule), parsed from G. LOCALES + EMISION MBL sheets. HOLD
+        per TODO(abel-Q3): the EXPO_IMPO "VB IMPORTACION" layer is NOT
+        wired in. (commit 8229c5a)
+      - None of these are wired into `api/routes.py`'s live form yet — FCL
+        terminal/naviera selection UI doesn't exist in new_quote.html.
+        That wiring, plus the actual F1-F4 scenario runs, is next-session
+        work per TODO(abel-Q7).
+- [x] Did NOT touch DDP logic or LISTENER_ENABLED this session (explicit
+      instruction).
+- [x] 638 → 709 tests (+71, all red-first). Full suite green throughout,
+      6 clean commits with explicit file lists per fix area.
+
+### Pending (2026-06-19, carry forward)
+- [ ] **Confirm with Abel/GT: CRAFT import VB 160 vs 90** — see note above.
+      Resolve before next LCL quote using CRAFT import.
+- [ ] TODO(abel-Q1): LCL Esc3 Almacén correct value (current 250 flagged wrong)
+- [ ] TODO(abel-Q1b): LCL Esc3 Visto Bueno correct consolidator/value
+- [ ] TODO(abel-Q2): APM import 40' — 489.95 (in use) vs Abel's 498.95
+- [ ] TODO(abel-Q3): FCL import VB-import layer — stack vs replace THC+ISPS+MBL
+- [ ] TODO(abel-Q4): CMA/APL second THC row (65/70 vs 40/65) in G. LOCALES
+- [ ] TODO(abel-Q5): Hamburg Süd ISPS — bill USD 16 or convert EUR 13 at SBS
+- [ ] TODO(abel-Q6): aereo modality — consolidado vs directo selection mechanism
+- [ ] TODO(abel-Q7): FCL F1-F4 not yet run — wire port_costs/fcl_naviera_costs/
+      fcl_import_costs into routes.py + new_quote.html FCL form fields, then
+      run scenarios and hand results to Abel
+- [ ] Aéreo/LCL config corrections need their own Abel re-validation pass
+      before being treated as production-final
 
 ### Completed this session (2026-06-18)
 - [x] Pre-launch verification — 10-task pass, surfaced 3 delivery-layer bugs + 1 signature finding
@@ -714,6 +783,12 @@ Barney's family and Renato's family are close. Friday May 1 dinner at Renato's h
 | `a1b34a8` | 2026-06-18 | Add DDP duties/taxes block to client proforma (calculation + render). New Section A (CIF: Invoice/Insurance/Freight) and Section C (Advalorem/IGV/IPM/Percepción) in proforma_es.html + proforma_en.html, gated strictly on incoterm==DDP — every non-DDP quote renders unchanged. Tax rates as configurable constants (ADVALOREM_PCT/IGV_PCT/IPM_PCT/PERCEPCION_PCT), confirmed against Abel's worked example (CIF 56,250 → Advalorem 5,625.00 / IGV 9,900.00 / IPM 1,237.50 / Percepción 2,555.44 / Subtotal B 19,317.94). 616/616 tests. |
 | `1cef182` | 2026-06-18 | DDP data entry: wire invoice/insurance form fields, CIF derives from flete, duties block renders from real form data. New Quote form gets invoice_usd/insurance_usd inputs shown only for DDP, captured by create_quote() into costeo_json, read back into the PDF meta builders — closing the gap where Section A/C only worked with manually-injected meta. Toggle behavior (appear on DDP / disappear off DDP / clear stale values on switch-away) verified and the missing clear-on-switch-away behavior fixed. Full form-to-proforma path proven end-to-end. 623/623 tests. |
 | `9fa5104` | 2026-06-18 | Railway log tail — attempted, reverted. CLI accessToken expires every ~1hr; manually created API tokens return "Not Authorized" on deployments query. Clean stub restored in get_railway_log_tail() with # TODO. RAILWAY_PROJECT_ID + RAILWAY_SERVICE_ID kept in .env for future use. Full Railway agent pipeline (auto-diagnose + self-heal) deferred until stable long-lived token is available from Railway. |
+| `fff9173` | 2026-06-19 | Abel Parte 2 — BUG 1 fix: aereo flete was USD 0.00 on every scenario because chargeable weight (max actual vs volumetric kg) was never multiplied into the rate. New flete_rate_aereo field + chargeable_kg costeo field. Stopped applying margin to Handling Aereo (flat pass-through, TALMA Esc1 = USD 94.00 + IGV). BUG 2 fix: Section 4 coloader items that duplicate the auto international-freight line are now suppressed. 650/650 tests. |
+| `94e29d2` | 2026-06-19 | Abel Parte 2 — aereo config corrections. Esc2 export: no handling charge (import-only gate). Esc1 standard customs agent (import): cost 90+IGV/venta 110+IGV. Esc4 OEA+BASC agent (import): cost net 80, venta PINNED to 110 — customs_agent_venta_usd() in core/transport.py. New rule: aereo consolidado destination charges (Transmission 35+IGV, Handling 45+IGV), reusing the existing consolidator dropdown (now shown for aereo, disabled when hidden to stop a stale-submit bug). LCL import customs agent (Escenario 4, neto 350+IGV) also added. 660/660 tests. |
+| `eb38744` | 2026-06-19 | Abel Parte 2 — LCL Escenario 4 customs-agent test coverage added (was wired in previous commit, missing its own test). LCL Escenario 3 (Visto Bueno + Almacén) left untouched with TODO(abel-Q1)/TODO(abel-Q1b) — Abel's note named no consolidator and validation screenshots show inconsistent manual overrides (108/160/192/228) not matching any single CONSOLIDATORS entry; confirmed with Barney not to guess this session. 662/662 tests. |
+| `92e8585` | 2026-06-19 | FCL port costs by terminal. New core/port_costs.py keyed on terminal x operation x container_type (20STD/40STD/40HC), cross-checked against the official tariffs in Client Data/Part 2_Abel/. TODO(abel-Q2): using 489.95 for APM import 40' (official tariff) over Abel's note (498.95). Not yet wired into api/routes.py — no FCL terminal/container form fields exist yet. 680/680 tests. |
+| `eb2fe8c` | 2026-06-19 | FCL export local costs by naviera. New core/fcl_naviera_costs.py parses (not hardcodes) EXPORTACION-CALLAO sheet of EXPO_IMPO.xlsx into naviera-attributed Visto Bueno + almacen-keyed Gate Out. Verified against the real file: MEDLOG/CONTRANS/DPW gate-outs and Maersk/MSK Box+Coverage VB all match exactly. Plus the 2nd-container +50% customs-agent-commission surcharge rule. 695/695 tests. |
+| `8229c5a` | 2026-06-19 | FCL import local costs by naviera. New core/fcl_import_costs.py implements Abel's explicit written rule — THC+ISPS+MBL only — parsed from G. LOCALES + EMISION MBL sheets. Verified against the real file: CMA/APL, COSCO/OOCL, Maersk/Sealand, Seaboard all match exactly (including NO COBRA and comma-decimal edge cases). HOLD per TODO(abel-Q3): EXPO_IMPO's "VB IMPORTACION" layer NOT wired in. 709/709 tests (was 638 at session start). |
 
 ---
 
