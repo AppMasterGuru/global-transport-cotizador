@@ -300,6 +300,16 @@
           </select>
           <span class="field-hint">Tarifa de handling aeroportuario se calcula automáticamente</span>
         </label>
+        <label class="field" id="row-almacen-aereo">
+          <span class="label-text">Almacén aéreo (consultar simulador TALMA/SAASA) <em style="font-weight:normal;color:#6b7280;">opcional</em></span>
+          <input type="number" name="almacen_aereo_usd" step="0.01" min="0" placeholder="Ej: 180.50">
+          <span class="field-hint">
+            No se calcula automáticamente — TALMA y SAASA usan simuladores en línea
+            (peso, tipo de carga, días, dimensiones). Consultar antes de cotizar:
+            TALMA: talmanet.talma.com.pe/ ·
+            SAASA: (enlace pendiente de Abel). Deja vacío si no aplica.
+          </span>
+        </label>
         <label class="field">
           <span class="label-text">Margen (%)</span>
           <input type="number" name="margin_pct" step="0.5" min="10" max="100" value="20">
@@ -687,6 +697,7 @@
   var rowAerolinea     = document.getElementById('row-aerolinea');
   var rowFleteLcl      = document.getElementById('row-flete-rate-lcl');
   var rowFleteAereo    = document.getElementById('row-flete-rate-aereo');
+  var rowAlmacenAereo  = document.getElementById('row-almacen-aereo');
   var consolidadorSel  = document.getElementById('consolidator-select');
 
   function applyModeVisibility() {
@@ -702,6 +713,7 @@
     rowAerolinea.style.display    = (mode === 'aereo') ? '' : 'none';
     rowFleteLcl.style.display     = (mode === 'lcl')   ? '' : 'none';
     rowFleteAereo.style.display   = (mode === 'aereo') ? '' : 'none';
+    rowAlmacenAereo.style.display = (mode === 'aereo') ? '' : 'none';
   }
 
   modeSelect.addEventListener('change', applyModeVisibility);

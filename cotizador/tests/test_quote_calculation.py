@@ -676,6 +676,41 @@ class TestAereoHandlingFee:
         assert costeo["handling_aereo_usd"] == 0.0
 
 
+class TestAereoAlmacenManualInput:
+    """Abel Parte 2 Q11 (2026-06-19): aereo almacen cannot be calculated
+    automatically (TALMA/SAASA use online simulators) — manual input field,
+    optional, flows into costeo + venta like any other line item, no
+    margin uplift (it's a pass-through of whatever the simulator quoted)."""
+
+    def test_passes_through_when_populated(self, client):
+        q = _post_aereo_quote(client, {
+            "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
+            "flete_rate_aereo": "4.5", "almacen_aereo_usd": "180.50",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["almacen_aereo_usd"] == pytest.approx(180.50, rel=0.001)
+
+    def test_venta_line_item_no_margin_uplift(self, client):
+        q = _post_aereo_quote(client, {
+            "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
+            "flete_rate_aereo": "4.5", "almacen_aereo_usd": "180.50",
+            "margin_pct": "20",
+        })
+        venta = json.loads(q["venta_json"])
+        almacen = next(i for i in venta["line_items"] if i["description"] == "Almacén Aéreo")
+        assert almacen["total"] == pytest.approx(180.50, rel=0.001)
+
+    def test_zero_when_empty(self, client):
+        q = _post_aereo_quote(client, {
+            "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
+            "flete_rate_aereo": "4.5",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["almacen_aereo_usd"] == 0.0
+        venta = json.loads(q["venta_json"])
+        assert not any(i["description"] == "Almacén Aéreo" for i in venta["line_items"])
+
+
 # ── BUG 2 (2026-06-19) — LCL duplicate international-freight block ───────────
 # Abel: "si ya tenemos un cuadro de flete internacional, ya no debería aparecer
 # un segundo cuadro en conceptos adicionales del coloader." When a real

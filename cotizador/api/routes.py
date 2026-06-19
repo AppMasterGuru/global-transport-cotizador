@@ -377,6 +377,12 @@ def create_quote():
             handling_aereo_usd = fee["net_usd"]
             handling_aereo_info = fee
 
+    # Almacen aereo (Abel Parte 2, 2026-06-19, Q11) — cannot be calculated
+    # automatically (TALMA/SAASA use online simulators by weight/cargo
+    # type/days/dimensions). Manual input, optional, flat pass-through
+    # (same pattern as Handling Aereo — no margin uplift).
+    almacen_aereo_usd = float(f.get("almacen_aereo_usd") or 0)
+
     # Aéreo consolidado (coloader) destination charges — Abel Parte 2,
     # 2026-06-19: exactly two flat pass-through charges (no margin uplift)
     # when working through a coloader. Reuses the existing consolidator
@@ -470,6 +476,7 @@ def create_quote():
     costeo_total = (
         flete_usd + vb_usd + customs_usd + transport_usd + handling_aereo_usd
         + thc_usd + _extra_total + aereo_transmission_usd + aereo_handling_destino_usd
+        + almacen_aereo_usd
     )
 
     costeo = {
@@ -485,6 +492,7 @@ def create_quote():
         "visto_bueno_usd": vb_usd,
         "handling_aereo_usd": handling_aereo_usd,
         "handling_aereo_detail": handling_aereo_info,
+        "almacen_aereo_usd": almacen_aereo_usd,
         "aereo_consolidado": aereo_consolidado if mode == "aereo" else None,
         "aereo_transmission_usd": aereo_transmission_usd if aereo_transmission_usd else None,
         "aereo_handling_destino_usd": aereo_handling_destino_usd if aereo_handling_destino_usd else None,
@@ -602,6 +610,16 @@ def create_quote():
             "quantity": 1,
             "unit_price": round(handling_aereo_usd, 2),
             "total": round(handling_aereo_usd, 2),
+            **_FLAGS_LOCAL,
+        })
+    if almacen_aereo_usd > 0:
+        # Manual input (Abel Parte 2, 2026-06-19, Q11) — flat pass-through
+        # of whatever the TALMA/SAASA simulator quoted, no margin uplift.
+        local_venta_items.append({
+            "description": "Almacén Aéreo",
+            "quantity": 1,
+            "unit_price": round(almacen_aereo_usd, 2),
+            "total": round(almacen_aereo_usd, 2),
             **_FLAGS_LOCAL,
         })
     if transport_usd > 0:
