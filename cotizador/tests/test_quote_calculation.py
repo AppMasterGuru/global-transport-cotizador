@@ -501,6 +501,20 @@ class TestDynamicLineItems:
         assert descriptions.index("THC / Terminal Handling") > descriptions.index("Pick Up")
 
 
+class TestLclAlmacenDefaultClosedQ1:
+    """Abel Parte 2 Q1 (2026-06-19): LCL Escenario 3 Almacen confirmed at
+    USD 220.00 + IGV (was flagged wrong at the old default of 250)."""
+
+    def test_form_default_is_220_not_250(self, client):
+        resp = client.get("/quote/new")
+        assert resp.status_code == 200
+        html = resp.data.decode()
+        almacen_idx = html.index("concept: 'Almacén'")
+        snippet = html[almacen_idx:almacen_idx + 60]
+        assert "valor: 220" in snippet
+        assert "valor: 250" not in snippet
+
+
 class TestDefaultRequesterTypeAgente:
     def test_form_default_is_agente(self, client):
         resp = client.get("/quote/new")

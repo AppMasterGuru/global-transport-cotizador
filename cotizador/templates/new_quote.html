@@ -616,10 +616,9 @@
       // session pending direct confirmation with Abel/GT.
       addLocal({ concept: 'Visto Bueno',         valor: vbValor });        // per consolidator (VB_RATES)
       addLocal({ concept: 'Desconsolidación',    valor: 25, factor: '' }); // per ton, factor TBD
-      // TODO(abel-Q1): Abel Parte 2 (2026-06-19) LCL Escenario 3 — "Monto del
-      // almacén es USD200.00 + IGV errado." Current default (250) is flagged
-      // wrong but the correct value is unconfirmed — do NOT guess. Leave as-is.
-      addLocal({ concept: 'Almacén',             valor: 250 });
+      // TODO(abel-Q1) CLOSED 2026-06-19: Abel confirmed LCL Escenario 3
+      // Almacen = USD 220.00 + IGV (was wrong at 250).
+      addLocal({ concept: 'Almacén',             valor: 220 });
       addLocal({ concept: 'Agente de Aduana',    cif_calc: true, pct_costo: 0.30, pct_venta: 0.35, min_costo: 70, min_venta: 110 });
       addLocal({ concept: 'Operative Charge',    valor: 25 });
       addLocal({ concept: 'Delivery',            valor: 0 });
