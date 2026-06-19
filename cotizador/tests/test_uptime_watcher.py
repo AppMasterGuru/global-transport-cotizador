@@ -177,3 +177,29 @@ def test_build_watcher_wires_check_and_alert_fns():
     assert watcher._check_fn is not None
     assert watcher._on_down is not None
     assert watcher._on_recovery is not None
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# uptime_daemon.py — background HTTP healthcheck server (required by Railway)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_health_server_responds_200_ok():
+    import sys
+
+    import requests
+
+    _scripts = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"
+    )
+    if _scripts not in sys.path:
+        sys.path.insert(0, _scripts)
+    import uptime_daemon
+
+    server = uptime_daemon.start_health_server(0)  # port 0 → OS-assigned free port
+    try:
+        port = server.server_port
+        resp = requests.get(f"http://127.0.0.1:{port}/health", timeout=5)
+        assert resp.status_code == 200
+        assert resp.json() == {"status": "ok"}
+    finally:
+        server.shutdown()

@@ -32,12 +32,15 @@ Stops cleanly on Ctrl-C or SIGTERM (logs UPTIME_WATCHER_STOPPED to audit).
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import signal
 import sys
+import threading
 import time
 from datetime import datetime, timezone
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # ── Path setup ─────────────────────────────────────────────────────────────────
 # scripts/ lives one level inside cotizador/ — resolve the project root so
@@ -117,6 +120,37 @@ def build_watcher() -> UptimeWatcher:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Healthcheck server — Railway requires an HTTP healthcheck on every service;
+# this daemon has no web app of its own, so it serves a trivial /health here.
+# Runs in a background thread so it never blocks the polling loop.
+# ══════════════════════════════════════════════════════════════════════════════
+
+class _HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self) -> None:
+        if self.path == "/health":
+            body = json.dumps({"status": "ok"}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def log_message(self, format: str, *args) -> None:  # noqa: A002
+        pass  # silence default BaseHTTPRequestHandler stderr access logging
+
+
+def start_health_server(port: int) -> HTTPServer:
+    """Start the /health HTTP server on a background daemon thread. Returns the server (caller may call .shutdown())."""
+    server = HTTPServer(("0.0.0.0", port), _HealthHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    return server
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Daemon
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -134,8 +168,14 @@ class UptimeDaemon:
 
     def run(self) -> None:
         init_db()
+
+        port = int(os.getenv("PORT", "8080"))
+        start_health_server(port)
+        log.info("Health server listening on :%d.", port)
+
         audit("UPTIME_WATCHER_STARTED", None, "uptime_daemon", {
             "interval_s": UPTIME_INTERVAL_S,
+            "health_server_port": port,
         })
         log.info("Uptime watcher started. Checking /health every %ds.", UPTIME_INTERVAL_S)
 
