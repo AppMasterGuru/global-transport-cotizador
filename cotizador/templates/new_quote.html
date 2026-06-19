@@ -606,8 +606,18 @@
       addIntl({ concept: 'BL',                  valor: 0 });
       addIntl({ concept: 'Customs Broker',       valor: 0 });
       // Local bucket defaults (import)
+      // TODO(abel-Q1b): Abel Parte 2 (2026-06-19) LCL Escenario 3 flagged
+      // Visto Bueno as wrong ("tiene que ser 90 USD + IGV") but did not name
+      // which consolidator/operation — the validation screenshots show a
+      // manually-typed override (108/160/192/228 across drafts), not a clean
+      // default capture, and no single CONSOLIDATORS entry matches cleanly.
+      // Confirmed with Barney 2026-06-19: do not touch CONSOLIDATORS this
+      // session pending direct confirmation with Abel/GT.
       addLocal({ concept: 'Visto Bueno',         valor: vbValor });        // per consolidator (VB_RATES)
       addLocal({ concept: 'Desconsolidación',    valor: 25, factor: '' }); // per ton, factor TBD
+      // TODO(abel-Q1): Abel Parte 2 (2026-06-19) LCL Escenario 3 — "Monto del
+      // almacén es USD200.00 + IGV errado." Current default (250) is flagged
+      // wrong but the correct value is unconfirmed — do NOT guess. Leave as-is.
       addLocal({ concept: 'Almacén',             valor: 250 });
       addLocal({ concept: 'Agente de Aduana',    cif_calc: true, pct_costo: 0.30, pct_venta: 0.35, min_costo: 70, min_venta: 110 });
       addLocal({ concept: 'Operative Charge',    valor: 25 });

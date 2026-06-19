@@ -708,6 +708,25 @@ class TestLclFreightDedup:
 # venta PINNED to the standard agent's venta (110), not derived from cost.
 # New rule: aereo consolidado destination charges (Transmission 35, Handling 45).
 
+class TestLclImportCustomsAgent:
+    """Abel Parte 2 (2026-06-19), LCL Escenario 4: Agente de Aduana neto USD 350 + IGV."""
+
+    def test_cost_net_350(self, client):
+        q = _post_quote(client, {
+            "flete_lcl": "315", "operation": "importacion", "requires_oea_basc": "",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["customs_agent_usd"] == pytest.approx(350.0, rel=0.001)
+
+    def test_export_unaffected(self, client):
+        # Export must keep using the generic export-flat agent (unchanged).
+        q = _post_quote(client, {
+            "flete_lcl": "315", "operation": "exportacion", "requires_oea_basc": "",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["customs_agent_usd"] != pytest.approx(350.0, rel=0.001)
+
+
 class TestAereoExportNoHandling:
     def test_no_handling_fee_on_export(self, client, monkeypatch):
         import api.routes as routes_mod
