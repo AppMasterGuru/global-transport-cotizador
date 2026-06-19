@@ -1,5 +1,5 @@
 ## Unread Email Summary
-_Last updated: 2026-06-11 19:59 UTC (incremental — 157 business threads | accounts: barney@timebackai.co)_
+_Last updated: 2026-06-19 02:22 UTC (incremental — 174 business threads | accounts: barney@timebackai.co)_
 
 ### ⚠️ NEEDS RESPONSE (20 threads)
 
@@ -123,37 +123,38 @@ _Last updated: 2026-06-11 19:59 UTC (incremental — 157 business threads | acco
 |---|------|-----|------|----|---------|---------|
 | 1 | 2026-05-30 22:59 | ← | pricing@gt.com.pe | barney@timebackai.co | Proforma Global Transport SAC — 26-05-00… | Estimado/a Miami Foods Corp, Adjunto encontrará nuestra proforma de co… **← UNANSWERED** |
 
-### 🚢 GlobalTransport (46 total, 20 ⚠️ needs response — showing last 14d)
+### 🚢 GlobalTransport (50 total, 20 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-19 | 1 | → | barney@timebackai.co | Rotación de credenciales — requisito BASC | Subject: Rotación de credenciales — requisito BASC Hola David, Espero … |
+| 2026-06-18 | 2 | ← | pricing@gt.com.pe | RE: Cotizador — validación completa (LCL, Aéreo,… | Hola Barney, Voy avanzando con la parte 1 PARTE 1 — PREGUNTAS DE CONFI… |
+| 2026-06-14 | 1 | → | barney@timebackai.co | Cotizador — validación final de tarifas (5 casos… | Abel, ya están listos todos los ajustes con tus números confirmados. T… |
+| 2026-06-13 | 1 | → | barney@timebackai.co |  | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
 | 2026-06-09 | 2 | ← | ralvarez@gt.com.pe | RE: Cotizador — listos para arrancar | Muy bien!! gracias AD JP Best Regards / Saludos Cordiales Renato Alvar… |
 | 2026-06-08 | 1 | → | barney.elliott@gmail.com | RE: 26-06-001 Hamburg Importer GmbH EXW GT-PC — … | Buenos días, adjunto nuestra tarifa para el embarque indicado. Flete i… |
-| 2026-06-04 | 4 | ← | ralvarez@gt.com.pe | RE: Donde estamos — resumen rápido | Eso mi amigo, todo claro, gracias……. Best Regards / Saludos Cordiales … |
-| 2026-06-03 | 2 | ← | ralvarez@gt.com.pe | RE: olvide adjuntar | Si la recibí, pero no la lei completa…sorry .muy larga….. La leo. Best… |
-| 2026-06-03 | 1 | ← | comm.intel@gt.com.pe | Invitación a Charla BASC Perú – Gestión de Segur… | Estimados asociados de negocio: Con el objetivo de fortalecer la cultu… |
-| 2026-06-02 | 12 | ← | kalzamora@sintad.pe | RE: Análisis técnico API SCE Carga — campos requ… | Estimado Renato Buenas tardes Adjunto encontrará la cotización de la i… |
-| 2026-05-30 ⚠️ | 1 | ← | pricing@gt.com.pe | Proforma Global Transport SAC — 26-05-002 Miami … | Estimado/a Miami Foods Corp, Adjunto encontrará nuestra proforma de co… |
-| 2026-05-29 | 1 | → | barney@timebackai.co | SINTAD — Tenemos lo que necesitamos, necesito su… | Subject: SINTAD — Tenemos lo que necesitamos, necesito su luz verde Ho… |
-| 2026-05-29 | 1 | → | barney@timebackai.co | SINTAD — Tenemos lo que necesitamos, necesito su… | Hola Renato, hola Jean Paul, Buenas noticias en el frente de SINTAD. D… |
 
-### 🏢 Becamm (2 total — showing last 14d)
+### 🏢 Becamm (2 total, none in last 14d)
+
+### 🍸 Rebara (4 total, none in last 14d)
+
+### 📬 Other (118 total, 16 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
-| 2026-05-29 | 3 | → | barney@timebackai.co | Re: TimeBack AI — Propuesta Actualizada + Docume… | Jorge — Genial, gracias. De verdad aprecio la oportunidad y tengo much… |
-
-### 🍸 Rebara (4 total — showing last 14d)
-
-| Date | Msgs | Dir | From | Subject | Snippet |
-|------|------|-----|------|---------|---------|
-| 2026-06-04 | 1 | → | barney@timebackai.co |  | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
-| 2026-06-04 | 2 | ← | mailer-daemon@googlemail.com | Delivery Status Notification (Failure) | Address not found Your message wasn&#39;t delivered to patty@pattyarre… |
-
-### 📬 Other (105 total, 16 ⚠️ needs response — showing last 14d)
-
-| Date | Msgs | Dir | From | Subject | Snippet |
-|------|------|-----|------|---------|---------|
+| 2026-06-18 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-17 | 1 | ← | calendar-notification@google… | Notification: Barney x ESCALA @ Wed Jun 17, 2026… | Barney x ESCALA Daniela Cortavarría is inviting you to a scheduled Zoo… |
+| 2026-06-17 | 1 | ← | info@sector3svg.org | Invitation: Barney x ESCALA @ Wed Jun 17, 2026 2… | Barney x ESCALA Daniela Cortavarría is inviting you to a scheduled Zoo… |
+| 2026-06-17 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Wed Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-17 | 2 | ← | contabilidadaleph@viajesroxa… | Re: ÁLEPH CAJAMARCA | Buenas noches estimado Barney: Confirmamos la recepción de la segunda … |
+| 2026-06-16 | 1 | ← | no-reply@mail.instagram.com | 923647 is your Instagram code | Hi, Someone tried to sign up for an Instagram account with barney@time… |
+| 2026-06-16 | 1 | ← | calendar-notification@google… | Notification: Partido Zoé football @ Tue Jun 16,… | Partido Zoé football You have been invited by valeriaruizsalas@gmail.c… |
+| 2026-06-16 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Tue Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-15 | 1 | ← | valeriaruizsalas@gmail.com | Invitation: Partido Zoé football @ Tue Jun 16, 2… | Partido Zoé football You have been invited by valeria ruiz to attend a… |
+| 2026-06-15 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-14 | 1 | ← | ant.wilson@supabase.com | Your Supabase Project timeback-outreach is going… | Hi there, To save on cloud resources I just did a scan of all our proj… |
+| 2026-06-13 | 1 | → | barney@timebackai.co |  | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
+| 2026-06-12 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Fri Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-11 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-10 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Wed Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-10 | 1 | ← | calendar-notification@google… | Notification: Script and blocking review  @ Wed … | Script and blocking review You have been invited by paul.keller@markha… |
@@ -166,27 +167,38 @@ _Last updated: 2026-06-11 19:59 UTC (incremental — 157 business threads | acco
 | 2026-06-08 | 1 | ← | welcome@supabase.com | Welcome to Supabase | Hey there, Welcome to Supabase, the Postgres development platform. Sup… |
 | 2026-06-08 | 1 | ← | welcome@supabase.com | Confirm your email and launch your projects on S… | Confirm your email address to start building with Supabase You can sta… |
 | 2026-06-08 | 1 | ← | team@m.ngrok.com | Keep your app online under traffic spikes | Your first ngrok endpoint is live, awesome! The next step many teams h… |
-| 2026-06-05 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Fri Jun 5… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-05 | 1 | ← | no-reply@accounts.google.com | Security alert | A new sign-in on Apple iPhone barney@timebackai.co We noticed a new si… |
-| 2026-06-04 | 1 | ← | noreply@google.com | Your Google data is ready to download | Your account, your data. We&#39;ve finished creating a copy of the Goo… |
-| 2026-06-04 | 1 | ← | no-reply@accounts.google.com | Archive of Google data requested | Archive of Google data requested for barney@timebackai.co You&#39;re g… |
-| 2026-06-04 | 1 | ← | no-reply@accounts.google.com | Security alert | A new sign-in on Mac barney@timebackai.co We noticed a new sign-in to … |
-| 2026-06-04 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu Jun 4… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-04 | 1 | ← | paul.keller@markham.edu.pe | Invitation: Script and blocking review  @ Wed Ju… | Script and blocking review You have been invited by Paul Keller to att… |
-| 2026-06-03 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Wed Jun 3… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-02 | 1 | ← | no-reply@accounts.google.com | Security alert | A new sign-in on Mac barney@timebackai.co We noticed a new sign-in to … |
-| 2026-06-02 | 2 | ← | noreply@tm.openai.com | Your temporary ChatGPT login code | Enter this temporary verification code to continue: 179055. ChatGPT Lo… |
-| 2026-06-02 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Tue Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-02 | 1 | ← | calendar-notification@google… | Notification: Barney shooting script meeting w/ … | Barney shooting script meeting w/ Group 4 You have been invited by pau… |
-| 2026-06-01 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-_… and more (showing 25 of 105)_
+_… and more (showing 25 of 118)_
 
 ### Personal email (barney.elliott@gmail.com)
 _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --personal` to add it._
 
 
 ## Active Tasks
-**Last updated: 2026-06-11**
+**Last updated: 2026-06-18**
+
+### Completed this session (2026-06-18)
+- [x] Pre-launch verification — 10-task pass, surfaced 3 delivery-layer bugs + 1 signature finding
+- [x] Bug 1 fixed — Send crash + state corruption (commit 1625873)
+- [x] Finding 4 fixed — GT-LOG from-address routing, Daniela email corrected to lognet.sales@gt.com.pe (commit 1625873)
+- [x] Bug 2 fixed — PDF mode/incoterm mislabel, every mode now renders correct mode + incoterm (commit 1625873)
+- [x] Railway boot failure fixed — WeasyPrint/Nixpacks (commit dceefc4)
+- [x] Visto bueno config — CRAFT import 90→160, SACO import 90→190, EQ export 170→180/import 170→90, form-override bug killed with regression test (commit dcceb5f)
+- [x] DDP duties/taxes block built — calculation half, all four taxes confirmed against Abel's worked example, configurable rate constants, ES+EN, DDP-only gated (commit a1b34a8)
+- [x] DDP data entry wired — invoice/insurance form fields, toggle behavior confirmed, CIF derives from flete, form-to-PDF path proven end-to-end (commit 1cef182)
+- [x] Test suite: 592 → 623 tests across session (+31 new regression tests, all red-first)
+- [x] Production healthy: 1cef182 live on Railway
+
+### Pending (2026-06-18, carry forward)
+- [ ] Abel Parte 2 scenario results — PENDING (LCL 1-4, Aéreo A1-A4, FCL F1-F4) — system back up, Abel resuming
+- [ ] LCL Escenario 5 + FCL F4 (DDP) — PENDING Abel run, DDP build now complete
+- [ ] Daniela direct phone number — MISSING (Abel gave GT main number, need Daniela directly)
+- [ ] Uptime monitoring agent — READY to build next session
+- [ ] Abel config session — default line items, auto-add rules, transport-local logic (bands vs address) — still open
+- [ ] 3 consecutive quotes approved by JP — CRITICAL, triggers USD 750 saldo
+- [ ] Renato/JP go-live session — schedule after Abel Parte 2 clears
+- [ ] LISTENER_ENABLED flip to true — after JP/Renato go-live approval
+- [ ] 🔴 Password rotation — GT passwords sent in plaintext by David, must rotate before go-live
+- [ ] Railway agent pipeline — auto-diagnose + self-heal on outage. Needs stable long-lived Railway API token. Foundation: get_railway_log_tail() stub in core/monitor.py, RAILWAY_PROJECT_ID + RAILWAY_SERVICE_ID already in .env.
 
 ### Completed this session (2026-06-11)
 - [x] FIX 4 — DPU → DDU in incoterm dropdown (6f21cb6)
@@ -696,6 +708,12 @@ Barney's family and Renato's family are close. Friday May 1 dinner at Renato's h
 | `63124c5` | 2026-06-09 | Graph API email sender + provider auto-send + provider status panel. `core/email_sender.py` rewritten: SMTP stub → Graph API (`GRAPH_CLIENT_ID/SECRET/TENANT_ID`), per-ejecutivo from-address via `resolve_from_address()`. `core/provider_status.py` NEW: GREEN/ORANGE/RED/GREY status logic + chase email builder. `api/routes.py`: `_auto_send_provider_emails()` fires on every `POST /quote/new` after `QUOTE_CREATED`; `APP_ENV` → `FLASK_ENV` guard fix; demo seed adds backdated provider contact + MSL reply records for Hamburg Importer. `templates/quote_detail.html`: provider status panel between Alertas and Aprobación. Railway build failure fixed (`.venv`/`venv/` in ignore files; GitHub auto-deploy restored). 419/419 tests. End-to-end pipeline confirmed live with Abel test email. |
 | — | 2026-05-19 | Bilingual PDF routing (proforma_es.html + proforma_en.html, language routed via meta.language, 234 tests). WhatsApp listener scaffold (core/whatsapp_listener.py, GET/POST /webhook/whatsapp, Meta payload parsing, stub mode when credentials absent, 255 tests). SMTP diagnosed: tenant block (5.7.139 SmtpClientAuthentication disabled) — Graph API Mail.Send path chosen, email sent to David. SINTAD technical call completed: custom Java API on VB6 SCE Carga, token auth, ~20d build, cost TBD. Field list sent to jdiez@sintad.pe. Daniela email corrected in config/signatures.py (lognet.sales@gt.com.pe). 255/255 tests passing. |
 | 6f21cb6 → e61763b | 2026-06-11 | Abel Demo 2 polish: DPU→DDU, GT-LOC→GT-LOG, conditional dropdowns (Aerolínea/Consolidador by mode), CBM auto-calc with mode-switching formulas, multi-package repeatable input, two-section split (Flete Internacional + Gastos Locales + IGV 18%) across all 4 render surfaces, PDF download button restored, seed data flags fixed. 488→522 tests. |
+| `1625873` | 2026-06-18 | Fix delivery-layer bugs from pre-launch verification: (1) send crash + state corruption on quote send, (2) GT-LOG from-address routing — Daniela's email corrected to lognet.sales@gt.com.pe, (3) PDF mode/incoterm mislabel — every mode now renders its actual mode + incoterm instead of a stale default. |
+| `dceefc4` | 2026-06-18 | Fix Railway boot failure: WeasyPrint native libraries missing from Nixpacks build. Root cause: railway.toml specifies Dockerfile but Railway was using Nixpacks builder, which never installed libgobject, libpango etc. that WeasyPrint requires — every gunicorn worker crashed on import at boot → 502. Fix: added cotizador/nixpacks.toml declaring the same aptPkgs already in the Dockerfile. Permanent — all future deploys get the libs regardless of builder. 592/592 tests unchanged. |
+| `dcceb5f` | 2026-06-18 | Apply Abel's confirmed Part 1 visto bueno values: CRAFT import 90→160, SACO import 90→190 (MSL/EQ import and all export values already correct). Found and fixed a live bug: the New Quote form pre-filled the Visto Bueno line item with a bare numeric literal regardless of consolidator, which silently overrode the engine's correct per-consolidator value on the quoted/venta side — invisible while all import VBs were uniformly 90, became a real undercharge the moment CRAFT/SACO diverged. Also fixed a stale EQ entry (170/170→180/90) in the same JS table. 599/599 tests. |
+| `a1b34a8` | 2026-06-18 | Add DDP duties/taxes block to client proforma (calculation + render). New Section A (CIF: Invoice/Insurance/Freight) and Section C (Advalorem/IGV/IPM/Percepción) in proforma_es.html + proforma_en.html, gated strictly on incoterm==DDP — every non-DDP quote renders unchanged. Tax rates as configurable constants (ADVALOREM_PCT/IGV_PCT/IPM_PCT/PERCEPCION_PCT), confirmed against Abel's worked example (CIF 56,250 → Advalorem 5,625.00 / IGV 9,900.00 / IPM 1,237.50 / Percepción 2,555.44 / Subtotal B 19,317.94). 616/616 tests. |
+| `1cef182` | 2026-06-18 | DDP data entry: wire invoice/insurance form fields, CIF derives from flete, duties block renders from real form data. New Quote form gets invoice_usd/insurance_usd inputs shown only for DDP, captured by create_quote() into costeo_json, read back into the PDF meta builders — closing the gap where Section A/C only worked with manually-injected meta. Toggle behavior (appear on DDP / disappear off DDP / clear stale values on switch-away) verified and the missing clear-on-switch-away behavior fixed. Full form-to-proforma path proven end-to-end. 623/623 tests. |
+| `9fa5104` | 2026-06-18 | Railway log tail — attempted, reverted. CLI accessToken expires every ~1hr; manually created API tokens return "Not Authorized" on deployments query. Clean stub restored in get_railway_log_tail() with # TODO. RAILWAY_PROJECT_ID + RAILWAY_SERVICE_ID kept in .env for future use. Full Railway agent pipeline (auto-diagnose + self-heal) deferred until stable long-lived token is available from Railway. |
 
 ---
 
