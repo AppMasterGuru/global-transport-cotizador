@@ -238,3 +238,31 @@ def send_recovery_alert(service: str, message: str) -> bool:
     title   = f"GT Cotizador — {service} recovered"
     details = {"Service": service, "Status": "back online"}
     return send_alert("info", title, message, details)
+
+
+def send_uptime_down_alert(
+    consecutive_failures: int,
+    last_error: str,
+    timestamp_utc: str,
+    log_lines: list[str] | None = None,
+) -> bool:
+    """
+    Send the uptime-watcher outage alert — fired once per outage by
+    UptimeWatcher on the transition into a down state (see core/monitor.py).
+    """
+    title   = "GT Cotizador — /health DOWN"
+    message = f"/health has failed {consecutive_failures} consecutive checks."
+    details = {
+        "Consecutive failures": str(consecutive_failures),
+        "Last error":            last_error or "unknown",
+        "Detected at (UTC)":     timestamp_utc,
+    }
+    if log_lines:
+        details["Railway logs (last 20)"] = "\n".join(log_lines)
+    else:
+        details["Railway logs"] = "unavailable (RAILWAY_API_TOKEN not configured)"
+
+    result = send_alert("critical", title, message, details)
+    # TODO: swap for WhatsApp once Twilio/Meta Cloud API credentials are added
+    # to .env — none exist today, so Slack is the only delivery channel.
+    return result

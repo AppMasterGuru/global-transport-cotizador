@@ -44,6 +44,8 @@ _SMTP_ADDRESS  = os.getenv("GT_EMAIL_ADDRESS", "")
 def check_flask_health() -> dict:
     """
     HTTP GET /health on the running Flask app.
+    Treats anything other than HTTP 200 with body {"status": "ok"} as down
+    (non-200, timeout/exception, or an unexpected/missing body).
     Returns {status, response_time_ms, error}.
     """
     start = time.monotonic()
@@ -51,7 +53,17 @@ def check_flask_health() -> dict:
         resp = _requests.get(_HEALTH_URL, timeout=10)
         elapsed_ms = (time.monotonic() - start) * 1000
         if resp.status_code == 200:
-            return {"status": "ok", "response_time_ms": round(elapsed_ms, 1), "error": None}
+            try:
+                body = resp.json()
+            except ValueError:
+                body = None
+            if isinstance(body, dict) and body.get("status") == "ok":
+                return {"status": "ok", "response_time_ms": round(elapsed_ms, 1), "error": None}
+            return {
+                "status": "down",
+                "response_time_ms": round(elapsed_ms, 1),
+                "error": f"unexpected body: {body!r}",
+            }
         return {
             "status": "down",
             "response_time_ms": round(elapsed_ms, 1),
@@ -379,3 +391,100 @@ def generate_daily_digest() -> dict:
         digest["errors"].append({"event_type": "DIGEST_ERROR", "detail": str(exc)})
 
     return digest
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Railway log tail (uptime alerts)
+# ══════════════════════════════════════════════════════════════════════════════
+
+_RAILWAY_GRAPHQL_URL = "https://backboard.railway.app/graphql/v2"
+
+
+def get_railway_log_tail(n: int = 20) -> list[str] | None:
+    """
+    Fetch the last `n` Railway deployment log lines for this service.
+
+    Returns None when RAILWAY_API_TOKEN / RAILWAY_PROJECT_ID / RAILWAY_SERVICE_ID
+    are not configured, or on any API failure. Callers must treat None as
+    "logs unavailable" and omit the log section — never crash or send an
+    empty section.
+    """
+    token      = os.getenv("RAILWAY_API_TOKEN", "")
+    project_id = os.getenv("RAILWAY_PROJECT_ID", "")
+    service_id = os.getenv("RAILWAY_SERVICE_ID", "")
+    if not (token and project_id and service_id):
+        return None
+
+    # TODO: verify this query against Railway's current GraphQL v2 schema once
+    # a real RAILWAY_API_TOKEN is provisioned — untested against the live API.
+    query = """
+        query ($serviceId: String!, $limit: Int!) {
+          deploymentLogs(serviceId: $serviceId, limit: $limit) {
+            message
+          }
+        }
+    """
+    try:
+        resp = _requests.post(
+            _RAILWAY_GRAPHQL_URL,
+            json={"query": query, "variables": {"serviceId": service_id, "limit": n}},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        logs = data.get("data", {}).get("deploymentLogs") or []
+        lines = [entry.get("message", "") for entry in logs]
+        return lines[-n:] if lines else None
+    except Exception:
+        return None
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Uptime watcher — consecutive-failure state machine for /health alerts
+# ══════════════════════════════════════════════════════════════════════════════
+
+_UPTIME_FAILURE_THRESHOLD = 2
+
+
+class UptimeWatcher:
+    """
+    Tracks consecutive /health failures and fires exactly one alert per
+    outage — on the transition into a down state — plus one recovery alert
+    when /health returns ok after an active outage. Never fires on a single
+    blip; never double-fires while an outage continues (flapping-safe).
+    """
+
+    def __init__(
+        self,
+        check_fn=check_flask_health,
+        on_down=None,
+        on_recovery=None,
+        failure_threshold: int = _UPTIME_FAILURE_THRESHOLD,
+    ) -> None:
+        self._check_fn = check_fn
+        self._on_down = on_down
+        self._on_recovery = on_recovery
+        self._threshold = failure_threshold
+        self.consecutive_failures = 0
+        self.in_outage = False
+
+    def poll(self) -> dict:
+        """Run one check cycle. Returns the raw check result dict."""
+        result = self._check_fn()
+
+        if result.get("status") == "ok":
+            if self.in_outage and self._on_recovery:
+                self._on_recovery(result)
+            self.consecutive_failures = 0
+            self.in_outage = False
+            return result
+
+        self.consecutive_failures += 1
+        if self.consecutive_failures >= self._threshold and not self.in_outage:
+            self.in_outage = True
+            if self._on_down:
+                self._on_down(result, self.consecutive_failures)
+
+        return result

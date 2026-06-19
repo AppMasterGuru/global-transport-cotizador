@@ -64,6 +64,38 @@ def test_flask_health_structure():
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# 79b. Flask health — HTTP 200 with a body that isn't {"status": "ok"} is "down"
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_flask_health_down_on_bad_body(monkeypatch):
+    """check_flask_health treats HTTP 200 with an unexpected body as down."""
+    class FakeResp:
+        status_code = 200
+
+        def json(self):
+            return {"status": "degraded"}
+
+    monkeypatch.setattr("core.monitor._requests.get", lambda *a, **k: FakeResp())
+    result = check_flask_health()
+    assert result["status"] == "down"
+    assert result["error"] is not None
+
+
+def test_flask_health_ok_on_good_body(monkeypatch):
+    """check_flask_health treats HTTP 200 with {"status": "ok"} as ok."""
+    class FakeResp:
+        status_code = 200
+
+        def json(self):
+            return {"status": "ok", "ts": "2026-06-18T00:00:00Z"}
+
+    monkeypatch.setattr("core.monitor._requests.get", lambda *a, **k: FakeResp())
+    result = check_flask_health()
+    assert result["status"] == "ok"
+    assert result["error"] is None
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # 80. DB health — returns "ok" with quote_count when DB is accessible
 # ═══════════════════════════════════════════════════════════════════════════════
 
