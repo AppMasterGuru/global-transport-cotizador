@@ -38,6 +38,8 @@ def _make_g_locales_xlsx() -> bytes:
         ["MAERSK / SEALAND", "COLUMBUS", "Callao", 110, 110, "DOC FEE", 55, 55],
         ["MSC", "MSC PERU", "Callao", 65, 65, None, None, None],
         ["SEABOARD", "CITIKOLD", "Callao", "NO COBRA", "NO COBRA", None, None, None],
+        ["HAMBURG SUD / ALIANCA", "COLUMBUS", "Callao", 90, 90, "ISPS",
+         "USD 16.00 \nEUR 13.00", "USD 16.00 \nEUR 13.00"],
     ]
     for r in rows:
         ws.append(r)
@@ -59,6 +61,7 @@ def _make_mbl_xlsx() -> bytes:
         ["MSC", "USD 57.00 + IGV", "NO"],
         ["SEABOARD", "USD 35.00 + IGV", "NO"],
         ["ONE", "USD 29,50 + IGV", "SI"],
+        ["HAMBURG SUD", "DOC FEE USD 30.93", "NO"],
     ]
     for r in rows:
         ws.append(r)
@@ -189,3 +192,12 @@ class TestCmaAplIgvExemptOverrideQ4:
         c = get_fcl_import_local_costs(g_locales, mbl, "COSCO / OOCL")
         assert c["thc_igv_applicable"] is True
         assert c["isps_igv_applicable"] is True
+
+
+class TestHamburgSudInactiveQ5:
+    """Abel confirmed no cargo with this carrier June 19 (Q5) — Hamburg Sud /
+    Alianca is removed from the active naviera list even though it still
+    has rows in the source sheets."""
+
+    def test_hamburg_sud_returns_none(self, g_locales, mbl):
+        assert get_fcl_import_local_costs(g_locales, mbl, "HAMBURG SUD / ALIANCA") is None

@@ -36,6 +36,10 @@ _NAVIERA_OVERRIDES: dict[str, dict] = {
     },
 }
 
+# Inactive navieras — Abel confirmed no cargo with this carrier June 19
+# (Q5). Excluded even though rows still exist in the source sheets.
+_INACTIVE_NAVIERAS: set[str] = {"HAMBURG SUD / ALIANCA"}
+
 
 def _parse_money(raw: str) -> dict:
     """
@@ -159,6 +163,8 @@ def get_fcl_import_local_costs(g_locales: dict, mbl: dict, naviera: str) -> dict
     THC+ISPS+MBL-only rule. Returns None if the naviera isn't found in
     G. LOCALES (the THC/ISPS source).
     """
+    if naviera in _INACTIVE_NAVIERAS:
+        return None
     g = g_locales.get(naviera)
     if g is None:
         return None
