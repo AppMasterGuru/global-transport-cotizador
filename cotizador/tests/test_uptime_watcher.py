@@ -118,6 +118,46 @@ def test_railway_log_tail_none_without_credentials(monkeypatch):
     assert get_railway_log_tail() is None
 
 
+def test_railway_log_tail_attempts_api_call_when_configured(monkeypatch):
+    """
+    All three vars present -> the function actually calls the Railway API.
+
+    Railway's deploymentLogs query takes a deploymentId, not a serviceId, so
+    a correct implementation must first look up the service's latest
+    deployment (projectId + serviceId), then fetch logs for that deployment.
+    """
+    monkeypatch.setenv("RAILWAY_API_TOKEN", "fake-token")
+    monkeypatch.setenv("RAILWAY_PROJECT_ID", "fake-project")
+    monkeypatch.setenv("RAILWAY_SERVICE_ID", "fake-service")
+
+    calls = []
+
+    class FakeResp:
+        def __init__(self, payload):
+            self.status_code = 200
+            self._payload = payload
+
+        def json(self):
+            return self._payload
+
+    def fake_post(url, json=None, headers=None, timeout=None):
+        calls.append(json)
+        query = json["query"]
+        if "deploymentLogs" in query:
+            assert json["variables"].get("deploymentId") == "dep-123"
+            return FakeResp({"data": {"deploymentLogs": [{"message": "line1"}, {"message": "line2"}]}})
+        # First call: look up the latest deployment for this service.
+        assert json["variables"]["input"]["serviceId"] == "fake-service"
+        assert json["variables"]["input"]["projectId"] == "fake-project"
+        return FakeResp({"data": {"deployments": {"edges": [{"node": {"id": "dep-123"}}]}}})
+
+    monkeypatch.setattr("core.monitor._requests.post", fake_post)
+
+    result = get_railway_log_tail(20)
+    assert len(calls) == 2  # deployment lookup, then log fetch
+    assert result == ["line1", "line2"]
+
+
 def test_railway_log_tail_none_on_api_failure(monkeypatch):
     monkeypatch.setenv("RAILWAY_API_TOKEN", "fake-token")
     monkeypatch.setenv("RAILWAY_PROJECT_ID", "fake-project")

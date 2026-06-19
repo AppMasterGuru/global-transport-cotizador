@@ -400,9 +400,34 @@ def generate_daily_digest() -> dict:
 _RAILWAY_GRAPHQL_URL = "https://backboard.railway.app/graphql/v2"
 
 
+_RAILWAY_DEPLOYMENTS_QUERY = """
+    query ($input: DeploymentListInput!, $first: Int) {
+      deployments(input: $input, first: $first) {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+    }
+"""
+
+_RAILWAY_DEPLOYMENT_LOGS_QUERY = """
+    query ($deploymentId: String!, $limit: Int) {
+      deploymentLogs(deploymentId: $deploymentId, limit: $limit) {
+        message
+      }
+    }
+"""
+
+
 def get_railway_log_tail(n: int = 20) -> list[str] | None:
     """
     Fetch the last `n` Railway deployment log lines for this service.
+
+    Railway's deploymentLogs query takes a deploymentId, not a serviceId, so
+    this looks up the service's most recent deployment first (projectId +
+    serviceId), then fetches that deployment's logs.
 
     Returns None when RAILWAY_API_TOKEN / RAILWAY_PROJECT_ID / RAILWAY_SERVICE_ID
     are not configured, or on any API failure. Callers must treat None as
@@ -415,26 +440,40 @@ def get_railway_log_tail(n: int = 20) -> list[str] | None:
     if not (token and project_id and service_id):
         return None
 
-    # TODO: verify this query against Railway's current GraphQL v2 schema once
-    # a real RAILWAY_API_TOKEN is provisioned — untested against the live API.
-    query = """
-        query ($serviceId: String!, $limit: Int!) {
-          deploymentLogs(serviceId: $serviceId, limit: $limit) {
-            message
-          }
-        }
-    """
+    headers = {"Authorization": f"Bearer {token}"}
+
     try:
         resp = _requests.post(
             _RAILWAY_GRAPHQL_URL,
-            json={"query": query, "variables": {"serviceId": service_id, "limit": n}},
-            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "query": _RAILWAY_DEPLOYMENTS_QUERY,
+                "variables": {
+                    "input": {"projectId": project_id, "serviceId": service_id},
+                    "first": 1,
+                },
+            },
+            headers=headers,
             timeout=10,
         )
         if resp.status_code != 200:
             return None
-        data = resp.json()
-        logs = data.get("data", {}).get("deploymentLogs") or []
+        edges = resp.json().get("data", {}).get("deployments", {}).get("edges") or []
+        if not edges:
+            return None
+        deployment_id = edges[0]["node"]["id"]
+
+        resp = _requests.post(
+            _RAILWAY_GRAPHQL_URL,
+            json={
+                "query": _RAILWAY_DEPLOYMENT_LOGS_QUERY,
+                "variables": {"deploymentId": deployment_id, "limit": n},
+            },
+            headers=headers,
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            return None
+        logs = resp.json().get("data", {}).get("deploymentLogs") or []
         lines = [entry.get("message", "") for entry in logs]
         return lines[-n:] if lines else None
     except Exception:
