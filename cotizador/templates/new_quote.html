@@ -376,10 +376,11 @@
 
   // VB net rates by consolidator × operation — MUST mirror core/transport.py
   // CONSOLIDATORS exactly (enforced by tests/test_vb_form_consistency.py).
-  // Confirmed by Abel 2026-06-18.
+  // Confirmed by Abel 2026-06-18; CRAFT import reverted 160->90 per Abel
+  // Q13 2026-06-19 (the 06-18 change was wrong for import).
   var VB_RATES = {
     MSL:   { exportacion: 160, importacion: 90 },
-    CRAFT: { exportacion: 160, importacion: 160 },
+    CRAFT: { exportacion: 160, importacion: 90 },
     SACO:  { exportacion: 190, importacion: 190 },
     EQ:    { exportacion: 180, importacion: 90 }
   };

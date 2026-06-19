@@ -59,7 +59,9 @@ CONSOLIDATORS: dict[str, dict] = {
     "CRAFT": {
         "name": "Craft",
         "visto_bueno_export_usd": 160.0,  # confirmed by Abel 2026-06-13
-        "visto_bueno_import_usd": 160.0,  # confirmed by Abel 2026-06-18 (was 90)
+        # June 18 dcceb5f change (90->160) was wrong for import per Abel
+        # Q13 June 19 — reverted back to 90.
+        "visto_bueno_import_usd": 90.0,
     },
     "SACO": {
         "name": "Saco",

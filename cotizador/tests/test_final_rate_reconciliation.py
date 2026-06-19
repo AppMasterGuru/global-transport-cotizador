@@ -96,13 +96,7 @@ class TestImportVbNinety:
 
 
 class TestImportVbUpdated20260618:
-    """CRAFT and SACO import VB updated by Abel 2026-06-18 (were USD 90)."""
-
-    def test_craft_import_vb_is_160(self):
-        c = get_consolidator("CRAFT")
-        assert c["visto_bueno_import_usd"] == 160.0
-        assert visto_bueno_net_usd(c, "importacion") == 160.0
-        assert vb_rate_missing(c, "importacion") is False
+    """SACO import VB updated by Abel 2026-06-18 (was USD 90)."""
 
     def test_saco_import_vb_is_190(self):
         c = get_consolidator("SACO")
@@ -122,6 +116,24 @@ class TestExportVbConfirmed:
         assert c["visto_bueno_export_usd"] != 180.0  # stale sheet value
 
     def test_craft_export_vb_is_160(self):
+        c = get_consolidator("CRAFT")
+        assert c["visto_bueno_export_usd"] == 160.0
+
+
+class TestCraftImportVbReverted20260619:
+    """
+    Abel Parte 2 Q13 (2026-06-19): the 2026-06-18 change (commit dcceb5f,
+    90->160) was wrong for CRAFT import. Reverted back to 90. Export is
+    unaffected by this — CRAFT export stays at 160.
+    """
+
+    def test_craft_import_vb_is_90(self):
+        c = get_consolidator("CRAFT")
+        assert c["visto_bueno_import_usd"] == 90.0
+        assert visto_bueno_net_usd(c, "importacion") == 90.0
+        assert vb_rate_missing(c, "importacion") is False
+
+    def test_craft_export_vb_still_160(self):
         c = get_consolidator("CRAFT")
         assert c["visto_bueno_export_usd"] == 160.0
 
