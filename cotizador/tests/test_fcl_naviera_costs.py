@@ -24,6 +24,7 @@ from core.fcl_naviera_costs import (
     get_export_gate_out,
     get_export_visto_bueno,
     parse_export_naviera_sheet,
+    precinto_total_usd,
     second_container_surcharge,
 )
 
@@ -179,3 +180,19 @@ class TestSecondContainerSurcharge:
     def test_two_containers_list_second_carries_surcharge(self):
         surcharges = apply_second_container_surcharges(100.0, num_containers=2)
         assert surcharges == [0.0, pytest.approx(50.0, rel=0.001)]
+
+
+class TestPrecintoQ8:
+    """Abel Parte 2 Q8 (2026-06-19): Alefero standard precinto is USD 10.00
+    + IGV per container, flat (Abel: 'por contenedor') — NOT subject to
+    the 2nd-container +50% surcharge that applies to the customs agent
+    commission."""
+
+    def test_one_container_is_10(self):
+        assert precinto_total_usd(num_containers=1) == pytest.approx(10.0, rel=0.001)
+
+    def test_two_containers_is_flat_20_not_surcharged(self):
+        assert precinto_total_usd(num_containers=2) == pytest.approx(20.0, rel=0.001)
+
+    def test_three_containers_is_flat_30(self):
+        assert precinto_total_usd(num_containers=3) == pytest.approx(30.0, rel=0.001)

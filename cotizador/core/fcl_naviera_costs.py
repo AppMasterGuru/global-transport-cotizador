@@ -132,3 +132,15 @@ def second_container_surcharge(agent_commission_usd: float, container_index: int
 def apply_second_container_surcharges(agent_commission_usd: float, num_containers: int) -> list[float]:
     """Per-container surcharge list (1-based index), first container = 0.0."""
     return [second_container_surcharge(agent_commission_usd, i) for i in range(1, num_containers + 1)]
+
+
+# ── Precinto (Abel Parte 2 Q8, 2026-06-19) ──────────────────────────────────
+# Alefero standard: USD 10.00 + IGV per container, flat ("por contenedor").
+# Unlike the customs agent commission, precinto does NOT carry the
+# 2nd-container +50% surcharge — it is the same per-container amount
+# regardless of container count.
+ALEFERO_PRECINTO_USD = 10.0
+
+
+def precinto_total_usd(num_containers: int) -> float:
+    return round(ALEFERO_PRECINTO_USD * num_containers, 2)
