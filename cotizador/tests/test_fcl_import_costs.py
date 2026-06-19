@@ -140,9 +140,11 @@ class TestFclImportLocalCostsCombined:
     """Abel's rule: THC + ISPS + MBL only."""
 
     def test_cma_apl_combined(self, g_locales, mbl):
+        # ISPS corrected to 39 by Abel Q4 2026-06-19 (was 14 from the raw
+        # sheet) — see TestCmaAplIgvExemptOverrideQ4 for the full override.
         c = get_fcl_import_local_costs(g_locales, mbl, "CMA CGM / APL")
         assert c["thc_20"] == pytest.approx(65.0, rel=0.001)
-        assert c["isps_20"] == pytest.approx(14.0, rel=0.001)
+        assert c["isps_20"] == pytest.approx(39.0, rel=0.001)
         assert c["mbl_usd"] == pytest.approx(55.0, rel=0.001)
 
     def test_cosco_oocl_combined(self, g_locales, mbl):
@@ -164,3 +166,26 @@ class TestFclImportLocalCostsCombined:
 
     def test_unknown_naviera_returns_none(self, g_locales, mbl):
         assert get_fcl_import_local_costs(g_locales, mbl, "NOT-A-REAL-LINE") is None
+
+
+class TestCmaAplIgvExemptOverrideQ4:
+    """Abel Parte 2 Q4 (2026-06-19): CMA CGM / APL THC and ISPS are
+    corrected (65 / 39) and IGV-exempt — overrides the raw G. LOCALES
+    sheet figures (which would otherwise default to IGV-applicable)."""
+
+    def test_thc_is_65_no_igv(self, g_locales, mbl):
+        c = get_fcl_import_local_costs(g_locales, mbl, "CMA CGM / APL")
+        assert c["thc_20"] == pytest.approx(65.0, rel=0.001)
+        assert c["thc_40"] == pytest.approx(65.0, rel=0.001)
+        assert c["thc_igv_applicable"] is False
+
+    def test_isps_is_39_no_igv(self, g_locales, mbl):
+        c = get_fcl_import_local_costs(g_locales, mbl, "CMA CGM / APL")
+        assert c["isps_20"] == pytest.approx(39.0, rel=0.001)
+        assert c["isps_40"] == pytest.approx(39.0, rel=0.001)
+        assert c["isps_igv_applicable"] is False
+
+    def test_other_navieras_default_igv_applicable_true(self, g_locales, mbl):
+        c = get_fcl_import_local_costs(g_locales, mbl, "COSCO / OOCL")
+        assert c["thc_igv_applicable"] is True
+        assert c["isps_igv_applicable"] is True

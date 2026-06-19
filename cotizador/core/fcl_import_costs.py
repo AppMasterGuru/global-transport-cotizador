@@ -21,6 +21,21 @@ import re
 
 _MONEY_RE = re.compile(r"(USD|S/)\s*([\d.,]+)")
 
+# Naviera-specific corrections/overrides on top of the raw sheet figures —
+# Abel Parte 2 Q4 (2026-06-19): CMA CGM / APL THC and ISPS are corrected
+# (65 / 39, both IGV-exempt), overriding the G. LOCALES "second THC row"
+# ambiguity flagged as TODO(abel-Q4) last session.
+_NAVIERA_OVERRIDES: dict[str, dict] = {
+    "CMA CGM / APL": {
+        "thc_20": 65.0,
+        "thc_40": 65.0,
+        "thc_igv_applicable": False,
+        "isps_20": 39.0,
+        "isps_40": 39.0,
+        "isps_igv_applicable": False,
+    },
+}
+
 
 def _parse_money(raw: str) -> dict:
     """
@@ -69,8 +84,11 @@ def parse_g_locales_sheet(ws) -> dict:
             continue
         naviera = row[0]
         if naviera is None:
-            # Orphan continuation row (e.g. CMA/APL's alternate THC figures —
-            # TODO(abel-Q4): confirm which THC row applies, 65/70 vs 40/65).
+            # Orphan continuation row (e.g. CMA/APL's alternate THC figures).
+            # TODO(abel-Q4) CLOSED 2026-06-19: Abel confirmed CMA CGM/APL
+            # THC=65 and ISPS=39, both IGV-exempt — applied as an override
+            # in _NAVIERA_OVERRIDES rather than resolved here, since this
+            # orphan row's own figures aren't the source of truth either.
             continue
         naviera_str = str(naviera).strip()
         if naviera_str.upper() in ("NAVIERA",):
@@ -145,14 +163,17 @@ def get_fcl_import_local_costs(g_locales: dict, mbl: dict, naviera: str) -> dict
     if g is None:
         return None
     m = _lookup_mbl(mbl, naviera)
+    override = _NAVIERA_OVERRIDES.get(naviera, {})
     return {
         "naviera": naviera,
-        "thc_20": g["thc_20"],
-        "thc_40": g["thc_40"],
+        "thc_20": override.get("thc_20", g["thc_20"]),
+        "thc_40": override.get("thc_40", g["thc_40"]),
         "thc_no_cobra": g["no_cobra"],
+        "thc_igv_applicable": override.get("thc_igv_applicable", True),
         "isps_concept": g["adicional_concept"],
-        "isps_20": g["adicional_20"],
-        "isps_40": g["adicional_40"],
+        "isps_20": override.get("isps_20", g["adicional_20"]),
+        "isps_40": override.get("isps_40", g["adicional_40"]),
+        "isps_igv_applicable": override.get("isps_igv_applicable", True),
         "mbl_usd": m.get("amount") if m.get("currency") == "USD" else None,
         "mbl_raw": m.get("raw"),
         "mbl_currency": m.get("currency"),
