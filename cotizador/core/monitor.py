@@ -421,6 +421,10 @@ _RAILWAY_DEPLOYMENT_LOGS_QUERY = """
 """
 
 
+# RAILWAY_API_TOKEN must be the CLI accessToken from ~/.railway/config.json
+# (run `railway login`, then read the token from that file) — not a manually
+# created API token from the Railway dashboard. Manually created tokens
+# return "Not Authorized" on the deployments query this function depends on.
 def get_railway_log_tail(n: int = 20) -> list[str] | None:
     """
     Fetch the last `n` Railway deployment log lines for this service.
