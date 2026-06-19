@@ -280,12 +280,26 @@ def create_quote():
         wm_factor         = round(max(_vol, _wt_ton), 4)
         flete_factor_unit = "m³" if _vol >= _wt_ton else "ton"
 
-    flete_rate_lcl = float(f.get("flete_rate_lcl") or 0)  # optional USD per W/M
+    # Chargeable weight (aereo only) — Abel Parte 2 (2026-06-19): flete must be
+    # rate × max(actual_kg, volumetric_kg). volume_cbm holds volumetric KG for
+    # mode=aereo (the form computes L×W×H×qty/6000 into that same field), not
+    # CBM in m³ — see new_quote.html rowCBM().
+    chargeable_kg = 0.0
+    if mode == "aereo":
+        chargeable_kg = round(max(weight_kg or 0.0, cbm or 0.0), 4)
+
+    flete_rate_lcl   = float(f.get("flete_rate_lcl") or 0)    # optional USD per W/M
+    flete_rate_aereo = float(f.get("flete_rate_aereo") or 0)  # optional USD per chargeable kg
     if mode == "lcl" and flete_rate_lcl and wm_factor:
-        flete_usd = round(flete_rate_lcl * wm_factor, 2)
-    else:
+        flete_usd        = round(flete_rate_lcl * wm_factor, 2)
+        flete_rate_aereo = 0.0
+    elif mode == "aereo" and flete_rate_aereo and chargeable_kg:
+        flete_usd      = round(flete_rate_aereo * chargeable_kg, 2)
         flete_rate_lcl = 0.0
-        flete_usd      = float(f.get("flete_lcl") or f.get("flete_usd") or 0)
+    else:
+        flete_rate_lcl   = 0.0
+        flete_rate_aereo = 0.0
+        flete_usd        = float(f.get("flete_lcl") or f.get("flete_usd") or 0)
 
     # THC — optional, from consolidator rate card (per W/M with minimum floor)
     thc_rate = float(f.get("thc_rate") or 0)
@@ -353,6 +367,15 @@ def create_quote():
     # User-defined coloader line items — submitted via Section 4 form buckets.
     # Each item carries bucket="intl"|"local" (defaults "intl" for backward compat).
     # CIF-calc items carry cif_calc=true + venta_neto (bypasses margin scaling).
+    # De-dup (Abel Parte 2, 2026-06-19): "si ya tenemos un cuadro de flete
+    # internacional, ya no debería aparecer un segundo cuadro en conceptos
+    # adicionales del coloader." When a real international-freight charge
+    # already exists (flete_usd > 0), drop any coloader-submitted "intl"
+    # bucket item that is itself a freight line — it would otherwise render
+    # as a second freight row alongside the auto-computed one.
+    _FREIGHT_CONCEPT_DESCS = {"flete internacional", "international freight",
+                               "flete", "ocean freight"}
+
     extra_costeo_items: list[dict] = []
     _extra_raw = f.get("extra_items_json", "[]")
     try:
@@ -363,6 +386,13 @@ def create_quote():
         _concept = str(_ei.get("concept", "")).strip()
         _bucket  = _ei.get("bucket", "intl")  # "intl" | "local"
         _is_cif  = bool(_ei.get("cif_calc"))
+
+        if (
+            flete_usd > 0
+            and _bucket == "intl"
+            and _concept.strip().lower() in _FREIGHT_CONCEPT_DESCS
+        ):
+            continue
 
         if _is_cif:
             # CIF calc item: valor=costo_neto, venta_neto separate, no factor.
@@ -420,6 +450,8 @@ def create_quote():
     costeo = {
         "flete_internacional_usd": flete_usd,
         "flete_rate_lcl":   flete_rate_lcl   if flete_rate_lcl   else None,
+        "flete_rate_aereo": flete_rate_aereo if flete_rate_aereo else None,
+        "chargeable_kg":    chargeable_kg    if mode == "aereo"  else None,
         "flete_factor":     wm_factor         if wm_factor        else None,
         "flete_factor_unit": flete_factor_unit if flete_factor_unit else None,
         "thc_rate":         thc_rate          if thc_rate         else None,
@@ -455,6 +487,15 @@ def create_quote():
             "unit_rate": round(flete_rate_lcl * m, 2),
             "factor_value": wm_factor,
             "factor_unit": flete_factor_unit,
+            "total": round(flete_usd * m, 2),
+            **_FLAGS_INTL,
+        }
+    elif mode == "aereo" and flete_rate_aereo:
+        flete_item = {
+            "description": "International Freight",
+            "unit_rate": round(flete_rate_aereo * m, 2),
+            "factor_value": chargeable_kg,
+            "factor_unit": "kg",
             "total": round(flete_usd * m, 2),
             **_FLAGS_INTL,
         }
@@ -517,11 +558,18 @@ def create_quote():
             **_FLAGS_LOCAL,
         })
     if handling_aereo_usd > 0:
+        # No margin uplift: net_usd from HANDLING AEREO.xlsx is already the
+        # airport handler's pass-through sell price (Abel confirmed 2026-06-19,
+        # TALMA Esc 1 = USD 94.00 + IGV exactly) — applying margin on top would
+        # double-count it. IGV only, applied once at PDF render.
+        # TODO(abel): confirm whether TALMA/SHOHIN/SAASA handling is computed
+        # per-kg of chargeable weight or is a flat per-airline lookup — current
+        # code treats it as a flat config value from get_air_handling_fee().
         local_venta_items.append({
             "description": "Handling Aéreo",
             "quantity": 1,
-            "unit_price": round(handling_aereo_usd * m, 2),
-            "total": round(handling_aereo_usd * m, 2),
+            "unit_price": round(handling_aereo_usd, 2),
+            "total": round(handling_aereo_usd, 2),
             **_FLAGS_LOCAL,
         })
     if transport_usd > 0:

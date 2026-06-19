@@ -253,10 +253,15 @@
           <span class="label-text">Flete Internacional (USD)</span>
           <input type="number" name="flete_lcl" step="0.01" min="0" placeholder="Ej: 850.00">
         </label>
-        <label class="field">
+        <label class="field" id="row-flete-rate-lcl">
           <span class="label-text">Tarifa Flete LCL (USD/W/M) <em style="font-weight:normal;color:#6b7280;">opcional</em></span>
           <input type="number" name="flete_rate_lcl" step="0.01" min="0" placeholder="Ej: 95.00">
           <span class="field-hint">Si se ingresa, el flete = tarifa × max(CBM, kg/1000). Deja vacío para usar monto fijo.</span>
+        </label>
+        <label class="field" id="row-flete-rate-aereo">
+          <span class="label-text">Tarifa Flete Aéreo (USD/kg) <em style="font-weight:normal;color:#6b7280;">opcional</em></span>
+          <input type="number" name="flete_rate_aereo" step="0.01" min="0" placeholder="Ej: 4.50">
+          <span class="field-hint">Si se ingresa, el flete = tarifa × peso facturable (max real vs volumétrico). Deja vacío para usar monto fijo.</span>
         </label>
         <label class="field">
           <span class="label-text">THC Tarifa (USD/W/M) <em style="font-weight:normal;color:#6b7280;">opcional</em></span>
@@ -670,11 +675,15 @@
   var modeSelect      = document.getElementById('mode-select');
   var rowConsolidador = document.getElementById('row-consolidador');
   var rowAerolinea    = document.getElementById('row-aerolinea');
+  var rowFleteLcl     = document.getElementById('row-flete-rate-lcl');
+  var rowFleteAereo   = document.getElementById('row-flete-rate-aereo');
 
   function applyModeVisibility() {
     var mode = modeSelect.value;
     rowConsolidador.style.display = (mode === 'lcl')   ? '' : 'none';
     rowAerolinea.style.display    = (mode === 'aereo') ? '' : 'none';
+    rowFleteLcl.style.display     = (mode === 'lcl')   ? '' : 'none';
+    rowFleteAereo.style.display   = (mode === 'aereo') ? '' : 'none';
   }
 
   modeSelect.addEventListener('change', applyModeVisibility);

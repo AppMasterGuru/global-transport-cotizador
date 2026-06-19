@@ -524,3 +524,177 @@ class TestAcusesRoute:
         resp = client.get("/acuses")
         assert resp.status_code == 200
         assert b"registrado" in resp.data
+
+
+# ── BUG 1 (2026-06-19) — Aéreo chargeable-weight freight ─────────────────────
+# Abel Parte 2: every aéreo scenario showed Flete Internacional USD 0.00 because
+# the costing engine never multiplied a per-kg rate by chargeable weight
+# (max(actual_kg, volumetric_kg)). volume_cbm holds volumetric KG for mode=aereo
+# (per the form's L×W×H×qty/6000 formula), not CBM in m³.
+
+_AEREO_BASE = {
+    "client_name": "Test Aereo Shipper",
+    "client_email": "test@shipper.com",
+    "mode": "aereo",
+    "incoterm": "FOB",
+    "origin": "Lima, Peru",
+    "destination": "Los Angeles, USA",
+    "cargo_description": "Test air cargo",
+    "consolidator": "",
+    "staff_code": "GT-PC",
+    "language": "es",
+    "requester_type": "cliente",
+    "flete_lcl": "",
+    "flete_rate_lcl": "",
+}
+
+
+def _post_aereo_quote(client, overrides=None):
+    return _post_quote(client, {**_AEREO_BASE, **(overrides or {})})
+
+
+class TestAereoChargeableWeight:
+    def test_actual_weight_wins_when_heavier(self, client):
+        # actual 300kg > volumetric 200kg → chargeable = 300 → flete = 5 * 300 = 1500
+        q = _post_aereo_quote(client, {
+            "weight": "300", "weight_unit": "kg",
+            "volume_cbm": "200",  # volumetric kg for aereo
+            "flete_rate_aereo": "5",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["chargeable_kg"] == pytest.approx(300.0, rel=0.001)
+        assert costeo["flete_internacional_usd"] == pytest.approx(1500.0, rel=0.01)
+
+    def test_volumetric_weight_wins_when_heavier(self, client):
+        # actual 200kg < volumetric 450kg → chargeable = 450 → flete = 5 * 450 = 2250
+        q = _post_aereo_quote(client, {
+            "weight": "200", "weight_unit": "kg",
+            "volume_cbm": "450",
+            "flete_rate_aereo": "5",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["chargeable_kg"] == pytest.approx(450.0, rel=0.001)
+        assert costeo["flete_internacional_usd"] == pytest.approx(2250.0, rel=0.01)
+
+    def test_flete_not_zero_when_rate_and_weight_present(self, client):
+        # Regression for the reported symptom: flete showed $0.00 on every aereo scenario.
+        q = _post_aereo_quote(client, {
+            "weight": "240", "weight_unit": "kg",
+            "volume_cbm": "100",
+            "flete_rate_aereo": "4.5",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["flete_internacional_usd"] > 0
+
+    def test_flat_flete_still_works_when_no_rate_given(self, client):
+        # Backward compat: flat flete_lcl/flete_usd field still works when
+        # flete_rate_aereo is blank.
+        q = _post_aereo_quote(client, {
+            "weight": "240", "weight_unit": "kg",
+            "volume_cbm": "100",
+            "flete_usd": "1200",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["flete_internacional_usd"] == pytest.approx(1200.0, rel=0.01)
+
+    def test_venta_flete_item_shows_rate_and_chargeable_kg(self, client):
+        q = _post_aereo_quote(client, {
+            "weight": "300", "weight_unit": "kg",
+            "volume_cbm": "200",
+            "flete_rate_aereo": "5",
+            "margin_pct": "20",
+        })
+        venta = json.loads(q["venta_json"])
+        flete_item = venta["line_items"][0]
+        assert flete_item["factor_value"] == pytest.approx(300.0, rel=0.001)
+        assert flete_item["factor_unit"] == "kg"
+        assert flete_item["total"] == pytest.approx(1500.0 * 1.20, rel=0.01)
+
+    def test_chargeable_kg_blank_for_lcl(self, client):
+        q = _post_quote(client, {"flete_lcl": "100"})
+        costeo = json.loads(q["costeo_json"])
+        assert costeo.get("chargeable_kg") is None
+
+
+class TestAereoHandlingFee:
+    """Abel confirmed (Parte 2): TALMA handling for Esc 1 = USD 94.00 + IGV,
+    a flat pass-through with no margin layer (forwarder doesn't mark up the
+    airport handler's fee — confirmed by Abel, matches the audit's flagged
+    double-margin risk on this line)."""
+
+    def test_handling_fee_net_usd_94(self, client, monkeypatch):
+        import api.routes as routes_mod
+        monkeypatch.setattr(routes_mod, "get_air_handling_fee",
+                             lambda carrier: {"airline": carrier, "handler": "TALMA",
+                                              "counter": carrier, "net_usd": 94.0,
+                                              "igv_usd": 16.92, "total_usd": 110.92})
+        q = _post_aereo_quote(client, {
+            "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
+            "flete_rate_aereo": "4.5", "airline": "TALMA",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["handling_aereo_usd"] == pytest.approx(94.0, rel=0.001)
+
+    def test_handling_fee_venta_no_margin_uplift(self, client, monkeypatch):
+        import api.routes as routes_mod
+        monkeypatch.setattr(routes_mod, "get_air_handling_fee",
+                             lambda carrier: {"airline": carrier, "handler": "TALMA",
+                                              "counter": carrier, "net_usd": 94.0,
+                                              "igv_usd": 16.92, "total_usd": 110.92})
+        q = _post_aereo_quote(client, {
+            "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
+            "flete_rate_aereo": "4.5", "airline": "TALMA", "margin_pct": "20",
+        })
+        venta = json.loads(q["venta_json"])
+        handling = next(i for i in venta["line_items"] if i["description"] == "Handling Aéreo")
+        assert handling["total"] == pytest.approx(94.0, rel=0.001)
+
+    def test_handling_fee_zero_when_no_match(self, client, monkeypatch):
+        import api.routes as routes_mod
+        monkeypatch.setattr(routes_mod, "get_air_handling_fee", lambda carrier: None)
+        q = _post_aereo_quote(client, {
+            "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
+            "flete_rate_aereo": "4.5", "airline": "UNKNOWN AIRLINE",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["handling_aereo_usd"] == 0.0
+
+
+# ── BUG 2 (2026-06-19) — LCL duplicate international-freight block ───────────
+# Abel: "si ya tenemos un cuadro de flete internacional, ya no debería aparecer
+# un segundo cuadro en conceptos adicionales del coloader." When a real
+# international-freight charge already exists, a coloader-submitted "intl"
+# bucket extra item that is itself a freight line must be suppressed.
+
+class TestLclFreightDedup:
+    def test_duplicate_intl_freight_item_suppressed(self, client):
+        q = _post_quote(client, {
+            "flete_lcl": "315",
+            "extra_items_json": '[{"concept":"Flete Internacional","valor":315,'
+                                 '"bucket":"intl","factor":null,"min_usd":null}]',
+        })
+        venta = json.loads(q["venta_json"])
+        freight_rows = [i for i in venta["line_items"]
+                        if i["description"].strip().lower() in ("international freight", "flete internacional")]
+        assert len(freight_rows) == 1
+
+    def test_non_freight_intl_extra_item_not_suppressed(self, client):
+        q = _post_quote(client, {
+            "flete_lcl": "315",
+            "extra_items_json": '[{"concept":"Gastos FCA","valor":47,'
+                                 '"bucket":"intl","factor":null,"min_usd":null}]',
+        })
+        venta = json.loads(q["venta_json"])
+        descriptions = [i["description"] for i in venta["line_items"]]
+        assert "Gastos FCA" in descriptions
+
+    def test_duplicate_freight_not_double_counted_in_costeo_extra_items(self, client):
+        q = _post_quote(client, {
+            "flete_lcl": "315",
+            "extra_items_json": '[{"concept":"Flete Internacional","valor":315,'
+                                 '"bucket":"intl","factor":null,"min_usd":null}]',
+        })
+        costeo = json.loads(q["costeo_json"])
+        # The duplicate freight extra item must not survive into costeo —
+        # only the auto-computed flete_internacional_usd should carry it.
+        assert not costeo.get("extra_items")
