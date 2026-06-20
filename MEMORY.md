@@ -1,5 +1,5 @@
 ## Unread Email Summary
-_Last updated: 2026-06-20 12:04 UTC (incremental — 176 business threads | accounts: barney@timebackai.co)_
+_Last updated: 2026-06-20 16:35 UTC (incremental — 177 business threads | accounts: barney@timebackai.co)_
 
 ### ⚠️ NEEDS RESPONSE (20 threads)
 
@@ -140,10 +140,11 @@ _Last updated: 2026-06-20 12:04 UTC (incremental — 176 business threads | acco
 
 ### 🍸 Rebara (4 total, none in last 14d)
 
-### 📬 Other (119 total, 16 ⚠️ needs response — showing last 14d)
+### 📬 Other (120 total, 16 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-20 | 1 | ← | posts-recap@mail.instagram.c… | timebackai.co, see what's been happening on Inst… | See what&#39;s new on Instagram pacoyonque, osakarestaurante and other… |
 | 2026-06-19 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Fri Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-18 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-17 | 1 | ← | calendar-notification@google… | Notification: Barney x ESCALA @ Wed Jun 17, 2026… | Barney x ESCALA Daniela Cortavarría is inviting you to a scheduled Zoo… |
@@ -168,8 +169,7 @@ _Last updated: 2026-06-20 12:04 UTC (incremental — 176 business threads | acco
 | 2026-06-08 | 1 | ← | admin@mail.capcut.com | Start your video creation today with CapCut | Dear user4975331583450 Thank you so much for choosing CapCut as your v… |
 | 2026-06-08 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 8… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-08 | 1 | ← | welcome@supabase.com | Welcome to Supabase | Hey there, Welcome to Supabase, the Postgres development platform. Sup… |
-| 2026-06-08 | 1 | ← | welcome@supabase.com | Confirm your email and launch your projects on S… | Confirm your email address to start building with Supabase You can sta… |
-_… and more (showing 25 of 119)_
+_… and more (showing 25 of 120)_
 
 ### Personal email (barney.elliott@gmail.com)
 _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --personal` to add it._
@@ -177,6 +177,39 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
 
 ## Active Tasks
 **Last updated: 2026-06-20**
+
+### Completed this session (2026-06-20) — Session E
+- [x] FCL wired into the live quote form (closes TODO(abel-Q7)) —
+      terminal (APM/DPW), naviera, container type (20'STD/40'STD/40'HC),
+      and container count selectors added to `new_quote.html`, gated to
+      mode=fcl with the same disabled-when-hidden pattern as the other
+      mode-specific fields. `api/routes.py`'s `create_quote()` now flows
+      these into: port cost (`core/port_costs.py`), a new FCL-specific
+      customs agent dispatch (`fcl_customs_agent_costs()` in
+      `core/fcl_naviera_costs.py` — Alefero flat commission + 2nd-container
+      surcharge, or OEA+BASC tiered commission, superseding the generic
+      `get_customs_agent()` path which doesn't know about either rule),
+      export Visto Bueno (naviera-attributed only), and import
+      THC+ISPS+MBL+VB importación. PDF two-section split verified
+      end-to-end for both FCL export and import quotes.
+- [x] FCL import VB parser rebuilt on a cleaner source (closes
+      ABEL_FOLLOWUPS.md item #2 — see Closed section there) — found that
+      Gastos de Importacion en Callao por Naviera.xlsx (the same file
+      already used for THC/ISPS and MBL) has its own "VB IMPORTACION"
+      sheet keying every block explicitly by naviera name, all 14
+      navieras, no guessing required. New `parse_vb_importacion_sheet()` /
+      `build_vb_importacion_totals()` in `core/fcl_import_costs.py`
+      supersede the EXPO_IMPO-based `parse_import_vb_sheet()` (which only
+      attributed 2 of 7 blocks) for live wiring; the old parser is left in
+      place, still tested, just no longer called from routes.py.
+      TODO(abel-F1F4): new parser's amounts not yet validated against a
+      real quote.
+- [x] Audit surfaced the same unattributed-VB pattern on the export side
+      (7 of 9 EXPO_IMPO EXPORTACION-CALLAO VB blocks have no naviera
+      token) — no equivalent clean per-naviera export sheet found yet.
+      Flagged as a new open item in ABEL_FOLLOWUPS.md rather than guessed.
+- [x] 766 → 817 tests (+51 new, all red-first). Full suite green
+      throughout. (commit 6e71960)
 
 ### Completed this session (2026-06-20) — Session D
 - [x] Open Transport container zone table (Q7 closed) — new
@@ -303,13 +336,16 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
 - [x] Tests: 709 → 721, last commit f7295c8.
 
 ### Pending (2026-06-20, carry forward)
-- [ ] **5 unattributed VB-import blocks in EXPO_IMPO IMPORTACIÓN sheet** —
-      need Abel to name the navieras before FCL import costs are complete.
-      Only MAERSK / SEALAND and CMA CGM / APL are naviera-identified
-      (explicit token in desglose text); the other 5 blocks (totals 294,
-      340, 300, 200, 295) have no identifying token — one even uses a
-      RETENCIÓN column instead of IGV, which needs Abel/Vania confirmation
-      too. Do not guess naviera from NOTA hints (MSC/COSCO mentions).
+- [x] 5 unattributed VB-import blocks in EXPO_IMPO IMPORTACIÓN sheet —
+      resolved 2026-06-20 (Session E) via the Gastos workbook's own VB
+      IMPORTACION sheet, all 14 navieras attributed. See ABEL_FOLLOWUPS.md
+      Closed section.
+- [ ] **7 of 9 export VB blocks unattributed (EXPO_IMPO EXPORTACION-CALLAO
+      sheet)** — new this session (Session E). Only CMA CGM and MAERSK are
+      naviera-identified on the export side; no equivalent clean
+      per-naviera export sheet has surfaced (the Gastos workbook that
+      resolved the import side is import-only by title/content). See
+      ABEL_FOLLOWUPS.md open item.
 - [ ] **test_aereo_config_corrections.py missing from disk** — only a stale
       `.pyc` remains in `cotizador/tests/__pycache__/`, source `.py` never
       committed to git (confirmed via `git log --all` — no history for this
@@ -325,7 +361,8 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
 - [x] Open Transport container zone table (Q7) — done 2026-06-20, see
       Session D above, commit 696758f
 - [x] Aéreo modality dropdown consolidado/directo (Q9) — done 2026-06-20, commit cf51943
-- [ ] Wire FCL into live form (terminal/naviera/container selectors)
+- [x] Wire FCL into live form (terminal/naviera/container selectors) —
+      done 2026-06-20, see Session E above, commit 6e71960
 - [ ] Abel to run F1–F4 once form is wired
 - [ ] JP go-live session — not yet scheduled
 - [ ] Still open from earlier in the session, not part of this Q&A round:

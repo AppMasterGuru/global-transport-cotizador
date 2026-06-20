@@ -22,7 +22,23 @@ or do you have the right value?
 Currently a placeholder in the aéreo form.
 **Question:** What is the SAASA almacén simulator URL?
 
-### 3. LCL Escenario 3 consolidator confirmation
+### 3. Export Visto Bueno — 7 of 9 blocks unattributed (FCL export)
+**Source:** EXPO_IMPO.xlsx EXPORTACION-CALLAO sheet, Session E build (commit 6e71960)
+**Issue:** Of 9 VISTO BUENO blocks on the export sheet, only 2 carry an
+identifiable naviera token in their desglose text (MAERSK via "MSK", CMA CGM
+via "CMA") — same pattern as the import-side problem that was just resolved
+(item #2, closed below), but no equivalent clean per-naviera export sheet
+has surfaced. The Gastos de Importacion en Callao por Naviera.xlsx workbook
+that resolved the import side is import-only by title and content — it has
+no export equivalent. These 7 blocks show as Visto Bueno = 0 on FCL export
+quotes for those carriers.
+**Question:** Can you identify which naviera each of the 7 unattributed
+export VB blocks belongs to? Alternatively, do you have (or can your team
+provide) a per-naviera export cost reference sheet — similar to the "VB
+IMPORTACION" sheet in the Gastos workbook — that lists export Visto Bueno
+explicitly keyed by naviera name?
+
+### 4. LCL Escenario 3 consolidator confirmation
 **Source:** Abel Parte 2 doc, June 19
 **Issue:** Abel flagged LCL Esc 3 Visto Bueno as wrong (should be USD 90). 
 CRAFT import was reverted to 90 based on screenshot evidence (commit 40a5cad). 
@@ -34,7 +50,7 @@ Just confirming CRAFT import = 90 is the right fix.
 
 ## Pending Abel action — validation
 
-### 4. FCL F1–F4 scenarios
+### 5. FCL F1–F4 scenarios
 **Status:** FCL form wiring (Session E) must complete first. 
 Once live, Abel to run F1–F4 against the system exactly as he did for 
 LCL and Aéreo in Parte 2, and report results.
@@ -56,7 +72,7 @@ Bueno block explicitly by naviera name (all 14 navieras, no guessing
 required). This sheet supersedes the EXPO_IMPO-based parser for FCL import 
 VB in live wiring — see `parse_vb_importacion_sheet()` / 
 `build_vb_importacion_totals()` in `core/fcl_import_costs.py` 
-(Session E, commit TBD).
+(Session E, commit 6e71960).
 **Still open — TODO(abel-F1F4):** these amounts come from Abel's own file 
 but haven't been validated against a real quote yet. Confirm via Abel's 
-F1–F4 scenario run (item #4 above) before treating them as final.
+F1–F4 scenario run (item #5 above) before treating them as final.
