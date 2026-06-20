@@ -283,6 +283,14 @@
           </select>
           <span class="field-hint" id="vb-hint"></span>
         </label>
+        <label class="field" id="row-aereo-modalidad">
+          <span class="label-text">Modalidad (Aéreo)</span>
+          <select name="aereo_modalidad" id="aereo-modalidad-select">
+            <option value="consolidado">Consolidado (coloader)</option>
+            <option value="directo">Directo (aerolínea)</option>
+          </select>
+          <span class="field-hint">Consolidado agrega Transmission + Handling Destino. Directo no.</span>
+        </label>
         <label class="field" id="row-aerolinea">
           <span class="label-text">Aerolínea (Aéreo)</span>
           <select name="airline">
@@ -698,7 +706,9 @@
   var rowFleteLcl      = document.getElementById('row-flete-rate-lcl');
   var rowFleteAereo    = document.getElementById('row-flete-rate-aereo');
   var rowAlmacenAereo  = document.getElementById('row-almacen-aereo');
+  var rowModalidad     = document.getElementById('row-aereo-modalidad');
   var consolidadorSel  = document.getElementById('consolidator-select');
+  var modalidadSel      = document.getElementById('aereo-modalidad-select');
 
   function applyModeVisibility() {
     var mode = modeSelect.value;
@@ -714,6 +724,8 @@
     rowFleteLcl.style.display     = (mode === 'lcl')   ? '' : 'none';
     rowFleteAereo.style.display   = (mode === 'aereo') ? '' : 'none';
     rowAlmacenAereo.style.display = (mode === 'aereo') ? '' : 'none';
+    rowModalidad.style.display    = (mode === 'aereo') ? '' : 'none';
+    if (modalidadSel) { modalidadSel.disabled = (mode !== 'aereo'); }
   }
 
   modeSelect.addEventListener('change', applyModeVisibility);

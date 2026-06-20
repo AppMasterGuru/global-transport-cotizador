@@ -314,6 +314,12 @@ def create_quote():
         thc_usd = round(max(thc_rate * wm_factor, thc_min), 2)
     consolidator_name  = f.get("consolidator", "MSL").upper()
     airline            = f.get("airline", "").strip()   # aereo only
+    # Aereo modality (Q9, 2026-06-19): explicit consolidado/directo selector,
+    # consolidado is the default. Replaces the old inference from whether a
+    # consolidator name happened to be present in the form post.
+    aereo_modalidad    = f.get("aereo_modalidad", "consolidado").strip().lower()
+    if aereo_modalidad not in ("consolidado", "directo"):
+        aereo_modalidad = "consolidado"
     requires_oea_basc  = f.get("requires_oea_basc") == "on"
     margin_pct_input   = float(f.get("margin_pct", 20) or 20) / 100
     margin_pct         = max(margin_pct_input, MARGIN_FLOOR)
@@ -385,10 +391,9 @@ def create_quote():
 
     # Aéreo consolidado (coloader) destination charges — Abel Parte 2,
     # 2026-06-19: exactly two flat pass-through charges (no margin uplift)
-    # when working through a coloader. Reuses the existing consolidator
-    # field rather than building a dedicated modality selector this session.
-    # TODO(abel-Q6): confirm modality selection (user-selected vs inferred).
-    aereo_consolidado = mode == "aereo" and bool(consolidator_name.strip())
+    # when working through a coloader. Driven by the explicit aereo_modalidad
+    # selector (Q9) rather than inferred from the consolidator field.
+    aereo_consolidado = mode == "aereo" and aereo_modalidad == "consolidado"
     aereo_transmission_usd = AEREO_CONSOLIDADO_TRANSMISSION_USD if aereo_consolidado else 0.0
     aereo_handling_destino_usd = AEREO_CONSOLIDADO_HANDLING_USD if aereo_consolidado else 0.0
 
@@ -493,6 +498,7 @@ def create_quote():
         "handling_aereo_usd": handling_aereo_usd,
         "handling_aereo_detail": handling_aereo_info,
         "almacen_aereo_usd": almacen_aereo_usd,
+        "aereo_modalidad": aereo_modalidad if mode == "aereo" else None,
         "aereo_consolidado": aereo_consolidado if mode == "aereo" else None,
         "aereo_transmission_usd": aereo_transmission_usd if aereo_transmission_usd else None,
         "aereo_handling_destino_usd": aereo_handling_destino_usd if aereo_handling_destino_usd else None,

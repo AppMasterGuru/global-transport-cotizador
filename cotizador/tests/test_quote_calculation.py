@@ -711,6 +711,65 @@ class TestAereoAlmacenManualInput:
         assert not any(i["description"] == "Almacén Aéreo" for i in venta["line_items"])
 
 
+class TestAereoModalidad:
+    """Abel Parte 2 Q9 (2026-06-19): explicit consolidado/directo modality
+    selector for aereo, replacing the old inference from whether a
+    consolidator name happened to be present in the form post. Consolidado
+    is the default — directo must be explicitly chosen to suppress the
+    Transmission + Handling Destino consolidado charges."""
+
+    def test_default_modality_is_consolidado(self, client):
+        q = _post_aereo_quote(client, {
+            "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
+            "flete_rate_aereo": "4.5",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["aereo_modalidad"] == "consolidado"
+        assert costeo["aereo_consolidado"] is True
+        assert costeo["aereo_transmission_usd"] == pytest.approx(35.0, rel=0.001)
+        assert costeo["aereo_handling_destino_usd"] == pytest.approx(45.0, rel=0.001)
+
+    def test_directo_suppresses_destination_charges(self, client):
+        q = _post_aereo_quote(client, {
+            "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
+            "flete_rate_aereo": "4.5", "aereo_modalidad": "directo",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["aereo_modalidad"] == "directo"
+        assert costeo["aereo_consolidado"] is False
+        assert costeo.get("aereo_transmission_usd") is None
+        assert costeo.get("aereo_handling_destino_usd") is None
+        venta = json.loads(q["venta_json"])
+        assert not any(i["description"] == "Transmission (Consolidado)" for i in venta["line_items"])
+        assert not any(i["description"] == "Handling Destino (Consolidado)" for i in venta["line_items"])
+
+    def test_directo_even_with_consolidator_selected(self, client):
+        # Modality selection wins over whatever consolidator happens to be
+        # picked in the (still-shown) consolidator dropdown.
+        q = _post_aereo_quote(client, {
+            "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
+            "flete_rate_aereo": "4.5", "aereo_modalidad": "directo",
+            "consolidator": "MSL",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["aereo_consolidado"] is False
+        assert costeo.get("aereo_transmission_usd") is None
+
+    def test_invalid_modalidad_defaults_to_consolidado(self, client):
+        q = _post_aereo_quote(client, {
+            "weight": "240", "weight_unit": "kg", "volume_cbm": "100",
+            "flete_rate_aereo": "4.5", "aereo_modalidad": "bogus-value",
+        })
+        costeo = json.loads(q["costeo_json"])
+        assert costeo["aereo_modalidad"] == "consolidado"
+        assert costeo["aereo_consolidado"] is True
+
+    def test_modalidad_blank_for_lcl(self, client):
+        q = _post_quote(client, {"flete_lcl": "100"})
+        costeo = json.loads(q["costeo_json"])
+        assert costeo.get("aereo_modalidad") is None
+
+
 # ── BUG 2 (2026-06-19) — LCL duplicate international-freight block ───────────
 # Abel: "si ya tenemos un cuadro de flete internacional, ya no debería aparecer
 # un segundo cuadro en conceptos adicionales del coloader." When a real
@@ -846,10 +905,10 @@ class TestAereoConsolidadoDestinationCharges:
         item = next(i for i in venta["line_items"] if "Handling" in i["description"] and "Destino" in i["description"])
         assert item["total"] == pytest.approx(45.0, rel=0.001)
 
-    def test_no_destination_charges_when_no_consolidator(self, client):
-        # Direct-with-international-agent modality — out of scope this
-        # session (TODO abel-Q6) — no consolidator submitted means no charge.
-        q = _post_aereo_quote(client, {"consolidator": ""})
+    def test_no_destination_charges_when_directo(self, client):
+        # Q9 (2026-06-19): explicit "directo" modality, not an empty
+        # consolidator field, is what suppresses the consolidado charges now.
+        q = _post_aereo_quote(client, {"aereo_modalidad": "directo"})
         venta = json.loads(q["venta_json"])
         descriptions = [i["description"] for i in venta["line_items"]]
         assert not any("Transmission" in d for d in descriptions)
