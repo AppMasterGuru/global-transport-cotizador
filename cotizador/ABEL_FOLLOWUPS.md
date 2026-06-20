@@ -16,23 +16,13 @@ Used ATE VITARTE (same zone, S/880 general / S/1,240 IMO) as a proxy.
 **Question:** Is S/880 general / S/1,240 IMO correct for LURIGANCHO (PRIALE), 
 or do you have the right value?
 
-### 2. Five unattributed VB-import blocks (FCL import)
-**Source:** EXPO_IMPO.xlsx IMPORTACIÓN sheet, Session B build (commit 776310e)
-**Issue:** Of 7 VB-import blocks in the sheet, only 2 could be attributed to 
-a naviera with confidence (MAERSK/SEALAND via "MSK" token = USD 150.50; 
-CMA CGM/APL via "CMA" token = USD 194.75). The other 5 blocks have no clear 
-naviera identifier in their desglose text and were left unattributed rather 
-than guessed. These show as VB = 0 on FCL import quotes for those carriers.
-**Question:** Can you identify which naviera each of the 5 unattributed blocks 
-belongs to? Please send the naviera name alongside each VB amount.
-
-### 3. SAASA almacén aéreo simulator link
+### 2. SAASA almacén aéreo simulator link
 **Source:** Abel Q11 reply, June 19
 **Issue:** Abel provided the TALMA simulator link but not SAASA's. 
 Currently a placeholder in the aéreo form.
 **Question:** What is the SAASA almacén simulator URL?
 
-### 4. LCL Escenario 3 consolidator confirmation
+### 3. LCL Escenario 3 consolidator confirmation
 **Source:** Abel Parte 2 doc, June 19
 **Issue:** Abel flagged LCL Esc 3 Visto Bueno as wrong (should be USD 90). 
 CRAFT import was reverted to 90 based on screenshot evidence (commit 40a5cad). 
@@ -44,7 +34,7 @@ Just confirming CRAFT import = 90 is the right fix.
 
 ## Pending Abel action — validation
 
-### 5. FCL F1–F4 scenarios
+### 4. FCL F1–F4 scenarios
 **Status:** FCL form wiring (Session E) must complete first. 
 Once live, Abel to run F1–F4 against the system exactly as he did for 
 LCL and Aéreo in Parte 2, and report results.
@@ -54,4 +44,19 @@ LCL and Aéreo in Parte 2, and report results.
 
 ## Closed — resolved
 
-*(Nothing closed yet — items move here once Abel confirms)*
+### Five unattributed VB-import blocks (FCL import) — RESOLVED 2026-06-20
+**Originally:** Of 7 VB-import blocks in EXPO_IMPO.xlsx's IMPORTACIÓN sheet 
+(Session B build, commit 776310e), only 2 could be attributed to a naviera 
+with confidence. The other 5 had no clear naviera identifier in their 
+desglose text and were left unattributed rather than guessed.
+**Resolution:** Found that the Gastos de Importacion en Callao por Naviera.xlsx 
+workbook — the same file already used for THC/ISPS (G. LOCALES) and MBL 
+(EMISION MBL) — has its own "VB IMPORTACION" sheet that keys every Visto 
+Bueno block explicitly by naviera name (all 14 navieras, no guessing 
+required). This sheet supersedes the EXPO_IMPO-based parser for FCL import 
+VB in live wiring — see `parse_vb_importacion_sheet()` / 
+`build_vb_importacion_totals()` in `core/fcl_import_costs.py` 
+(Session E, commit TBD).
+**Still open — TODO(abel-F1F4):** these amounts come from Abel's own file 
+but haven't been validated against a real quote yet. Confirm via Abel's 
+F1–F4 scenario run (item #4 above) before treating them as final.

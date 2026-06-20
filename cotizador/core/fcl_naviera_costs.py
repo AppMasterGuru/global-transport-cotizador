@@ -176,3 +176,87 @@ def fcl_oea_basc_gastos_operativos_usd() -> float:
 
 def fcl_oea_basc_precinto_total_usd(num_containers: int) -> float:
     return round(FCL_OEA_BASC_PRECINTO_USD * num_containers, 2)
+
+
+# ── FCL-specific customs agent dispatch (Session E live wiring) ────────────
+# The generic transport.get_customs_agent() path (flat USD 50 Alefero / USD
+# 80 OEA+BASC commission, no container-count awareness) does NOT apply to
+# FCL — FCL has its own rules confirmed by Abel (Q6, Q8, and the 2nd-
+# container surcharge from the original Parte 2 build): Alefero charges a
+# flat base commission plus the 2nd-container-onward +50% surcharge;
+# OEA+BASC charges a tiered per-container commission plus flat gastos
+# operativos plus its own (lower) precinto rate. This dispatch supersedes
+# the generic agent for mode="fcl" only.
+ALEFERO_FCL_COMMISSION_USD = 50.0  # mirrors transport.CUSTOMS_AGENTS["ALEFERO"]["commission_usd"]
+
+
+def fcl_customs_agent_costs(requires_oea_basc: bool, num_containers: int) -> dict:
+    """Commission + gastos operativos + precinto for the selected FCL
+    customs agent, by container count. See module note above for why this
+    is separate from the generic transport.get_customs_agent() path."""
+    if requires_oea_basc:
+        return {
+            "agent_name": "OEA+BASC Certified Agent",
+            "commission_usd": fcl_oea_basc_commission_total_usd(num_containers),
+            "gastos_operativos_usd": fcl_oea_basc_gastos_operativos_usd(),
+            "precinto_usd": fcl_oea_basc_precinto_total_usd(num_containers),
+        }
+    commission_total = ALEFERO_FCL_COMMISSION_USD + sum(
+        apply_second_container_surcharges(ALEFERO_FCL_COMMISSION_USD, num_containers)
+    )
+    return {
+        "agent_name": "Alefero",
+        "commission_usd": round(commission_total, 2),
+        "gastos_operativos_usd": 0.0,
+        "precinto_usd": precinto_total_usd(num_containers),
+    }
+
+
+# ── Real export naviera data (Session E) ────────────────────────────────────
+# Transcribed from EXPORTACION-CALLAO sheet of EXPO_IMPO.xlsx (Client
+# Data/Part 2_Abel/) via parse_export_naviera_sheet(), audited 2026-06-20.
+# Source file is local-only (not committed to git, not present on Railway) —
+# hardcoded here, same pattern as CONSOLIDATORS/CUSTOMS_AGENTS in
+# transport.py and the Open Transport district table.
+#
+# Of 9 VISTO BUENO blocks on the real sheet, only 2 carry an identifiable
+# naviera token in their desglose text (MAERSK via "MSK", CMA CGM via
+# "CMA") — same no-guessing rule as the import side before it was resolved
+# (ABEL_FOLLOWUPS.md, closed item). No equivalent clean per-naviera export
+# VB source has surfaced yet — see ABEL_FOLLOWUPS.md for the open follow-up.
+EXPORT_NAVIERA_DATA: dict = {
+    "gate_out": {
+        "CONTRANS":           {"net": 150.0, "igv": 27.0,                "total": 177.0},
+        "DEMARES":            {"net": 179.0, "igv": 32.22,               "total": 211.22},
+        "DP WORLD LOGISTICS": {"net": 120.5, "igv": 21.689999999999998,  "total": 142.19},
+        "DPW":                {"net": 150.0, "igv": 27.0,                "total": 177.0},
+        "FARGOLINE":          {"net": 125.5, "igv": 22.59,               "total": 148.09},
+        "IMUPESA":            {"net": 133.5, "igv": 24.029999999999998, "total": 157.53},
+        "MEDLOG":             {"net": 152.0, "igv": 27.36,               "total": 179.36},
+        "RANSA":              {"net": 150.0, "igv": 27.0,                "total": 177.0},
+        "TPP":                {"net": 120.5, "igv": 21.689999999999998, "total": 142.19},
+    },
+    "visto_bueno": {
+        "CMA CGM": {
+            "total": 258.83299999999997,
+            "desglose": [
+                {"concept": "CMA - COORDINACIÓN Y SUPERVISIÓN DE EMBARQUE",
+                 "monto": 214.0, "igv_or_retencion": 38.519999999999996,
+                 "total": 252.51999999999998, "tipo": "CONTENEDOR"},
+            ],
+        },
+        "MAERSK": {
+            "total": 160.0,
+            "desglose": [
+                {"concept": "BOX FEE - EXPO MSK", "monto": 80.5,
+                 "igv_or_retencion": 34.5, "total": 115.0, "tipo": "CONTENEDOR"},
+                {"concept": "COVERAGE FEE - EXPO MSK", "monto": 31.5,
+                 "igv_or_retencion": 13.5, "total": 45.0, "tipo": "CONTENEDOR"},
+            ],
+        },
+    },
+}
+
+
+def get_export_naviera_data() -> dict:
+    return EXPORT_NAVIERA_DATA

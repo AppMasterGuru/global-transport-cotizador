@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import re
 
+from core.exchange_rate import soles_to_usd
+
 _MONEY_RE = re.compile(r"(USD|S/)\s*([\d.,]+)")
 
 # Naviera-specific corrections/overrides on top of the raw sheet figures —
@@ -271,3 +273,361 @@ def get_fcl_import_local_costs(g_locales: dict, mbl: dict, naviera: str, vb_impo
         "mbl_no_cobra": m.get("no_cobra", False),
         "vb_importacion_usd": vb["vb_importacion_usd"] if vb else None,
     }
+
+
+# ── VB IMPORTACION sheet (Gastos de Importacion en Callao por Naviera.xlsx) ──
+# Abel Parte 2 Q3 follow-up (closed 2026-06-20, ABEL_FOLLOWUPS.md item #2):
+# this sheet — in the SAME workbook already parsed above for G. LOCALES and
+# EMISION MBL — keys every Visto Bueno block explicitly by naviera name in
+# column A. Unlike the EXPO_IMPO IMPORTACIÓN sheet's VISTO BUENO blocks
+# (parse_import_vb_sheet, above; only 2 of 7 blocks naviera-identifiable),
+# this sheet needs no naviera guessing at all — it supersedes
+# parse_import_vb_sheet() as the source for vb_importacion in live wiring.
+# parse_import_vb_sheet() is left in place (still tested) but is no longer
+# the function routes.py calls for FCL import VB.
+
+# Sheet header row name -> canonical naviera key used by G. LOCALES (this
+# sheet writes "CMA-CGM / APL" with a hyphen; G. LOCALES uses "CMA CGM / APL").
+_VB_IMPORTACION_NAME_FIXES: dict[str, str] = {
+    "CMA-CGM / APL": "CMA CGM / APL",
+}
+
+# COSCO / OOCL prices Visto Bueno in container-count tiers rather than a
+# flat per-container rate like every other naviera on this sheet. Only the
+# tier concept matching the quote's num_containers contributes to the total;
+# the other two tier rows for that naviera are excluded.
+_COSCO_VB_TIERS: dict[str, tuple[int, int | None]] = {
+    "VOBO 1 CNTR.": (1, 1),
+    "VOBO 2 A 5 CNTR.": (2, 5),
+    "VOBO 6 A MÁS CNTR.": (6, None),
+}
+
+
+def parse_vb_importacion_sheet(ws) -> dict:
+    """
+    Parse the Gastos de Importacion en Callao por Naviera.xlsx "VB
+    IMPORTACION" sheet into {naviera: {"concepts": [{concept, unit, p_unit,
+    currency, factura_agent}]}}.
+
+    Columns: NAVIERA, CONCEPTO, POD, UNIT, P. UNIT, MONEDA, FACTURA. A
+    naviera name in column A starts a new block; subsequent rows with a
+    blank column A belong to that naviera until the next named row.
+
+    "GATE IN"/"GATE OUT" concept rows are excluded — that is a separate
+    almacén/gate charge (same category as fcl_naviera_costs' export-side
+    gate_out), not Visto Bueno, and out of scope for this layer (Abel's
+    explicit FCL import rule is THC + ISPS + MBL + VB only).
+
+    Non-numeric P. UNIT cells (e.g. a percentage described in free text
+    rather than a computed amount) are skipped rather than guessed.
+    """
+    out: dict[str, dict] = {}
+    current_naviera: str | None = None
+    current_concepts: list[dict] = []
+
+    def _flush():
+        nonlocal current_naviera, current_concepts
+        if current_naviera:
+            out[current_naviera] = {"concepts": current_concepts}
+        current_naviera = None
+        current_concepts = []
+
+    for row in ws.iter_rows(values_only=True):
+        if not any(v is not None for v in row):
+            continue
+        padded = tuple(row) + (None,) * max(0, 7 - len(row))
+        naviera_cell, concept, _pod, unit, p_unit, moneda, factura_agent = padded[:7]
+
+        if naviera_cell is not None:
+            naviera_str = str(naviera_cell).strip()
+            if naviera_str.upper() == "NAVIERA":
+                continue  # header row
+            if "MONTOS NO INCLUYEN IGV" in naviera_str.upper():
+                continue  # footer note, not a naviera
+            _flush()
+            current_naviera = _VB_IMPORTACION_NAME_FIXES.get(naviera_str, naviera_str)
+
+        if concept is None or current_naviera is None:
+            continue
+        concept_str = str(concept).strip()
+        if "GATE IN" in concept_str.upper() or "GATE OUT" in concept_str.upper():
+            continue
+        if not isinstance(p_unit, (int, float)):
+            continue  # non-numeric (free-text percentage, etc.) — skip, don't guess
+
+        current_concepts.append({
+            "concept": concept_str,
+            "unit": str(unit).strip() if unit else None,
+            "p_unit": float(p_unit),
+            "currency": str(moneda).strip().upper() if moneda else None,
+            "factura_agent": factura_agent,
+        })
+
+    _flush()
+    return out
+
+
+def build_vb_importacion_totals(
+    parsed: dict, num_containers: int = 1, exchange_rate: float | None = None
+) -> dict[str, dict]:
+    """
+    Reduce parse_vb_importacion_sheet() output to {naviera:
+    {vb_importacion_usd}} — the flat shape get_fcl_import_local_costs()'s
+    vb_importacion arg expects, so this slots in as a drop-in replacement
+    for parse_import_vb_sheet()'s output without changing that function.
+
+    "Cntr."-unit concepts scale by num_containers; "BL" and "Factura"-unit
+    concepts are flat regardless of container count. PEN concepts are
+    converted to USD via core.exchange_rate.soles_to_usd.
+
+    COSCO / OOCL: only the tier concept matching num_containers contributes.
+
+    TODO(abel-F1F4): figures here come from Abel's own Gastos de
+    Importacion en Callao por Naviera.xlsx "VB IMPORTACION" sheet, not yet
+    validated against a real quote — confirm via Abel's F1-F4 scenario run
+    before treating these amounts as final, same validation gate as the
+    rest of FCL.
+    """
+    totals: dict[str, dict] = {}
+    for naviera, block in parsed.items():
+        total = 0.0
+        for c in block["concepts"]:
+            tier = _COSCO_VB_TIERS.get(c["concept"].upper())
+            if tier is not None:
+                lo, hi = tier
+                if not (num_containers >= lo and (hi is None or num_containers <= hi)):
+                    continue
+            amount = c["p_unit"]
+            if c["currency"] == "PEN":
+                amount = soles_to_usd(amount, exchange_rate)
+            multiplier = num_containers if c["unit"] == "Cntr." else 1
+            total += amount * multiplier
+        totals[naviera] = {"vb_importacion_usd": round(total, 2)}
+    return totals
+
+
+# ── Real import reference data (Session E) ──────────────────────────────────
+# Transcribed from Gastos de Importacion en Callao por Naviera.xlsx (Client
+# Data/Part 2_Abel/) via parse_g_locales_sheet/parse_mbl_sheet/
+# parse_vb_importacion_sheet, audited 2026-06-20. Source file is local-only
+# (not committed to git, not present on Railway) — hardcoded here, same
+# pattern as CONSOLIDATORS/EXPORT_NAVIERA_DATA.
+G_LOCALES_DATA: dict = {
+    "CMA CGM / APL": {"thc_20": 65.0, "thc_40": 70.0, "no_cobra": False,
+                       "agente_maritimo": "IAN TAYLOR",
+                       "adicional_concept": "ISPS", "adicional_20": 14.0, "adicional_40": 14.0},
+    "COSCO / OOCL": {"thc_20": 55.0, "thc_40": 55.0, "no_cobra": False,
+                      "agente_maritimo": "COSCO PERU",
+                      "adicional_concept": "ISPS", "adicional_20": 6.0, "adicional_40": 6.0},
+    "EVERGREEN": {"thc_20": 80.0, "thc_40": 80.0, "no_cobra": False,
+                  "agente_maritimo": "GREENANDES",
+                  "adicional_concept": "ISPS", "adicional_20": 10.0, "adicional_40": 10.0},
+    "HAMBURG SUD / ALIANCA": {"thc_20": 90.0, "thc_40": 90.0, "no_cobra": False,
+                              "agente_maritimo": "COLUMBUS", "adicional_concept": "ISPS",
+                              "adicional_20": "USD 16.00 \nEUR 13.00",
+                              "adicional_40": "USD 16.00 \nEUR 13.00"},
+    "HAPAG LLOYD": {"thc_20": 75.0, "thc_40": 75.0, "no_cobra": False,
+                     "agente_maritimo": "TRAMARSA",
+                     "adicional_concept": "ISPS", "adicional_20": 13.0, "adicional_40": 13.0},
+    "HYUNDAI": {"thc_20": 85.0, "thc_40": 85.0, "no_cobra": False,
+                "agente_maritimo": "TRANSTOTAL",
+                "adicional_concept": "ISPS", "adicional_20": 10.0, "adicional_40": 10.0},
+    "MAERSK / SEALAND": {"thc_20": 110.0, "thc_40": 110.0, "no_cobra": False,
+                         "agente_maritimo": "COLUMBUS",
+                         "adicional_concept": "DOC FEE", "adicional_20": 55.0, "adicional_40": 55.0},
+    "MSC": {"thc_20": 65.0, "thc_40": 65.0, "no_cobra": False,
+            "agente_maritimo": "MSC PERU",
+            "adicional_concept": None, "adicional_20": None, "adicional_40": None},
+    "ONE": {"thc_20": 125.0, "thc_40": 125.0, "no_cobra": False,
+            "agente_maritimo": "MERCATOR",
+            "adicional_concept": "CVC", "adicional_20": 59.0, "adicional_40": 59.0},
+    "PIL": {"thc_20": 84.0, "thc_40": 84.0, "no_cobra": False,
+            "agente_maritimo": "TRANSMERIDIAN",
+            "adicional_concept": "ISPS", "adicional_20": 20.0, "adicional_40": 20.0},
+    "SEABOARD": {"thc_20": None, "thc_40": None, "no_cobra": True,
+                 "agente_maritimo": "CITIKOLD",
+                 "adicional_concept": None, "adicional_20": None, "adicional_40": None},
+    "WAN HAI": {"thc_20": 90.0, "thc_40": 90.0, "no_cobra": False,
+                "agente_maritimo": "TRANSTOTAL",
+                "adicional_concept": "ISPS", "adicional_20": 10.0, "adicional_40": 10.0},
+    "YANG MING": {"thc_20": 80.0, "thc_40": 80.0, "no_cobra": False,
+                  "agente_maritimo": "TPP",
+                  "adicional_concept": "ISPS", "adicional_20": 9.0, "adicional_40": 9.0},
+    "ZIM": {"thc_20": 90.0, "thc_40": 90.0, "no_cobra": False,
+            "agente_maritimo": "TPP",
+            "adicional_concept": "ISPS", "adicional_20": 18.0, "adicional_40": 18.0},
+}
+
+MBL_DATA: dict = {
+    "APL": {"amount": 55.0, "currency": "USD", "no_cobra": False, "plus_igv": True,
+            "raw": "USD 55.00 + IGV", "sea_waybill_telex": "NO"},
+    "CMA CGM": {"amount": 55.0, "currency": "USD", "no_cobra": False, "plus_igv": True,
+                "raw": "USD 55.00 + IGV", "sea_waybill_telex": "SI"},
+    "COSCO / OOCL": {"amount": 30.0, "currency": "USD", "no_cobra": False, "plus_igv": True,
+                      "raw": "USD 30.00 + IGV", "sea_waybill_telex": "SI"},
+    "EVERGREEN": {"amount": None, "currency": None, "no_cobra": True, "plus_igv": False,
+                  "raw": "NO COBRA", "sea_waybill_telex": "NO"},
+    "HAMBURG SUD": {"amount": 30.93, "currency": "USD", "no_cobra": False, "plus_igv": False,
+                    "raw": "DOC FEE USD 30.93", "sea_waybill_telex": "NO"},
+    "HAPAG LLOYD": {"amount": 60.0, "currency": "USD", "no_cobra": False, "plus_igv": True,
+                     "raw": "USD 60.00 + IGV", "sea_waybill_telex": "NO"},
+    "HYUNDAI": {"amount": 90.0, "currency": "PEN", "no_cobra": False, "plus_igv": True,
+                "raw": "S/ 90.00 + IGV", "sea_waybill_telex": "NO"},
+    "MAERSK / SEALAND": {"amount": 55.0, "currency": "USD", "no_cobra": False, "plus_igv": False,
+                         "raw": "DOC FEE USD 55.00", "sea_waybill_telex": "SI"},
+    "MSC": {"amount": 57.0, "currency": "USD", "no_cobra": False, "plus_igv": True,
+            "raw": "USD 57.00 + IGV", "sea_waybill_telex": "NO"},
+    "ONE": {"amount": 29.5, "currency": "USD", "no_cobra": False, "plus_igv": True,
+            "raw": "USD 29,50 + IGV", "sea_waybill_telex": "SI"},
+    "PIL": {"amount": 145.0, "currency": "PEN", "no_cobra": False, "plus_igv": True,
+            "raw": "S/ 145.00 + IGV", "sea_waybill_telex": "NO"},
+    "SEABOARD": {"amount": 35.0, "currency": "USD", "no_cobra": False, "plus_igv": True,
+                 "raw": "USD 35.00 + IGV", "sea_waybill_telex": "NO"},
+    "WAN HAI": {"amount": 115.0, "currency": "PEN", "no_cobra": False, "plus_igv": True,
+                "raw": "S/ 115.00 + IGV", "sea_waybill_telex": "NO"},
+    "YANG MING": {"amount": 50.0, "currency": "USD", "no_cobra": False, "plus_igv": True,
+                  "raw": "USD 50.00 + IGV", "sea_waybill_telex": "NO"},
+    "ZIM": {"amount": 50.0, "currency": "USD", "no_cobra": False, "plus_igv": True,
+            "raw": "USD 50.00 + IGV", "sea_waybill_telex": "-"},
+}
+
+VB_IMPORTACION_DATA: dict = {
+    "CMA CGM / APL": {"concepts": [
+        {"concept": "COORDINACIÓN Y SUPERVISIÓN DE DESCARGA", "currency": "USD",
+         "factura_agent": "IAN TAYLOR", "p_unit": 190.0, "unit": "Cntr."},
+        {"concept": "ADMINISTRACIÓN Y PROTECCIÓN DE EQUIPOS", "currency": "USD",
+         "factura_agent": "IAN TAYLOR", "p_unit": 35.0, "unit": "Cntr."},
+        {"concept": "GASTOS ADMINISTRATIVOS (2.5% FACTURA)", "currency": "USD",
+         "factura_agent": "IAN TAYLOR", "p_unit": 0.0, "unit": "Factura"},
+    ]},
+    "COSCO / OOCL": {"concepts": [
+        {"concept": "Servicio de Administración de Contenedores", "currency": "PEN",
+         "factura_agent": "COSCO", "p_unit": 120.0, "unit": "Cntr."},
+        {"concept": "VoBo 1 Cntr.", "currency": "PEN",
+         "factura_agent": "COSCO", "p_unit": 540.0, "unit": "Cntr."},
+        {"concept": "VoBo 2 a 5 Cntr.", "currency": "PEN",
+         "factura_agent": "COSCO", "p_unit": 470.0, "unit": "Cntr."},
+        {"concept": "VoBo 6 a más Cntr.", "currency": "PEN",
+         "factura_agent": "COSCO", "p_unit": 390.0, "unit": "Cntr."},
+    ]},
+    "EVERGREEN": {"concepts": [
+        {"concept": "DELIVERY ORDER", "currency": "USD",
+         "factura_agent": "GREENANDES PERU", "p_unit": 250.0, "unit": "Cntr."},
+        {"concept": "GASTOS ADMINISTRATIVOS", "currency": "PEN",
+         "factura_agent": "GREENANDES PERU", "p_unit": 25.0, "unit": "Factura"},
+        {"concept": "BL TRANSMISSION FEE", "currency": "USD",
+         "factura_agent": "GREENANDES PERU", "p_unit": 62.0, "unit": "BL"},
+    ]},
+    "HAMBURG SUD / ALIANCA": {"concepts": [
+        {"concept": "Container Control", "currency": "USD",
+         "factura_agent": "COLUMBUS", "p_unit": 135.0, "unit": "Cntr."},
+        {"concept": "Servicio de administración de contenedores (SAC)", "currency": "USD",
+         "factura_agent": "COLUMBUS", "p_unit": 70.0, "unit": "Cntr."},
+        {"concept": "Servicio Documentario", "currency": "USD",
+         "factura_agent": "COLUMBUS", "p_unit": 55.0, "unit": "BL"},
+    ]},
+    "HAPAG LLOYD": {"concepts": [
+        {"concept": "Gestión de Despacho de Contenedor Importación (GDCI)", "currency": "USD",
+         "factura_agent": "TRAMARSA", "p_unit": 192.0, "unit": "Cntr."},
+        {"concept": "Tramite Documentario de Importación (TDI)", "currency": "USD",
+         "factura_agent": "TRAMARSA", "p_unit": 98.0, "unit": "BL"},
+    ]},
+    "HYUNDAI": {"concepts": [
+        {"concept": "CONTROL & ADMINISTRACION DE CONTENEDORES", "currency": "PEN",
+         "factura_agent": "TRANSTOTAL", "p_unit": 150.0, "unit": "Cntr."},
+        {"concept": "BOX FEE", "currency": "PEN",
+         "factura_agent": "TRANSTOTAL", "p_unit": 420.0, "unit": "Cntr."},
+        {"concept": "GASTOS ADMINISTRATIVOS", "currency": "PEN",
+         "factura_agent": "TRANSTOTAL", "p_unit": 70.0, "unit": "Factura"},
+        {"concept": "DOC FEE", "currency": "PEN",
+         "factura_agent": "TRANSTOTAL", "p_unit": 456.0, "unit": "BL"},
+        {"concept": "GTO ADMINISTRATIVO 20' / 40' / 40'RF", "currency": "PEN",
+         "factura_agent": "IMUPESA", "p_unit": 70.0, "unit": "Cntr."},
+        {"concept": "REACOMODO DE STOCK", "currency": "USD",
+         "factura_agent": "IMUPESA", "p_unit": 30.0, "unit": "Cntr."},
+    ]},
+    "MAERSK / SEALAND": {"concepts": [
+        {"concept": "BOX FEE", "currency": "USD",
+         "factura_agent": "IAN TAYLOR", "p_unit": 135.0, "unit": "Cntr."},
+        {"concept": "CONTAINER COVERAGE FEE", "currency": "USD",
+         "factura_agent": "IAN TAYLOR", "p_unit": 70.0, "unit": "Cntr."},
+        {"concept": "SERVICIO INTEGRAL RECEPCIÓN DE VACÍOS", "currency": "USD",
+         "factura_agent": "ALCONSA", "p_unit": 237.0, "unit": "Cntr."},
+    ]},
+    "MSC": {"concepts": [
+        {"concept": "Despacho Contenedor", "currency": "USD",
+         "factura_agent": "MSC DEL PERU", "p_unit": 167.0, "unit": "Cntr."},
+        {"concept": "Despacho Documentario", "currency": "USD",
+         "factura_agent": "MSC DEL PERU", "p_unit": 120.0, "unit": "BL"},
+        {"concept": "VB HBL adicional", "currency": "USD",
+         "factura_agent": "MSC DEL PERU", "p_unit": 105.0, "unit": "BL"},
+    ]},
+    "ONE": {"concepts": [
+        {"concept": "Gastos Administrativos", "currency": "USD",
+         "factura_agent": "MERCATOR", "p_unit": 10.0, "unit": "Factura"},
+        {"concept": "Box fee", "currency": "USD",
+         "factura_agent": "MERCATOR", "p_unit": 155.0, "unit": "Cntr."},
+        {"concept": "SCAC", "currency": "USD",
+         "factura_agent": "MERCATOR", "p_unit": 42.0, "unit": "Cntr."},
+        {"concept": "Doc Fee", "currency": "USD",
+         "factura_agent": "MERCATOR", "p_unit": 115.0, "unit": "BL"},
+    ]},
+    "PIL": {"concepts": [
+        {"concept": "CONTAINER DELIVERY ORDER FEE", "currency": "USD",
+         "factura_agent": "TRANSMERIDIAN", "p_unit": 125.0, "unit": "Cntr."},
+        {"concept": "GASTOS ADMINISTRATIVOS", "currency": "USD",
+         "factura_agent": "TRANSMERIDIAN", "p_unit": 40.0, "unit": "Factura"},
+        {"concept": "SERVICIO DE ADMINISTRACIÓN DE CONTENEDORES", "currency": "USD",
+         "factura_agent": "TRANSMERIDIAN", "p_unit": 36.0, "unit": "Cntr."},
+        {"concept": "DOC FEE", "currency": "USD",
+         "factura_agent": "TRANSMERIDIAN", "p_unit": 120.0, "unit": "BL"},
+    ]},
+    "SEABOARD": {"concepts": [
+        {"concept": "CONTAINER DELIVERY ORDER FEE", "currency": "USD",
+         "factura_agent": "CITIKOLD", "p_unit": 116.0, "unit": "Cntr."},
+        {"concept": "GASTOS ADMINISTRATIVOS", "currency": "USD",
+         "factura_agent": "CITIKOLD", "p_unit": 30.0, "unit": "Factura"},
+        {"concept": "DOC FEE", "currency": "USD",
+         "factura_agent": "CITIKOLD", "p_unit": 140.98, "unit": "BL"},
+    ]},
+    "WAN HAI": {"concepts": [
+        {"concept": "CONTROL & ADMINISTRACION DE CONTENEDORES", "currency": "USD",
+         "factura_agent": "TRANSTOTAL", "p_unit": 50.0, "unit": "Cntr."},
+        {"concept": "BOX FEE", "currency": "USD",
+         "factura_agent": "TRANSTOTAL", "p_unit": 100.0, "unit": "Cntr."},
+        {"concept": "GASTOS ADMINISTRATIVOS", "currency": "USD",
+         "factura_agent": "TRANSTOTAL", "p_unit": 20.0, "unit": "Factura"},
+        {"concept": "DOC FEE", "currency": "USD",
+         "factura_agent": "TRANSTOTAL", "p_unit": 108.0, "unit": "BL"},
+    ]},
+    "YANG MING": {"concepts": [
+        {"concept": "Container Delivery & Control Fee", "currency": "USD",
+         "factura_agent": "PMA", "p_unit": 180.0, "unit": "Cntr."},
+        {"concept": "Equipment Services Fee", "currency": "USD",
+         "factura_agent": "PMA", "p_unit": 36.0, "unit": "Cntr."},
+        {"concept": "Administration Fee", "currency": "USD",
+         "factura_agent": "PMA", "p_unit": 40.0, "unit": "Factura"},
+        {"concept": "Documentation Fee", "currency": "USD",
+         "factura_agent": "PMA", "p_unit": 80.0, "unit": "BL"},
+    ]},
+    "ZIM": {"concepts": [
+        {"concept": "DELIVERY ORDER", "currency": "USD",
+         "factura_agent": "COSMOS", "p_unit": 200.0, "unit": "Cntr."},
+        {"concept": "GASTOS ADMINISTRATIVOS", "currency": "USD",
+         "factura_agent": "COSMOS", "p_unit": 30.0, "unit": "Factura"},
+        {"concept": "Documentation Fee", "currency": "USD",
+         "factura_agent": "COSMOS", "p_unit": 150.0, "unit": "BL"},
+    ]},
+}
+
+
+def get_g_locales_data() -> dict:
+    return G_LOCALES_DATA
+
+
+def get_mbl_data() -> dict:
+    return MBL_DATA
+
+
+def get_vb_importacion_data() -> dict:
+    return VB_IMPORTACION_DATA

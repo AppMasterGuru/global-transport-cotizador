@@ -333,6 +333,37 @@
           </select>
           <span class="field-hint">Tarifa por distrito de destino (TARIFA OPEN TRANSPORT 2025). Deja en blanco si no aplica.</span>
         </label>
+        <label class="field" id="row-fcl-terminal">
+          <span class="label-text">Terminal Portuario (FCL)</span>
+          <select name="fcl_terminal" id="fcl-terminal-select">
+            <option value="DPW">DP World (DPW)</option>
+            <option value="APM">APM Terminals</option>
+          </select>
+          <span class="field-hint">DPW cobra depósito temporal aparte (S/450 expo · S/600 impo); APM ya lo incluye.</span>
+        </label>
+        <label class="field" id="row-fcl-naviera">
+          <span class="label-text">Naviera (FCL)</span>
+          <select name="fcl_naviera" id="fcl-naviera-select">
+            <option value="">— Seleccionar —</option>
+            {% for n in fcl_navieras %}
+            <option value="{{ n }}">{{ n }}</option>
+            {% endfor %}
+          </select>
+          <span class="field-hint">Visto Bueno (expo) / THC+ISPS+MBL+VB (impo) solo se cobran si la naviera tiene tarifa confirmada.</span>
+        </label>
+        <label class="field" id="row-fcl-container-type">
+          <span class="label-text">Tipo de Contenedor (FCL)</span>
+          <select name="fcl_container_type" id="fcl-container-type-select">
+            <option value="20STD">20' Standard</option>
+            <option value="40STD">40' Standard</option>
+            <option value="40HC">40' High Cube</option>
+          </select>
+        </label>
+        <label class="field" id="row-fcl-num-containers">
+          <span class="label-text">N° Contenedores (FCL)</span>
+          <input type="number" name="num_containers" id="fcl-num-containers-input" min="1" step="1" value="1">
+          <span class="field-hint">Afecta puerto, agente de aduana (recargo 2do contenedor) y precinto.</span>
+        </label>
       </div>
       <div class="form-grid">
         <label class="field field-check">
@@ -728,6 +759,14 @@
   var rowOpenTransportHazardous = document.getElementById('row-open-transport-hazardous');
   var openTransportDistrictSel  = document.getElementById('open-transport-district-select');
   var openTransportHazardousChk = document.getElementById('open-transport-hazardous-check');
+  var rowFclTerminal      = document.getElementById('row-fcl-terminal');
+  var rowFclNaviera       = document.getElementById('row-fcl-naviera');
+  var rowFclContainerType = document.getElementById('row-fcl-container-type');
+  var rowFclNumContainers = document.getElementById('row-fcl-num-containers');
+  var fclTerminalSel      = document.getElementById('fcl-terminal-select');
+  var fclNavieraSel       = document.getElementById('fcl-naviera-select');
+  var fclContainerTypeSel = document.getElementById('fcl-container-type-select');
+  var fclNumContainersInp = document.getElementById('fcl-num-containers-input');
 
   function applyModeVisibility() {
     var mode = modeSelect.value;
@@ -736,6 +775,14 @@
     rowOpenTransportHazardous.style.display = showOpenTransport ? '' : 'none';
     if (openTransportDistrictSel)  { openTransportDistrictSel.disabled  = !showOpenTransport; }
     if (openTransportHazardousChk) { openTransportHazardousChk.disabled = !showOpenTransport; }
+    rowFclTerminal.style.display      = showOpenTransport ? '' : 'none';
+    rowFclNaviera.style.display       = showOpenTransport ? '' : 'none';
+    rowFclContainerType.style.display = showOpenTransport ? '' : 'none';
+    rowFclNumContainers.style.display = showOpenTransport ? '' : 'none';
+    if (fclTerminalSel)      { fclTerminalSel.disabled      = !showOpenTransport; }
+    if (fclNavieraSel)       { fclNavieraSel.disabled       = !showOpenTransport; }
+    if (fclContainerTypeSel) { fclContainerTypeSel.disabled = !showOpenTransport; }
+    if (fclNumContainersInp) { fclNumContainersInp.disabled = !showOpenTransport; }
     // Consolidador row is shown for both LCL (auto Visto Bueno) and Aéreo
     // (consolidado destination charges — Transmission/Handling). Disabling
     // it for FCL/other modes stops the hidden <select> from still submitting

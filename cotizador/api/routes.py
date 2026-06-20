@@ -53,8 +53,21 @@ from core.db import audit, get_audit_trail, get_connection, get_provider_replies
 from core.email_sender import send_quote_email, send_provider_email, CREDENTIALS_ROTATED
 from core.pdf_generator import generate_pdf_bytes, generate_html_preview, WEASYPRINT_AVAILABLE
 from core.exchange_rate import get_exchange_rate, soles_to_usd
+from core.fcl_import_costs import (
+    build_vb_importacion_totals,
+    get_fcl_import_local_costs,
+    get_g_locales_data,
+    get_mbl_data,
+    get_vb_importacion_data,
+)
+from core.fcl_naviera_costs import (
+    fcl_customs_agent_costs,
+    get_export_naviera_data,
+    get_export_visto_bueno,
+)
 from core.incoterms import classify_incoterm
 from core.open_transport_costs import list_open_transport_districts, open_transport_delivery_usd
+from core.port_costs import get_port_cost
 from core.provider_emails import generate_provider_emails
 from core.reference import generate_reference
 from core.sintad_export import generate_sintad_excel
@@ -193,6 +206,7 @@ def new_quote_form():
     return render_template(
         "new_quote.html",
         open_transport_districts=list_open_transport_districts(),
+        fcl_navieras=sorted(get_g_locales_data()),
     )
 
 
@@ -332,6 +346,20 @@ def create_quote():
     operation_raw      = f.get("operation", "exportacion").strip().lower()
     operation          = operation_raw if operation_raw in ("exportacion", "importacion") else "exportacion"
 
+    # FCL terminal/naviera/container selectors (Session E) — FCL-only, no
+    # effect on other modes. Defaults are inert (DPW/20STD/1 container) when
+    # mode != "fcl" since the cost block below only runs for mode == "fcl".
+    fcl_terminal = f.get("fcl_terminal", "DPW").strip().upper()
+    if fcl_terminal not in ("DPW", "APM"):
+        fcl_terminal = "DPW"
+    fcl_naviera = f.get("fcl_naviera", "").strip().upper()
+    fcl_container_type = f.get("fcl_container_type", "20STD").strip().upper()
+    if fcl_container_type not in ("20STD", "40STD", "40HC"):
+        fcl_container_type = "20STD"
+    num_containers = int(f.get("num_containers", 1) or 1)
+    if num_containers < 1:
+        num_containers = 1
+
     # DDP duties CIF inputs (client-facing proforma only — Abel confirmed 2026-06-18).
     # Freight reuses flete_usd computed below; only Invoice/Insurance are new entry.
     invoice_usd   = float(f.get("invoice_usd") or 0) if incoterm == "DDP" else None
@@ -355,7 +383,84 @@ def create_quote():
         agent = get_lcl_import_customs_agent()
     else:
         agent = get_customs_agent(requires_oea_basc)
-    customs_usd = customs_net_usd(agent)
+    # FCL has its own commission/precinto rules (fcl_customs_agent_costs,
+    # computed below) — the generic agent's flat commission does not apply
+    # to FCL (it knows nothing about the 2nd-container surcharge or the
+    # OEA+BASC per-container tiering). agent["name"] is still used for the
+    # costeo["customs_agent"] display field.
+    customs_usd = 0.0 if mode == "fcl" else customs_net_usd(agent)
+
+    # FCL local costs (Session E) — terminal/naviera/container-driven, only
+    # for mode="fcl". TODO(abel-F1F4): margin is applied to all of these by
+    # default (same as Visto Bueno/Agente de Aduana/Transporte Local
+    # elsewhere) since Abel hasn't flagged any of them as flat pass-throughs
+    # (unlike Handling Aereo/Almacén Aéreo) — confirm via Abel's F1-F4 run.
+    fcl_port_usd = 0.0
+    fcl_deposito_temporal_usd = 0.0
+    fcl_visto_bueno_usd = 0.0
+    fcl_customs_commission_usd = 0.0
+    fcl_customs_gastos_operativos_usd = 0.0
+    fcl_customs_precinto_usd = 0.0
+    fcl_customs_agent_name = ""
+    fcl_thc_usd = 0.0
+    fcl_isps_usd = 0.0
+    fcl_mbl_usd = 0.0
+    fcl_vb_importacion_usd = 0.0
+
+    if mode == "fcl":
+        port = get_port_cost(fcl_terminal, operation, fcl_container_type)
+        fcl_port_usd = round(port["usd_port_usd"] * num_containers, 2)
+        if fcl_terminal == "DPW":
+            # Deposito temporal is a flat per-shipment service fee, not
+            # per-container (unlike the port handling charge above) — Barney's
+            # reading of "deposito temporal" as a customs storage admin fee.
+            # TODO(abel-F1F4): confirm this assumption during F1-F4.
+            fcl_deposito_temporal_usd = round(
+                soles_to_usd(port["pen_deposito_temporal"], exchange_rate), 2
+            )
+
+        agent_costs = fcl_customs_agent_costs(requires_oea_basc, num_containers)
+        fcl_customs_commission_usd = agent_costs["commission_usd"]
+        fcl_customs_gastos_operativos_usd = agent_costs["gastos_operativos_usd"]
+        fcl_customs_precinto_usd = agent_costs["precinto_usd"]
+        fcl_customs_agent_name = agent_costs["agent_name"]
+
+        if operation == "exportacion" and fcl_naviera:
+            export_data = get_export_naviera_data()
+            vb = get_export_visto_bueno(export_data, fcl_naviera)
+            if vb is None and "/" in fcl_naviera:
+                # Export sheet uses bare carrier names (e.g. "MAERSK"); the
+                # naviera dropdown uses the fuller import-side names (e.g.
+                # "MAERSK / SEALAND") — try the first segment before giving up.
+                vb = get_export_visto_bueno(export_data, fcl_naviera.split("/")[0].strip())
+            if vb:
+                fcl_visto_bueno_usd = round(vb["total"], 2)
+            elif fcl_naviera:
+                logging.warning(
+                    "No naviera-attributed export Visto Bueno for %r — FCL export VB not charged",
+                    fcl_naviera,
+                )
+
+        if operation == "importacion" and fcl_naviera:
+            vb_totals = build_vb_importacion_totals(
+                get_vb_importacion_data(), num_containers, exchange_rate
+            )
+            import_costs = get_fcl_import_local_costs(
+                get_g_locales_data(), get_mbl_data(), fcl_naviera, vb_importacion=vb_totals
+            )
+            if import_costs:
+                size_key = "20" if fcl_container_type == "20STD" else "40"
+                thc_unit = import_costs.get(f"thc_{size_key}") or 0.0
+                isps_unit = import_costs.get(f"isps_{size_key}") or 0.0
+                fcl_thc_usd = round(thc_unit * num_containers, 2)
+                fcl_isps_usd = round(isps_unit * num_containers, 2)
+                fcl_mbl_usd = round(import_costs.get("mbl_usd") or 0.0, 2)
+                fcl_vb_importacion_usd = round(import_costs.get("vb_importacion_usd") or 0.0, 2)
+            else:
+                logging.warning(
+                    "Unknown or inactive FCL import naviera %r — import local costs not charged",
+                    fcl_naviera,
+                )
 
     # Visto bueno (LCL only) — net pre-IGV, resolved by (consolidator × operation)
     vb_usd = 0.0
@@ -511,6 +616,9 @@ def create_quote():
         flete_usd + vb_usd + customs_usd + transport_usd + handling_aereo_usd
         + thc_usd + _extra_total + aereo_transmission_usd + aereo_handling_destino_usd
         + almacen_aereo_usd + open_transport_usd
+        + fcl_port_usd + fcl_deposito_temporal_usd + fcl_visto_bueno_usd
+        + fcl_customs_commission_usd + fcl_customs_gastos_operativos_usd + fcl_customs_precinto_usd
+        + fcl_thc_usd + fcl_isps_usd + fcl_mbl_usd + fcl_vb_importacion_usd
     )
 
     costeo = {
@@ -530,6 +638,21 @@ def create_quote():
         "open_transport_usd": open_transport_usd if open_transport_usd else None,
         "open_transport_district": open_transport_district if open_transport_district else None,
         "open_transport_hazardous": open_transport_hazardous if mode == "fcl" else None,
+        "fcl_terminal": fcl_terminal if mode == "fcl" else None,
+        "fcl_naviera": fcl_naviera if mode == "fcl" and fcl_naviera else None,
+        "fcl_container_type": fcl_container_type if mode == "fcl" else None,
+        "num_containers": num_containers if mode == "fcl" else None,
+        "fcl_port_usd": fcl_port_usd if fcl_port_usd else None,
+        "fcl_deposito_temporal_usd": fcl_deposito_temporal_usd if fcl_deposito_temporal_usd else None,
+        "fcl_visto_bueno_usd": fcl_visto_bueno_usd if fcl_visto_bueno_usd else None,
+        "fcl_customs_commission_usd": fcl_customs_commission_usd if mode == "fcl" else None,
+        "fcl_customs_gastos_operativos_usd": fcl_customs_gastos_operativos_usd if mode == "fcl" else None,
+        "fcl_customs_precinto_usd": fcl_customs_precinto_usd if mode == "fcl" else None,
+        "fcl_customs_agent_name": fcl_customs_agent_name if mode == "fcl" else None,
+        "fcl_thc_usd": fcl_thc_usd if fcl_thc_usd else None,
+        "fcl_isps_usd": fcl_isps_usd if fcl_isps_usd else None,
+        "fcl_mbl_usd": fcl_mbl_usd if fcl_mbl_usd else None,
+        "fcl_vb_importacion_usd": fcl_vb_importacion_usd if fcl_vb_importacion_usd else None,
         "aereo_modalidad": aereo_modalidad if mode == "aereo" else None,
         "aereo_consolidado": aereo_consolidado if mode == "aereo" else None,
         "aereo_transmission_usd": aereo_transmission_usd if aereo_transmission_usd else None,
@@ -691,6 +814,81 @@ def create_quote():
             "quantity": 1,
             "unit_price": round(aereo_handling_destino_usd, 2),
             "total": round(aereo_handling_destino_usd, 2),
+            **_FLAGS_LOCAL,
+        })
+    # FCL local costs (Session E) — see TODO(abel-F1F4) note above on the
+    # costeo block: margin applied by default, not yet confirmed flat.
+    if fcl_port_usd > 0:
+        local_venta_items.append({
+            "description": f"Puerto ({fcl_terminal})",
+            "quantity": 1,
+            "unit_price": round(fcl_port_usd * m, 2),
+            "total": round(fcl_port_usd * m, 2),
+            **_FLAGS_LOCAL,
+        })
+    if fcl_deposito_temporal_usd > 0:
+        local_venta_items.append({
+            "description": "Depósito Temporal (DPW)",
+            "quantity": 1,
+            "unit_price": round(fcl_deposito_temporal_usd * m, 2),
+            "total": round(fcl_deposito_temporal_usd * m, 2),
+            **_FLAGS_LOCAL,
+        })
+    if mode == "fcl" and (fcl_customs_commission_usd or fcl_customs_gastos_operativos_usd):
+        _fcl_customs_net = fcl_customs_commission_usd + fcl_customs_gastos_operativos_usd
+        local_venta_items.append({
+            "description": "Agente de Aduana",
+            "quantity": 1,
+            "unit_price": round(_fcl_customs_net * m, 2),
+            "total": round(_fcl_customs_net * m, 2),
+            **_FLAGS_LOCAL,
+        })
+    if fcl_customs_precinto_usd > 0:
+        local_venta_items.append({
+            "description": "Precinto",
+            "quantity": 1,
+            "unit_price": round(fcl_customs_precinto_usd * m, 2),
+            "total": round(fcl_customs_precinto_usd * m, 2),
+            **_FLAGS_LOCAL,
+        })
+    if fcl_visto_bueno_usd > 0:
+        local_venta_items.append({
+            "description": "Visto Bueno",
+            "quantity": 1,
+            "unit_price": round(fcl_visto_bueno_usd * m, 2),
+            "total": round(fcl_visto_bueno_usd * m, 2),
+            **_FLAGS_LOCAL,
+        })
+    if fcl_thc_usd > 0:
+        local_venta_items.append({
+            "description": "THC / Terminal Handling",
+            "quantity": 1,
+            "unit_price": round(fcl_thc_usd * m, 2),
+            "total": round(fcl_thc_usd * m, 2),
+            **_FLAGS_LOCAL,
+        })
+    if fcl_isps_usd > 0:
+        local_venta_items.append({
+            "description": "ISPS",
+            "quantity": 1,
+            "unit_price": round(fcl_isps_usd * m, 2),
+            "total": round(fcl_isps_usd * m, 2),
+            **_FLAGS_LOCAL,
+        })
+    if fcl_mbl_usd > 0:
+        local_venta_items.append({
+            "description": "Emisión MBL",
+            "quantity": 1,
+            "unit_price": round(fcl_mbl_usd * m, 2),
+            "total": round(fcl_mbl_usd * m, 2),
+            **_FLAGS_LOCAL,
+        })
+    if fcl_vb_importacion_usd > 0:
+        local_venta_items.append({
+            "description": "Visto Bueno (Importación)",
+            "quantity": 1,
+            "unit_price": round(fcl_vb_importacion_usd * m, 2),
+            "total": round(fcl_vb_importacion_usd * m, 2),
             **_FLAGS_LOCAL,
         })
 

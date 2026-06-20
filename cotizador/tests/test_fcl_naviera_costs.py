@@ -21,11 +21,13 @@ import pytest
 
 from core.fcl_naviera_costs import (
     apply_second_container_surcharges,
+    fcl_customs_agent_costs,
     fcl_oea_basc_commission_per_container_usd,
     fcl_oea_basc_commission_total_usd,
     fcl_oea_basc_gastos_operativos_usd,
     fcl_oea_basc_precinto_total_usd,
     get_export_gate_out,
+    get_export_naviera_data,
     get_export_visto_bueno,
     parse_export_naviera_sheet,
     precinto_total_usd,
@@ -244,3 +246,67 @@ class TestFclOeaBascTieredCustomsAgentQ6:
 
     def test_precinto_three_containers_is_flat_15(self):
         assert fcl_oea_basc_precinto_total_usd(3) == pytest.approx(15.0, rel=0.001)
+
+
+class TestExportNavieraData:
+    """Real EXPORTACION-CALLAO data (Session E), transcribed from the local
+    EXPO_IMPO.xlsx via parse_export_naviera_sheet — hardcoded the same way
+    CONSOLIDATORS/CUSTOMS_AGENTS are, since the source file isn't deployed."""
+
+    def test_gate_out_almacenes_present(self):
+        data = get_export_naviera_data()
+        assert set(data["gate_out"]) == {
+            "CONTRANS", "DEMARES", "DP WORLD LOGISTICS", "DPW",
+            "FARGOLINE", "IMUPESA", "MEDLOG", "RANSA", "TPP",
+        }
+
+    def test_medlog_gate_out_value(self):
+        data = get_export_naviera_data()
+        assert data["gate_out"]["MEDLOG"]["net"] == pytest.approx(152.0, rel=0.001)
+
+    def test_visto_bueno_navieras_present(self):
+        data = get_export_naviera_data()
+        assert set(data["visto_bueno"]) == {"CMA CGM", "MAERSK"}
+
+    def test_maersk_visto_bueno_total(self):
+        data = get_export_naviera_data()
+        assert data["visto_bueno"]["MAERSK"]["total"] == pytest.approx(160.0, rel=0.001)
+
+    def test_consumable_via_existing_getters(self):
+        # get_export_naviera_data() output must be consumable by the
+        # existing get_export_gate_out/get_export_visto_bueno helpers.
+        data = get_export_naviera_data()
+        assert get_export_gate_out(data, "MEDLOG")["net"] == pytest.approx(152.0, rel=0.001)
+        assert get_export_visto_bueno(data, "MAERSK")["total"] == pytest.approx(160.0, rel=0.001)
+
+
+class TestFclCustomsAgentCostsDispatch:
+    """FCL-specific customs agent dispatch (Session E) — supersedes the
+    generic transport.get_customs_agent() path for mode='fcl', which knows
+    nothing about the 2nd-container surcharge or OEA+BASC per-container
+    tiering."""
+
+    def test_alefero_one_container(self):
+        c = fcl_customs_agent_costs(requires_oea_basc=False, num_containers=1)
+        assert c["agent_name"] == "Alefero"
+        assert c["commission_usd"] == pytest.approx(50.0, rel=0.001)
+        assert c["gastos_operativos_usd"] == pytest.approx(0.0, rel=0.001)
+        assert c["precinto_usd"] == pytest.approx(10.0, rel=0.001)
+
+    def test_alefero_two_containers_commission_includes_surcharge(self):
+        # Base 50 + 2nd-container 50% surcharge (25) = 75.
+        c = fcl_customs_agent_costs(requires_oea_basc=False, num_containers=2)
+        assert c["commission_usd"] == pytest.approx(75.0, rel=0.001)
+        assert c["precinto_usd"] == pytest.approx(20.0, rel=0.001)
+
+    def test_oea_basc_one_container(self):
+        c = fcl_customs_agent_costs(requires_oea_basc=True, num_containers=1)
+        assert c["agent_name"] == "OEA+BASC Certified Agent"
+        assert c["commission_usd"] == pytest.approx(70.0, rel=0.001)
+        assert c["gastos_operativos_usd"] == pytest.approx(20.0, rel=0.001)
+        assert c["precinto_usd"] == pytest.approx(5.0, rel=0.001)
+
+    def test_oea_basc_two_containers_tiered(self):
+        c = fcl_customs_agent_costs(requires_oea_basc=True, num_containers=2)
+        assert c["commission_usd"] == pytest.approx(100.0, rel=0.001)
+        assert c["precinto_usd"] == pytest.approx(10.0, rel=0.001)
