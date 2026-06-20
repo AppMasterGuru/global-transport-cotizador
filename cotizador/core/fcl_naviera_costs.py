@@ -144,3 +144,35 @@ ALEFERO_PRECINTO_USD = 10.0
 
 def precinto_total_usd(num_containers: int) -> float:
     return round(ALEFERO_PRECINTO_USD * num_containers, 2)
+
+
+# ── FCL OEA+BASC tiered customs agent — export (Abel Parte 2 Q6) ───────────
+# Unlike Alefero's flat commission + 2nd-container surcharge model, the
+# OEA+BASC certified export agent prices per container on a volume tier:
+#   1 container:  USD 70/cntr
+#   2 containers: USD 50/cntr
+#   3+ containers: USD 40/cntr
+# Plus flat gastos operativos USD 20 (regardless of container count) and
+# its own precinto rate, USD 5/cntr (separate from Alefero's USD 10/cntr).
+FCL_OEA_BASC_GASTOS_OPERATIVOS_USD = 20.0
+FCL_OEA_BASC_PRECINTO_USD = 5.0
+
+
+def fcl_oea_basc_commission_per_container_usd(num_containers: int) -> float:
+    if num_containers == 1:
+        return 70.0
+    if num_containers == 2:
+        return 50.0
+    return 40.0
+
+
+def fcl_oea_basc_commission_total_usd(num_containers: int) -> float:
+    return round(fcl_oea_basc_commission_per_container_usd(num_containers) * num_containers, 2)
+
+
+def fcl_oea_basc_gastos_operativos_usd() -> float:
+    return FCL_OEA_BASC_GASTOS_OPERATIVOS_USD
+
+
+def fcl_oea_basc_precinto_total_usd(num_containers: int) -> float:
+    return round(FCL_OEA_BASC_PRECINTO_USD * num_containers, 2)

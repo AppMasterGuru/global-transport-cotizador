@@ -21,6 +21,10 @@ import pytest
 
 from core.fcl_naviera_costs import (
     apply_second_container_surcharges,
+    fcl_oea_basc_commission_per_container_usd,
+    fcl_oea_basc_commission_total_usd,
+    fcl_oea_basc_gastos_operativos_usd,
+    fcl_oea_basc_precinto_total_usd,
     get_export_gate_out,
     get_export_visto_bueno,
     parse_export_naviera_sheet,
@@ -196,3 +200,47 @@ class TestPrecintoQ8:
 
     def test_three_containers_is_flat_30(self):
         assert precinto_total_usd(num_containers=3) == pytest.approx(30.0, rel=0.001)
+
+
+class TestFclOeaBascTieredCustomsAgentQ6:
+    """Abel Parte 2 Q6 (FCL export): the OEA+BASC certified customs agent's
+    commission is tiered by container count — 1 cntr USD 70, 2 cntrs USD
+    50/cntr, 3+ cntrs USD 40/cntr — plus flat gastos operativos USD 20 and
+    precinto USD 5/cntr (this agent's own precinto rate, separate from
+    Alefero's USD 10/cntr)."""
+
+    def test_one_container_rate_is_70(self):
+        assert fcl_oea_basc_commission_per_container_usd(1) == pytest.approx(70.0, rel=0.001)
+
+    def test_two_container_rate_is_50(self):
+        assert fcl_oea_basc_commission_per_container_usd(2) == pytest.approx(50.0, rel=0.001)
+
+    def test_three_container_rate_is_40(self):
+        assert fcl_oea_basc_commission_per_container_usd(3) == pytest.approx(40.0, rel=0.001)
+
+    def test_four_container_rate_still_40(self):
+        assert fcl_oea_basc_commission_per_container_usd(4) == pytest.approx(40.0, rel=0.001)
+
+    def test_one_container_total_is_70(self):
+        assert fcl_oea_basc_commission_total_usd(1) == pytest.approx(70.0, rel=0.001)
+
+    def test_two_containers_total_is_100(self):
+        assert fcl_oea_basc_commission_total_usd(2) == pytest.approx(100.0, rel=0.001)
+
+    def test_three_containers_total_is_120(self):
+        assert fcl_oea_basc_commission_total_usd(3) == pytest.approx(120.0, rel=0.001)
+
+    def test_five_containers_total_is_200(self):
+        assert fcl_oea_basc_commission_total_usd(5) == pytest.approx(200.0, rel=0.001)
+
+    def test_gastos_operativos_is_flat_20_regardless_of_container_count(self):
+        assert fcl_oea_basc_gastos_operativos_usd() == pytest.approx(20.0, rel=0.001)
+
+    def test_precinto_one_container_is_5(self):
+        assert fcl_oea_basc_precinto_total_usd(1) == pytest.approx(5.0, rel=0.001)
+
+    def test_precinto_two_containers_is_flat_10(self):
+        assert fcl_oea_basc_precinto_total_usd(2) == pytest.approx(10.0, rel=0.001)
+
+    def test_precinto_three_containers_is_flat_15(self):
+        assert fcl_oea_basc_precinto_total_usd(3) == pytest.approx(15.0, rel=0.001)
