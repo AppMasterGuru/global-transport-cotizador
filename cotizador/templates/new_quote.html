@@ -323,12 +323,27 @@
           <input type="number" name="margin_pct" step="0.5" min="10" max="100" value="20">
           <span class="field-hint">Piso mínimo: 10% (no negociable)</span>
         </label>
+        <label class="field" id="row-open-transport-district">
+          <span class="label-text">Transporte Local — Open Transport (FCL) <em style="font-weight:normal;color:#6b7280;">opcional</em></span>
+          <select name="open_transport_district" id="open-transport-district-select">
+            <option value="">— Sin transporte local —</option>
+            {% for d in open_transport_districts %}
+            <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+          </select>
+          <span class="field-hint">Tarifa por distrito de destino (TARIFA OPEN TRANSPORT 2025). Deja en blanco si no aplica.</span>
+        </label>
       </div>
       <div class="form-grid">
         <label class="field field-check">
           <input type="checkbox" name="requires_oea_basc">
           <span class="label-text">Cliente requiere agente OEA+BASC</span>
           <span class="field-hint">Ej: Farmex. Costo mayor que Alefero estándar.</span>
+        </label>
+        <label class="field field-check" id="row-open-transport-hazardous">
+          <input type="checkbox" name="open_transport_hazardous" id="open-transport-hazardous-check">
+          <span class="label-text">Carga IMO / peligrosa (Open Transport)</span>
+          <span class="field-hint">Aplica la tarifa IMO en vez de la tarifa general.</span>
         </label>
       </div>
     </section>
@@ -709,9 +724,18 @@
   var rowModalidad     = document.getElementById('row-aereo-modalidad');
   var consolidadorSel  = document.getElementById('consolidator-select');
   var modalidadSel      = document.getElementById('aereo-modalidad-select');
+  var rowOpenTransportDistrict  = document.getElementById('row-open-transport-district');
+  var rowOpenTransportHazardous = document.getElementById('row-open-transport-hazardous');
+  var openTransportDistrictSel  = document.getElementById('open-transport-district-select');
+  var openTransportHazardousChk = document.getElementById('open-transport-hazardous-check');
 
   function applyModeVisibility() {
     var mode = modeSelect.value;
+    var showOpenTransport = (mode === 'fcl');
+    rowOpenTransportDistrict.style.display  = showOpenTransport ? '' : 'none';
+    rowOpenTransportHazardous.style.display = showOpenTransport ? '' : 'none';
+    if (openTransportDistrictSel)  { openTransportDistrictSel.disabled  = !showOpenTransport; }
+    if (openTransportHazardousChk) { openTransportHazardousChk.disabled = !showOpenTransport; }
     // Consolidador row is shown for both LCL (auto Visto Bueno) and Aéreo
     // (consolidado destination charges — Transmission/Handling). Disabling
     // it for FCL/other modes stops the hidden <select> from still submitting

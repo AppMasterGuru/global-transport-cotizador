@@ -54,6 +54,7 @@ from core.email_sender import send_quote_email, send_provider_email, CREDENTIALS
 from core.pdf_generator import generate_pdf_bytes, generate_html_preview, WEASYPRINT_AVAILABLE
 from core.exchange_rate import get_exchange_rate, soles_to_usd
 from core.incoterms import classify_incoterm
+from core.open_transport_costs import list_open_transport_districts, open_transport_delivery_usd
 from core.provider_emails import generate_provider_emails
 from core.reference import generate_reference
 from core.sintad_export import generate_sintad_excel
@@ -189,7 +190,10 @@ def api_dashboard_quotes():
 
 @bp.route("/quote/new", methods=["GET"])
 def new_quote_form():
-    return render_template("new_quote.html")
+    return render_template(
+        "new_quote.html",
+        open_transport_districts=list_open_transport_districts(),
+    )
 
 
 def _auto_send_provider_emails(ref: str, quote: dict, actor: str) -> None:
@@ -389,6 +393,31 @@ def create_quote():
     # (same pattern as Handling Aereo — no margin uplift).
     almacen_aereo_usd = float(f.get("almacen_aereo_usd") or 0)
 
+    # Open Transport district delivery (FCL only, Q7, 2026-06-20) — optional
+    # local delivery line item, district-by-district rate from Open Transport
+    # SAC's "TARIFAS OPEN TRANSPORT 2025.pdf". Only charged when the user
+    # explicitly picks a destination district; unknown/blank district → 0,
+    # no silent guess.
+    open_transport_district = f.get("open_transport_district", "").strip().upper()
+    open_transport_hazardous = f.get("open_transport_hazardous") == "on"
+    open_transport_usd = 0.0
+    if mode == "fcl" and open_transport_district:
+        try:
+            open_transport_usd = open_transport_delivery_usd(
+                open_transport_district, open_transport_hazardous, exchange_rate
+            )
+        except ValueError:
+            logging.warning(
+                "Unknown Open Transport district %r submitted — delivery charge skipped",
+                open_transport_district,
+            )
+            flash(
+                f"Distrito '{open_transport_district}' no reconocido por Open Transport — "
+                "transporte local no calculado.",
+                "warning",
+            )
+            open_transport_district = ""
+
     # Aéreo consolidado (coloader) destination charges — Abel Parte 2,
     # 2026-06-19: exactly two flat pass-through charges (no margin uplift)
     # when working through a coloader. Driven by the explicit aereo_modalidad
@@ -481,7 +510,7 @@ def create_quote():
     costeo_total = (
         flete_usd + vb_usd + customs_usd + transport_usd + handling_aereo_usd
         + thc_usd + _extra_total + aereo_transmission_usd + aereo_handling_destino_usd
-        + almacen_aereo_usd
+        + almacen_aereo_usd + open_transport_usd
     )
 
     costeo = {
@@ -498,6 +527,9 @@ def create_quote():
         "handling_aereo_usd": handling_aereo_usd,
         "handling_aereo_detail": handling_aereo_info,
         "almacen_aereo_usd": almacen_aereo_usd,
+        "open_transport_usd": open_transport_usd if open_transport_usd else None,
+        "open_transport_district": open_transport_district if open_transport_district else None,
+        "open_transport_hazardous": open_transport_hazardous if mode == "fcl" else None,
         "aereo_modalidad": aereo_modalidad if mode == "aereo" else None,
         "aereo_consolidado": aereo_consolidado if mode == "aereo" else None,
         "aereo_transmission_usd": aereo_transmission_usd if aereo_transmission_usd else None,
@@ -634,6 +666,14 @@ def create_quote():
             "quantity": 1,
             "unit_price": round(transport_usd * m, 2),
             "total": round(transport_usd * m, 2),
+            **_FLAGS_LOCAL,
+        })
+    if open_transport_usd > 0:
+        local_venta_items.append({
+            "description": "Transporte Local (Open Transport)",
+            "quantity": 1,
+            "unit_price": round(open_transport_usd * m, 2),
+            "total": round(open_transport_usd * m, 2),
             **_FLAGS_LOCAL,
         })
     if aereo_transmission_usd > 0:
