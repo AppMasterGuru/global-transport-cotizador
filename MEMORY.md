@@ -1,5 +1,5 @@
 ## Unread Email Summary
-_Last updated: 2026-06-20 16:35 UTC (incremental — 177 business threads | accounts: barney@timebackai.co)_
+_Last updated: 2026-06-20 18:36 UTC (incremental — 178 business threads | accounts: barney@timebackai.co)_
 
 ### ⚠️ NEEDS RESPONSE (20 threads)
 
@@ -140,10 +140,11 @@ _Last updated: 2026-06-20 16:35 UTC (incremental — 177 business threads | acco
 
 ### 🍸 Rebara (4 total, none in last 14d)
 
-### 📬 Other (120 total, 16 ⚠️ needs response — showing last 14d)
+### 📬 Other (121 total, 16 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-20 | 1 | ← | posts-recaps@mail.instagram.… | timebackai.co, catch up on moments you've missed | findecultural , tynereatsaround and others posted something new. Catch… |
 | 2026-06-20 | 1 | ← | posts-recap@mail.instagram.c… | timebackai.co, see what's been happening on Inst… | See what&#39;s new on Instagram pacoyonque, osakarestaurante and other… |
 | 2026-06-19 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Fri Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-18 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
@@ -168,8 +169,7 @@ _Last updated: 2026-06-20 16:35 UTC (incremental — 177 business threads | acco
 | 2026-06-08 | 1 | → | barney.elliott@gmail.com | RE: 26-06-001 Hamburg Importer GmbH — Tarifa LCL | Buenos días, adjunto nuestra tarifa: Flete USD 450, Visto Bueno USD 16… |
 | 2026-06-08 | 1 | ← | admin@mail.capcut.com | Start your video creation today with CapCut | Dear user4975331583450 Thank you so much for choosing CapCut as your v… |
 | 2026-06-08 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 8… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-08 | 1 | ← | welcome@supabase.com | Welcome to Supabase | Hey there, Welcome to Supabase, the Postgres development platform. Sup… |
-_… and more (showing 25 of 120)_
+_… and more (showing 25 of 121)_
 
 ### Personal email (barney.elliott@gmail.com)
 _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --personal` to add it._
@@ -210,6 +210,12 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
       Flagged as a new open item in ABEL_FOLLOWUPS.md rather than guessed.
 - [x] 766 → 817 tests (+51 new, all red-first). Full suite green
       throughout. (commit 6e71960)
+- [x] `ABEL_FOLLOWUPS.md` moved from `cotizador/` to the project root —
+      now sits alongside `MEMORY.md`/`CLAUDE.md`. No path references
+      needed updating (existing mentions used the bare filename, not a
+      `cotizador/`-prefixed path). (commit abf4b56)
+- [x] `git push origin main` run successfully — `origin/main` now at
+      `473e621`, triggering Railway's GitHub auto-deploy.
 
 ### Completed this session (2026-06-20) — Session D
 - [x] Open Transport container zone table (Q7 closed) — new
