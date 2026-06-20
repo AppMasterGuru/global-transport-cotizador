@@ -9,10 +9,15 @@ emission. Parsed (not hardcoded) from
   - EMISION MBL sheet -> free-text MBL emission cost per naviera (mixed
     USD/PEN, mixed "+ IGV" / flat / "NO COBRA" formats).
 
-HOLD (TODO abel-Q3): there is a second import structure — the EXPO_IMPO
-IMPORTACIÓN sheet's "VB IMPORTACION" layer — that may stack with or
-replace the costs here. NOT wired into the import total this session;
-default to Abel's written THC+ISPS+MBL-only rule.
+Abel Parte 2 Q3 (closed 2026-06-20): the second import structure — the
+EXPO_IMPO "IMPORTACIÓN" sheet's "VB IMPORTACION" layer — STACKS with
+THC+ISPS+MBL rather than replacing it. Parsed via parse_import_vb_sheet()
+and summed in by get_fcl_import_local_costs() when a vb_importacion dict
+is supplied. Only naviera-identifiable blocks (an explicit naviera token
+in the desglose concept text, e.g. "BOX FEE - EXPO MSK") are attributed —
+same no-guessing rule already applied to the export side's VISTO BUENO
+blocks in fcl_naviera_costs.py. Unidentified blocks (no token, even if a
+NOTA elsewhere hints at a naviera) are parsed but not attributed.
 """
 
 from __future__ import annotations
@@ -39,6 +44,15 @@ _NAVIERA_OVERRIDES: dict[str, dict] = {
 # Inactive navieras — Abel confirmed no cargo with this carrier June 19
 # (Q5). Excluded even though rows still exist in the source sheets.
 _INACTIVE_NAVIERAS: set[str] = {"HAMBURG SUD / ALIANCA"}
+
+# VB IMPORTACION desglose token -> canonical naviera key (matching the
+# naviera strings used by get_fcl_import_local_costs / G. LOCALES). Same
+# no-guessing approach as fcl_naviera_costs._NAVIERA_TOKENS: only blocks
+# whose desglose mentions one of these tokens are naviera-attributed.
+_VB_NAVIERA_TOKENS: dict[str, str] = {
+    "MSK": "MAERSK / SEALAND",
+    "CMA": "CMA CGM / APL",
+}
 
 
 def _parse_money(raw: str) -> dict:
@@ -157,11 +171,81 @@ def _lookup_mbl(mbl: dict, naviera: str) -> dict:
     return {}
 
 
-def get_fcl_import_local_costs(g_locales: dict, mbl: dict, naviera: str) -> dict | None:
+def parse_import_vb_sheet(ws) -> dict:
+    """
+    Parse the EXPO_IMPO "IMPORTACIÓN" sheet's VB IMPORTACION blocks into
+    {naviera: {vb_importacion_usd, desglose}} — only for blocks whose
+    desglose mentions a token in _VB_NAVIERA_TOKENS (Q3: no naviera
+    guessing). Each block has the same row shape as the export sheet's
+    VISTO BUENO blocks (fcl_naviera_costs.parse_export_naviera_sheet):
+      - header: (concept, monto, igv_or_retencion, total) — 4 values
+      - desglose line: (concept, monto, igv, total, tipo) — 5 values,
+        monto numeric
+      - terminated by the next ALMACÉN "GATE IN"/"GATE OUT" row
+    """
+    out: dict[str, dict] = {}
+
+    pending_total: float | None = None
+    pending_desglose: list[dict] = []
+    pending_naviera: str | None = None
+
+    def _flush():
+        nonlocal pending_total, pending_desglose, pending_naviera
+        if pending_naviera and pending_total is not None:
+            out[pending_naviera] = {
+                "vb_importacion_usd": pending_total,
+                "desglose": pending_desglose,
+            }
+        pending_total = None
+        pending_desglose = []
+        pending_naviera = None
+
+    for row in ws.iter_rows(values_only=True):
+        c = tuple(v for v in row if v is not None)
+        if not c:
+            continue
+
+        first = str(c[0]).strip() if c else ""
+
+        if first.upper().startswith("VISTO BUENO") and len(c) == 4:
+            _flush()
+            pending_total = float(c[1])
+            continue
+
+        if len(c) >= 5 and isinstance(c[1], str) and ("GATE OUT" in c[1].upper() or "GATE IN" in c[1].upper()):
+            _flush()
+            continue
+
+        if pending_total is not None and len(c) == 5 and isinstance(c[1], (int, float)):
+            concept = str(c[0]).strip()
+            pending_desglose.append({
+                "concept": concept,
+                "monto": float(c[1]),
+                "igv_or_retencion": float(c[2]),
+                "total": float(c[3]),
+                "tipo": str(c[4]),
+            })
+            concept_u = concept.upper()
+            for token, canonical in _VB_NAVIERA_TOKENS.items():
+                if token in concept_u:
+                    pending_naviera = canonical
+                    break
+            continue
+
+    _flush()
+    return out
+
+
+def get_fcl_import_local_costs(g_locales: dict, mbl: dict, naviera: str, vb_importacion: dict | None = None) -> dict | None:
     """
     Combine THC + ISPS/adicional + MBL for one naviera — Abel's explicit
-    THC+ISPS+MBL-only rule. Returns None if the naviera isn't found in
+    THC+ISPS+MBL rule. Returns None if the naviera isn't found in
     G. LOCALES (the THC/ISPS source).
+
+    vb_importacion (Q3, closed 2026-06-20): optional dict from
+    parse_import_vb_sheet(). When the naviera has a naviera-identified VB
+    IMPORTACION block, its net amount stacks in as vb_importacion_usd;
+    otherwise vb_importacion_usd is None (no guessing).
     """
     if naviera in _INACTIVE_NAVIERAS:
         return None
@@ -170,6 +254,7 @@ def get_fcl_import_local_costs(g_locales: dict, mbl: dict, naviera: str) -> dict
         return None
     m = _lookup_mbl(mbl, naviera)
     override = _NAVIERA_OVERRIDES.get(naviera, {})
+    vb = (vb_importacion or {}).get(naviera)
     return {
         "naviera": naviera,
         "thc_20": override.get("thc_20", g["thc_20"]),
@@ -184,4 +269,5 @@ def get_fcl_import_local_costs(g_locales: dict, mbl: dict, naviera: str) -> dict
         "mbl_raw": m.get("raw"),
         "mbl_currency": m.get("currency"),
         "mbl_no_cobra": m.get("no_cobra", False),
+        "vb_importacion_usd": vb["vb_importacion_usd"] if vb else None,
     }

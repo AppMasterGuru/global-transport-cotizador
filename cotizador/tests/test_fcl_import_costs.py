@@ -21,6 +21,7 @@ import pytest
 from core.fcl_import_costs import (
     get_fcl_import_local_costs,
     parse_g_locales_sheet,
+    parse_import_vb_sheet,
     parse_mbl_sheet,
 )
 
@@ -80,6 +81,53 @@ def g_locales():
 def mbl():
     wb = openpyxl.load_workbook(io.BytesIO(_make_mbl_xlsx()), data_only=True, read_only=True)
     return parse_mbl_sheet(wb["EMISION MBL"])
+
+
+def _make_import_vb_xlsx() -> bytes:
+    """
+    Three VB IMPORTACIÓN blocks, replicating the real layout/values from
+    EXPO_IMPO.xlsx's IMPORTACIÓN sheet (Client Data/Part 2_Abel/):
+      - "BOX FEE - EXPO MSK" / "COVERAGE FEE - EXPO MSK" desglose ->
+        naviera-identifiable (MSK token) -> MAERSK / SEALAND, total 150.50.
+      - "CMA - COORDINACIÓN Y SUPERVISIÓN DE EMBARQUE" desglose ->
+        naviera-identifiable (CMA token) -> CMA CGM / APL, total 194.75.
+      - "DESPACHO DEL CONTENEDOR" / "DESPACHO DOCUMENTARIO" desglose -> no
+        naviera token -> unidentified, total 294 (not naviera-attributed,
+        same as the unidentified blocks Abel's sheet leaves ambiguous).
+    """
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "IMPORTACIÓN"
+    rows = [
+        ["CALLAO"],
+        ["VISTO BUENO (BOX FEE | COVERAGE FEE)", 150.5, 64.5, 215],
+        ["DESGLOSE DEL VISTO BUENO (IMPORTACIÓN)"],
+        ["BOX FEE - EXPO MSK", 101.5, 43.5, 145, "CONTENEDOR"],
+        ["COVERAGE FEE - EXPO MSK", 49, 21, 70, "CONTENEDOR"],
+        ["DEMARES", "GATE IN | 20' & 40'", 237, 42.66, 279.66, "CONTENEDOR"],
+        ["CALLAO"],
+        ["VISTO BUENO (COORDINACIÓN Y SUPERVISIÓN DE EMBARQUE | AGENCY FEE)", 194.75, 35.055, 229.805],
+        ["DESGLOSE DEL VISTO BUENO (IMPORTACIÓN)"],
+        ["CMA - COORDINACIÓN Y SUPERVISIÓN DE EMBARQUE", 190, 34.2, 224.2, "CONTENEDOR"],
+        ["IMUPESA", "GATE IN | 20' & 40'", 205, 36.9, 241.9, "CONTENEDOR"],
+        ["CALLAO"],
+        ["VISTO BUENO (DESPACHO DE CONTENEDOR | DESPACHO DOCUMENTARIO)", 294, 52.92, 346.92],
+        ["DESGLOSE DEL VISTO BUENO (IMPORTACIÓN)"],
+        ["DESPACHO DEL CONTENEDOR", 174, 31.32, 205.32, "CONTENEDOR"],
+        ["DESPACHO DOCUMENTARIO", 120, 21.6, 141.6, "BL"],
+        ["MEDLOG", "GATE IN | 20' &40", 215, 38.7, 253.7, "CONTENEDOR"],
+    ]
+    for r in rows:
+        ws.append(r)
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+@pytest.fixture
+def import_vb():
+    wb = openpyxl.load_workbook(io.BytesIO(_make_import_vb_xlsx()), data_only=True, read_only=True)
+    return parse_import_vb_sheet(wb["IMPORTACIÓN"])
 
 
 class TestGLocalesParsing:
@@ -201,3 +249,47 @@ class TestHamburgSudInactiveQ5:
 
     def test_hamburg_sud_returns_none(self, g_locales, mbl):
         assert get_fcl_import_local_costs(g_locales, mbl, "HAMBURG SUD / ALIANCA") is None
+
+
+class TestImportVbSheetParsing:
+    """Abel Parte 2 Q3 (closed 2026-06-20): the EXPO_IMPO IMPORTACIÓN
+    sheet's VB IMPORTACION layer stacks with THC+ISPS+MBL rather than
+    replacing it. Only naviera-identifiable blocks (explicit token in the
+    desglose concept text) get attributed — same no-guessing rule already
+    applied to the export VISTO BUENO blocks in fcl_naviera_costs.py."""
+
+    def test_maersk_identified_via_msk_token(self, import_vb):
+        e = import_vb["MAERSK / SEALAND"]
+        assert e["vb_importacion_usd"] == pytest.approx(150.5, rel=0.001)
+
+    def test_cma_identified_via_cma_token(self, import_vb):
+        e = import_vb["CMA CGM / APL"]
+        assert e["vb_importacion_usd"] == pytest.approx(194.75, rel=0.001)
+
+    def test_unidentified_block_not_attributed(self, import_vb):
+        # The 294-total block (DESPACHO DEL CONTENEDOR / DESPACHO
+        # DOCUMENTARIO) has no naviera token in its desglose, so it must
+        # NOT be guessed into any naviera key.
+        assert "MSC" not in import_vb
+        assert len(import_vb) == 2
+
+
+class TestFclImportLocalCostsVbStackingQ3:
+    """get_fcl_import_local_costs sums the VB-import layer with
+    THC+ISPS+MBL when a naviera-identified vb_importacion entry exists."""
+
+    def test_maersk_combined_includes_vb_importacion(self, g_locales, mbl, import_vb):
+        c = get_fcl_import_local_costs(g_locales, mbl, "MAERSK / SEALAND", vb_importacion=import_vb)
+        assert c["thc_20"] == pytest.approx(110.0, rel=0.001)
+        assert c["mbl_usd"] == pytest.approx(55.0, rel=0.001)
+        assert c["vb_importacion_usd"] == pytest.approx(150.5, rel=0.001)
+
+    def test_naviera_without_vb_entry_is_none(self, g_locales, mbl, import_vb):
+        # COSCO / OOCL has no naviera-identified VB import block.
+        c = get_fcl_import_local_costs(g_locales, mbl, "COSCO / OOCL", vb_importacion=import_vb)
+        assert c["vb_importacion_usd"] is None
+
+    def test_no_vb_importacion_arg_defaults_to_none(self, g_locales, mbl):
+        # Backward-compatible default — no vb_importacion dict supplied.
+        c = get_fcl_import_local_costs(g_locales, mbl, "CMA CGM / APL")
+        assert c["vb_importacion_usd"] is None

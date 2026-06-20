@@ -1,5 +1,5 @@
 ## Unread Email Summary
-_Last updated: 2026-06-19 22:31 UTC (incremental — 176 business threads | accounts: barney@timebackai.co)_
+_Last updated: 2026-06-20 11:34 UTC (incremental — 176 business threads | accounts: barney@timebackai.co)_
 
 ### ⚠️ NEEDS RESPONSE (20 threads)
 
@@ -127,9 +127,9 @@ _Last updated: 2026-06-19 22:31 UTC (incremental — 176 business threads | acco
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-19 | 7 | → | barney@timebackai.co | Re: Cotizador — validación completa (LCL, Aéreo,… | Gracias Abel Con todo esto terminara esta fin de semana, y tu y yo hac… |
 | 2026-06-19 | 13 | ← | kalzamora@sintad.pe | RE: Análisis técnico API SCE Carga — campos requ… | Estimado Renato Buenas tardes Es un gusto saludarlo nuevamente. El mot… |
 | 2026-06-19 | 2 | ← | pricing@gt.com.pe | RE: Una pregunta más (#13) — CRAFT importación V… | TE RESPONDO BARNEY, MONTO DE VISTO BUENO CRAFT EXPORTACIÓN ES à USD160… |
-| 2026-06-19 | 6 | ← | pricing@gt.com.pe | RE: Cotizador — validación completa (LCL, Aéreo,… | Hola Barney, Respondo a tus preguntas: LCL 1) Escenario 3 — almacén: m… |
 | 2026-06-19 | 1 | → | barney@timebackai.co | Rotación de credenciales — requisito BASC | Subject: Rotación de credenciales — requisito BASC Hola David, Espero … |
 | 2026-06-14 | 1 | → | barney@timebackai.co | Cotizador — validación final de tarifas (5 casos… | Abel, ya están listos todos los ajustes con tus números confirmados. T… |
 | 2026-06-13 | 1 | → | barney@timebackai.co |  | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
@@ -176,7 +176,38 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
 
 
 ## Active Tasks
-**Last updated: 2026-06-19**
+**Last updated: 2026-06-20**
+
+### Completed this session (2026-06-20) — Session B
+- [x] FCL import VB stacking layer (Q3 closed) — `core/fcl_import_costs.py`:
+      new `parse_import_vb_sheet()` parses the EXPO_IMPO IMPORTACIÓN
+      sheet's VB IMPORTACION blocks; `get_fcl_import_local_costs()` gains
+      an optional `vb_importacion` arg and a new `vb_importacion_usd`
+      field that sums in alongside THC+ISPS+MBL. Audited the real sheet
+      first (not assumed): of 7 VB blocks, only 2 have an explicit naviera
+      token in their desglose text (MAERSK / SEALAND via "MSK" in "BOX
+      FEE - EXPO MSK", USD 150.50; CMA CGM / APL via "CMA" in "CMA -
+      COORDINACIÓN Y SUPERVISIÓN DE EMBARQUE", USD 194.75) — same
+      no-guessing rule already used for the export side's VISTO BUENO
+      blocks in `fcl_naviera_costs.py`. The other 5 blocks (incl. ones
+      with NOTA hints toward MSC/COSCO) are parsed but left unattributed,
+      consistent with Barney's standing "don't guess" instruction.
+      Still NOT wired into `api/routes.py`'s live form (unchanged from
+      last session — separate task per TODO(abel-Q7)).
+- [x] 726 → 732 tests (+6 new — parsing, stacking, and backward-compat
+      default — all red-first; one existing import updated). Full suite
+      green throughout.
+
+### Completed this session (2026-06-20) — Session A
+- [x] Aéreo modality dropdown (Q9) — explicit consolidado/directo selector
+      on the aereo form, consolidado default. Replaces the old inference of
+      "consolidado" from whether a consolidator name happened to be
+      submitted (closes TODO abel-Q6). Directo suppresses the Transmission
+      USD 35 + Handling Destino USD 45 charges regardless of consolidator
+      value. (commit cf51943)
+- [x] 721 → 726 tests (+5 new, red-first; one pre-existing test updated to
+      match the new explicit-modality behavior instead of the old
+      empty-consolidator inference).
 
 ### Completed this session (2026-06-19) — Abel Parte 2 corrections + FCL build
 - [x] BUG 1 (critical) — aereo chargeable-weight freight fixed. Flete was
@@ -241,11 +272,20 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
       confirmed; SAASA link still pending from Abel — not invented). (commit f7295c8)
 - [x] Tests: 709 → 721, last commit f7295c8.
 
+### Pending (2026-06-20, carry forward)
+- [ ] **test_aereo_config_corrections.py missing from disk** — only a stale
+      `.pyc` remains in `cotizador/tests/__pycache__/`, source `.py` never
+      committed to git (confirmed via `git log --all` — no history for this
+      path). Covered TestAereoExportNoHandling, TestAereoImportStandardCustomsAgent,
+      TestAereoImportOeaBascCustomsAgent (Esc1/2/4 customs agent cost/venta
+      rules from commit 94e29d2) — currently NO live test coverage for those
+      rules. Restore before go-live.
+
 ### Pending (2026-06-19, carry forward to Saturday)
-- [ ] FCL import VB stacking layer (Q3)
+- [x] FCL import VB stacking layer (Q3) — done 2026-06-20, see Session B below
 - [ ] FCL OEA+BASC tiered customs agent export (Q6)
 - [ ] Open Transport container zone table (Q7)
-- [ ] Aéreo modality dropdown consolidado/directo (Q9)
+- [x] Aéreo modality dropdown consolidado/directo (Q9) — done 2026-06-20, commit cf51943
 - [ ] Wire FCL into live form (terminal/naviera/container selectors)
 - [ ] Abel to run F1–F4 once form is wired
 - [ ] JP go-live session — not yet scheduled
