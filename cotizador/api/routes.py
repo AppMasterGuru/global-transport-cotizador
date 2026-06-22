@@ -62,8 +62,7 @@ from core.fcl_import_costs import (
 )
 from core.fcl_naviera_costs import (
     fcl_customs_agent_costs,
-    get_export_naviera_data,
-    get_export_visto_bueno,
+    get_export_vb_net_usd,
 )
 from core.incoterms import classify_incoterm
 from core.open_transport_costs import list_open_transport_districts, open_transport_delivery_usd
@@ -426,16 +425,10 @@ def create_quote():
         fcl_customs_agent_name = agent_costs["agent_name"]
 
         if operation == "exportacion" and fcl_naviera:
-            export_data = get_export_naviera_data()
-            vb = get_export_visto_bueno(export_data, fcl_naviera)
-            if vb is None and "/" in fcl_naviera:
-                # Export sheet uses bare carrier names (e.g. "MAERSK"); the
-                # naviera dropdown uses the fuller import-side names (e.g.
-                # "MAERSK / SEALAND") — try the first segment before giving up.
-                vb = get_export_visto_bueno(export_data, fcl_naviera.split("/")[0].strip())
-            if vb:
-                fcl_visto_bueno_usd = round(vb["total"], 2)
-            elif fcl_naviera:
+            vb_net = get_export_vb_net_usd(fcl_naviera)
+            if vb_net is not None:
+                fcl_visto_bueno_usd = round(vb_net, 2)
+            else:
                 logging.warning(
                     "No naviera-attributed export Visto Bueno for %r — FCL export VB not charged",
                     fcl_naviera,

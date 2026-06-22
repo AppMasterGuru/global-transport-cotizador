@@ -1,18 +1,17 @@
 """
 FCL local costs keyed by naviera/almacén — Abel Parte 2 (2026-06-19).
 
-Export side: parsed from the EXPORTACION-CALLAO sheet of EXPO_IMPO.xlsx
-(Client Data/Part 2_Abel/). Two independent things live on that sheet,
-identified by row shape rather than a fixed column layout (the sheet uses
-merged cells, so real rows carry a lot of None padding):
+Export VB + Gate Out: Abel June 22 confirmed the full 7-naviera mapping
+from the EXPORTACION-CALLAO sheet of EXPO_IMPO.xlsx (Client Data/Part 2_Abel/).
+Previous build only attributed 2 of 7 navieras (MAERSK via "MSK" token,
+CMA CGM via "CMA" token in desglose text). The remaining 5 blocks had no
+text identifier — Abel confirmed the mapping in full, enabling the
+naviera-keyed table below.
 
-  - GATE OUT: cleanly keyed by an explicit almacén/depot name in every
-    block (MEDLOG, CONTRANS, DPW, DEMARES, ...). Always reliable.
-  - VISTO BUENO (+ desglose): only some blocks name an identifiable
-    naviera in their desglose concepts (e.g. "BOX FEE - EXPO MSK" ->
-    Maersk). Blocks with no identifiable naviera token are parsed but not
-    naviera-attributed — looking one up by name returns None rather than
-    guessing.
+  - VB amounts stored as NET pre-IGV (PDF layer applies 18% IGV at render).
+    Exception: MAERSK uses RETENCIÓN 30%, not IGV — see TODO(abel-F1F4).
+  - Gate Out stored per naviera (IMUPESA appears at two different amounts:
+    $150 net for CMA CGM, $133.50 net for EVERGREEN).
 
 Also implements the precinto recargo rule: when an export has more than
 one container, the 2nd container carries a +50% surcharge of the customs
@@ -212,51 +211,87 @@ def fcl_customs_agent_costs(requires_oea_basc: bool, num_containers: int) -> dic
     }
 
 
-# ── Real export naviera data (Session E) ────────────────────────────────────
-# Transcribed from EXPORTACION-CALLAO sheet of EXPO_IMPO.xlsx (Client
-# Data/Part 2_Abel/) via parse_export_naviera_sheet(), audited 2026-06-20.
-# Source file is local-only (not committed to git, not present on Railway) —
-# hardcoded here, same pattern as CONSOLIDATORS/CUSTOMS_AGENTS in
-# transport.py and the Open Transport district table.
+# ── Real export naviera data (Session G, 2026-06-22) ────────────────────────
+# Abel confirmed the full 7-naviera mapping from EXPORTACION-CALLAO sheet of
+# EXPO_IMPO.xlsx (Client Data/Part 2_Abel/). Previous build only attributed
+# MAERSK and CMA CGM via desglose text tokens; the other 5 navieras had no
+# text identifier and were left unattributed (ABEL_FOLLOWUPS.md, now closed).
 #
-# Of 9 VISTO BUENO blocks on the real sheet, only 2 carry an identifiable
-# naviera token in their desglose text (MAERSK via "MSK", CMA CGM via
-# "CMA") — same no-guessing rule as the import side before it was resolved
-# (ABEL_FOLLOWUPS.md, closed item). No equivalent clean per-naviera export
-# VB source has surfaced yet — see ABEL_FOLLOWUPS.md for the open follow-up.
-EXPORT_NAVIERA_DATA: dict = {
-    "gate_out": {
-        "CONTRANS":           {"net": 150.0, "igv": 27.0,                "total": 177.0},
-        "DEMARES":            {"net": 179.0, "igv": 32.22,               "total": 211.22},
-        "DP WORLD LOGISTICS": {"net": 120.5, "igv": 21.689999999999998,  "total": 142.19},
-        "DPW":                {"net": 150.0, "igv": 27.0,                "total": 177.0},
-        "FARGOLINE":          {"net": 125.5, "igv": 22.59,               "total": 148.09},
-        "IMUPESA":            {"net": 133.5, "igv": 24.029999999999998, "total": 157.53},
-        "MEDLOG":             {"net": 152.0, "igv": 27.36,               "total": 179.36},
-        "RANSA":              {"net": 150.0, "igv": 27.0,                "total": 177.0},
-        "TPP":                {"net": 120.5, "igv": 21.689999999999998, "total": 142.19},
-    },
-    "visto_bueno": {
-        "CMA CGM": {
-            "total": 258.83299999999997,
-            "desglose": [
-                {"concept": "CMA - COORDINACIÓN Y SUPERVISIÓN DE EMBARQUE",
-                 "monto": 214.0, "igv_or_retencion": 38.519999999999996,
-                 "total": 252.51999999999998, "tipo": "CONTENEDOR"},
-            ],
+# vb_net_usd: NET pre-IGV. PDF layer adds 18% IGV at render (IGV-once rule).
+#   Exception — MAERSK: uses RETENCIÓN 30%, not IGV. Base monto=$112,
+#   retención=$48, total=$160. Stored as $160 until retención handling is
+#   implemented. TODO(abel-F1F4): validate MAERSK retención treatment.
+#
+# gate_out: keyed by depot name per naviera. Gate out is not wired into
+#   routes.py yet — available for future use. IMUPESA carries a different
+#   amount per naviera ($150 for CMA CGM, $133.50 for EVERGREEN); the old
+#   almacén-keyed table could not represent this — the naviera-keyed
+#   structure resolves it correctly.
+_EXPORT_VB_BY_NAVIERA: dict[str, dict] = {
+    "MSC": {
+        "vb_net_usd": 365.0,
+        "gate_out": {
+            "MEDLOG": {"net": 152.0, "igv": 27.36, "total": 179.36},
         },
-        "MAERSK": {
-            "total": 160.0,
-            "desglose": [
-                {"concept": "BOX FEE - EXPO MSK", "monto": 80.5,
-                 "igv_or_retencion": 34.5, "total": 115.0, "tipo": "CONTENEDOR"},
-                {"concept": "COVERAGE FEE - EXPO MSK", "monto": 31.5,
-                 "igv_or_retencion": 13.5, "total": 45.0, "tipo": "CONTENEDOR"},
-            ],
+    },
+    "ONE": {
+        "vb_net_usd": 272.0,
+        "gate_out": {
+            "CONTRANS": {"net": 150.0, "igv": 27.0, "total": 177.0},
+            "DPW":      {"net": 150.0, "igv": 27.0, "total": 177.0},
+        },
+    },
+    "MAERSK": {  # TODO(abel-F1F4): retención 30%, not IGV. Base=$112, total=$160.
+        "vb_net_usd": 160.0,
+        "gate_out": {
+            "DEMARES": {"net": 179.0, "igv": 32.22, "total": 211.22},
+        },
+    },
+    "HAPAG LLOYD": {
+        "vb_net_usd": 152.0,
+        "gate_out": {
+            "RANSA": {"net": 150.0, "igv": 27.0, "total": 177.0},
+        },
+    },
+    "CMA CGM": {
+        "vb_net_usd": 219.35,
+        "gate_out": {
+            "IMUPESA": {"net": 150.0, "igv": 27.0, "total": 177.0},
+        },
+    },
+    "COSCO": {
+        "vb_net_usd": 100.0,
+        "gate_out": {
+            "FARGOLINE": {"net": 125.5, "igv": 22.59, "total": 148.09},
+        },
+    },
+    "EVERGREEN": {
+        "vb_net_usd": 227.0,
+        "gate_out": {
+            "TPP":                {"net": 120.5, "igv": 21.69, "total": 142.19},
+            "IMUPESA":            {"net": 133.5, "igv": 24.03, "total": 157.53},
+            "DP WORLD LOGISTICS": {"net": 120.5, "igv": 21.69, "total": 142.19},
         },
     },
 }
 
 
-def get_export_naviera_data() -> dict:
-    return EXPORT_NAVIERA_DATA
+def _export_vb_lookup(naviera: str) -> dict | None:
+    """Look up _EXPORT_VB_BY_NAVIERA by naviera name. Handles 'X / Y' form names."""
+    key = naviera.strip().upper()
+    entry = _EXPORT_VB_BY_NAVIERA.get(key)
+    if entry is None and "/" in key:
+        entry = _EXPORT_VB_BY_NAVIERA.get(key.split("/")[0].strip())
+    return entry
+
+
+def get_export_vb_net_usd(naviera: str) -> float | None:
+    """Net pre-IGV export VB cost by naviera (PDF layer adds 18% IGV). None if unknown."""
+    entry = _export_vb_lookup(naviera)
+    return entry["vb_net_usd"] if entry else None
+
+
+def get_export_gate_outs(naviera: str) -> dict[str, dict]:
+    """Gate Out almacenes for a naviera, keyed by depot name. Empty dict if unknown."""
+    entry = _export_vb_lookup(naviera)
+    return entry.get("gate_out", {}) if entry else {}

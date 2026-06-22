@@ -27,7 +27,8 @@ from core.fcl_naviera_costs import (
     fcl_oea_basc_gastos_operativos_usd,
     fcl_oea_basc_precinto_total_usd,
     get_export_gate_out,
-    get_export_naviera_data,
+    get_export_gate_outs,
+    get_export_vb_net_usd,
     get_export_visto_bueno,
     parse_export_naviera_sheet,
     precinto_total_usd,
@@ -249,35 +250,81 @@ class TestFclOeaBascTieredCustomsAgentQ6:
 
 
 class TestExportNavieraData:
-    """Real EXPORTACION-CALLAO data (Session E), transcribed from the local
-    EXPO_IMPO.xlsx via parse_export_naviera_sheet — hardcoded the same way
-    CONSOLIDATORS/CUSTOMS_AGENTS are, since the source file isn't deployed."""
+    """Export VB table — Abel June 22 confirmed 7-naviera mapping (Q2 resolution).
+    Source: EXPORTACION-CALLAO sheet of EXPO_IMPO.xlsx, naviera-keyed."""
 
-    def test_gate_out_almacenes_present(self):
-        data = get_export_naviera_data()
-        assert set(data["gate_out"]) == {
-            "CONTRANS", "DEMARES", "DP WORLD LOGISTICS", "DPW",
-            "FARGOLINE", "IMUPESA", "MEDLOG", "RANSA", "TPP",
-        }
+    def test_all_seven_navieras_present(self):
+        for nav in ["MSC", "ONE", "MAERSK", "HAPAG LLOYD", "CMA CGM", "COSCO", "EVERGREEN"]:
+            assert get_export_vb_net_usd(nav) is not None, f"{nav} missing from export VB table"
 
-    def test_medlog_gate_out_value(self):
-        data = get_export_naviera_data()
-        assert data["gate_out"]["MEDLOG"]["net"] == pytest.approx(152.0, rel=0.001)
+    def test_msc_vb_net_usd(self):
+        assert get_export_vb_net_usd("MSC") == pytest.approx(365.0, rel=0.001)
 
-    def test_visto_bueno_navieras_present(self):
-        data = get_export_naviera_data()
-        assert set(data["visto_bueno"]) == {"CMA CGM", "MAERSK"}
+    def test_one_vb_net_usd(self):
+        assert get_export_vb_net_usd("ONE") == pytest.approx(272.0, rel=0.001)
 
-    def test_maersk_visto_bueno_total(self):
-        data = get_export_naviera_data()
-        assert data["visto_bueno"]["MAERSK"]["total"] == pytest.approx(160.0, rel=0.001)
+    def test_maersk_vb_is_160_retencion_case(self):
+        # MAERSK: retención 30% (not IGV). Base monto=$112, total=$160.
+        # Stored as $160 pending retención handling — TODO(abel-F1F4).
+        assert get_export_vb_net_usd("MAERSK") == pytest.approx(160.0, rel=0.001)
 
-    def test_consumable_via_existing_getters(self):
-        # get_export_naviera_data() output must be consumable by the
-        # existing get_export_gate_out/get_export_visto_bueno helpers.
-        data = get_export_naviera_data()
-        assert get_export_gate_out(data, "MEDLOG")["net"] == pytest.approx(152.0, rel=0.001)
-        assert get_export_visto_bueno(data, "MAERSK")["total"] == pytest.approx(160.0, rel=0.001)
+    def test_maersk_via_slash_form_name(self):
+        # Dropdown sends "MAERSK / SEALAND" — slash-stripping inside the function.
+        assert get_export_vb_net_usd("MAERSK / SEALAND") == pytest.approx(160.0, rel=0.001)
+
+    def test_hapag_lloyd_vb_net_usd(self):
+        assert get_export_vb_net_usd("HAPAG LLOYD") == pytest.approx(152.0, rel=0.001)
+
+    def test_cma_cgm_vb_net_usd(self):
+        # Net pre-IGV: 219.35 × 1.18 = 258.83 (resolves previous double-IGV bug).
+        assert get_export_vb_net_usd("CMA CGM") == pytest.approx(219.35, rel=0.001)
+
+    def test_cma_cgm_via_slash_form_name(self):
+        # Dropdown sends "CMA CGM / APL"
+        assert get_export_vb_net_usd("CMA CGM / APL") == pytest.approx(219.35, rel=0.001)
+
+    def test_cosco_vb_net_usd(self):
+        assert get_export_vb_net_usd("COSCO") == pytest.approx(100.0, rel=0.001)
+
+    def test_cosco_via_slash_form_name(self):
+        # Dropdown sends "COSCO / OOCL"
+        assert get_export_vb_net_usd("COSCO / OOCL") == pytest.approx(100.0, rel=0.001)
+
+    def test_evergreen_vb_net_usd(self):
+        assert get_export_vb_net_usd("EVERGREEN") == pytest.approx(227.0, rel=0.001)
+
+    def test_unknown_naviera_returns_none(self):
+        assert get_export_vb_net_usd("UNKNOWN CARRIER") is None
+
+    def test_case_insensitive(self):
+        assert get_export_vb_net_usd("msc") == pytest.approx(365.0, rel=0.001)
+
+    def test_medlog_gate_out_for_msc(self):
+        gates = get_export_gate_outs("MSC")
+        assert gates["MEDLOG"]["net"] == pytest.approx(152.0, rel=0.001)
+        assert gates["MEDLOG"]["total"] == pytest.approx(179.36, rel=0.001)
+
+    def test_demares_gate_out_for_maersk(self):
+        gates = get_export_gate_outs("MAERSK")
+        assert gates["DEMARES"]["net"] == pytest.approx(179.0, rel=0.001)
+        assert gates["DEMARES"]["total"] == pytest.approx(211.22, rel=0.001)
+
+    def test_imupesa_gate_out_for_cma_cgm(self):
+        gates = get_export_gate_outs("CMA CGM")
+        assert gates["IMUPESA"]["net"] == pytest.approx(150.0, rel=0.001)
+
+    def test_three_gate_out_depots_for_evergreen(self):
+        gates = get_export_gate_outs("EVERGREEN")
+        assert set(gates) == {"TPP", "IMUPESA", "DP WORLD LOGISTICS"}
+
+    def test_imupesa_gate_out_for_evergreen_is_133_50(self):
+        # IMUPESA appears in both CMA CGM block ($150) and EVERGREEN block ($133.50).
+        # Naviera-keyed table resolves this conflict; each naviera gets its own value.
+        gates = get_export_gate_outs("EVERGREEN")
+        assert gates["IMUPESA"]["net"] == pytest.approx(133.5, rel=0.001)
+
+    def test_gate_outs_empty_for_unknown_naviera(self):
+        assert get_export_gate_outs("UNKNOWN") == {}
 
 
 class TestFclCustomsAgentCostsDispatch:

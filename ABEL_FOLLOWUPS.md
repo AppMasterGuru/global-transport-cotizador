@@ -9,50 +9,19 @@ when something new surfaces.
 
 ## Open — needs Abel response
 
-### 1. SAASA almacén aéreo simulator link
-**Source:** Abel Q11 reply, June 19; partial reply June 22
-**Issue:** Abel provided the TALMA simulator link but not SAASA's. Currently
-a placeholder in the aéreo form: `SAASA: (enlace pendiente de Abel)`.
-Abel's June 22 message referenced SAASA but the URL was not captured in the
-session task message — cannot add it until Barney supplies the exact URL.
-Also to add alongside the URL: SHOHIN has no online simulator (manual entry
-only), unlike TALMA and SAASA.
-**Blocked on:** Barney to paste the SAASA URL from Abel's email so it can
-be wired into new_quote.html helper text.
-
-### 2. Export Visto Bueno — 5 of 7 blocks unattributed (FCL export)
-**Source:** EXPO_IMPO.xlsx EXPORTACION-CALLAO sheet, inspected 2026-06-22
-**Background:** Abel confirmed on June 22 the export VB lives in
-EXPO_IMPO.xlsx EXPORTACION-CALLAO (the same sheet Session E already parsed).
-The sheet was re-inspected row by row on June 22. Findings:
-
-The sheet has 7 distinct VB blocks. Of these:
-- MAERSK (Block 3): confirmed via "BOX FEE - EXPO MSK" + "COVERAGE FEE - EXPO MSK"
-  in desglose text. VB = $160 (with 30% RETENCIÓN, not IGV). Gate: DEMARES $179.
-- CMA CGM (Block 5): confirmed via "CMA - COORDINACIÓN Y SUPERVISIÓN DE EMBARQUE"
-  in desglose text. VB = $219.35. Gate: IMUPESA $150.
-- Block 1 (VB=$365, Gate MEDLOG $152): no naviera token in desglose, but a NOTA
-  in Abel's own sheet says "cuando se hacen embarques FOB con MSC, la naviera
-  también cobra el VB" — attached to this block's section. Possible=MSC but not
-  a structural header, so not treated as confirmed.
-- Block 6 (VB=$100, Gate FARGOLINE $125.50): same pattern — NOTA says COSCO.
-  Possible=COSCO but not structurally confirmed.
-- Block 2 (VB~$272, Gates CONTRANS $150 + DPW $150): no naviera attribution.
-- Block 4 (VB=$152, Gate RANSA $150): no naviera attribution.
-- Block 7 (VB=$227, Gates TPP $120.50 / IMUPESA $133.50 / DPW LOGISTICS $120.50):
-  no naviera attribution. (Note: IMUPESA $133.50 = 119.50+14; DP World Logistics
-  $120.50 — these are Abel's spot-check reference values.)
-
-This sheet is NOT clean like the VB IMPORTACION sheet (which had all 14
-navieras explicitly headed). Stopped per "no guessing" rule — no build until
-the attribution is resolved.
-
-**Question for Abel:** 
-(a) Blocks 1 and 6 — your own file notes say these are MSC and COSCO. Can you
-    confirm so we can attribute them without guessing?
-(b) Blocks 2, 4, and 7 — which navieras do these belong to? Or do you have a
-    per-naviera export cost sheet (like the VB IMPORTACION sheet in the Gastos
-    workbook) that would resolve this cleanly?
+### 1. EVERGREEN import VB — source file mismatch (FCL import)
+**Source:** Discovered during Session G cross-check (2026-06-22)
+**Issue:** Two source files disagree on the EVERGREEN import VB amount:
+- **Gastos workbook (VB IMPORTACION sheet)** — currently live in production:
+  DELIVERY ORDER $250 + GASTOS ADMINISTRATIVOS PEN 25 + BL TRANSMISSION $62
+  (hardcoded in `core/fcl_import_costs.py` `VB_IMPORTACION_DATA["EVERGREEN"]`)
+- **EXPO_IMPO.xlsx IMPORTACIÓN tab** — DELIVERY ORDER $230 + BL TRANSMISIÓN $65
+  = net $295, total $348.10 (with 18% IGV)
+These numbers do not agree. The two files are both Abel's own documents.
+**Not auto-fixed** — awaiting Abel confirmation of which values are current.
+**Question for Abel:** EVERGREEN import VB — is the correct breakdown
+DELIVERY ORDER $250 + BL $62 (Gastos workbook) or DELIVERY ORDER $230 + BL $65
+(EXPO_IMPO IMPORTACIÓN tab)? Which file is more up to date?
 
 ---
 
@@ -67,6 +36,32 @@ report results.
 ---
 
 ## Closed — resolved
+
+### SAASA almacén aéreo simulator link — RESOLVED 2026-06-22
+**Source:** Abel Q11 reply, June 19; URL supplied by Barney June 22
+**Resolution:** URL wired into `new_quote.html` almacén aéreo helper text
+as a clickable link alongside the existing TALMA reference. SHOHIN "no
+simulator — manual entry only" note also added. Session G, commit this session.
+
+### Export VB all 7 navieras attributed — RESOLVED 2026-06-22
+**Source:** EXPO_IMPO.xlsx EXPORTACION-CALLAO sheet; Abel confirmed full
+mapping June 22 (reply to Q2 question)
+**Background:** Previous build only attributed MAERSK ($160, retención case)
+and CMA CGM ($219.35 net) via desglose text tokens. Abel confirmed the
+remaining 5 navieras: MSC ($365 net, MEDLOG gate), ONE ($272 net,
+CONTRANS/DPW gate), HAPAG LLOYD ($152 net, RANSA gate), COSCO ($100 net,
+FARGOLINE gate), EVERGREEN ($227 net, TPP/IMUPESA/DPW LOGISTICS gate).
+**Action taken:** Rebuilt `_EXPORT_VB_BY_NAVIERA` in `core/fcl_naviera_costs.py`
+— naviera-keyed table replacing the old almacén-keyed `EXPORT_NAVIERA_DATA`.
+Now stores NET pre-IGV VB amounts (PDF layer adds 18% at render), fixing
+a double-IGV bug for navieras previously stored as IGV-inclusive totals.
+IMUPESA conflict resolved (CMA CGM $150 vs EVERGREEN $133.50 were both
+previously stored as one entry — now each naviera has its own gate_out).
+Routes.py now calls `get_export_vb_net_usd(naviera)` — 5 new naviera VBs
+now charged in live export quotes. Session G, 831 tests passing.
+**Still open — TODO(abel-F1F4):** MAERSK retención (30%) treatment not yet
+resolved — stored as $160 (retención-inclusive total) until F1-F4 validation.
+**Still open:** EVERGREEN import VB mismatch (see new open item above).
 
 ### LURIGANCHO (PRIALE) transport rate — RESOLVED 2026-06-22
 **Originally:** PDF extraction garbled the column order for this district.

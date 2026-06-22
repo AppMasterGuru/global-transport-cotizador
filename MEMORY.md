@@ -1,5 +1,5 @@
 ## Unread Email Summary
-_Last updated: 2026-06-22 17:04 UTC (incremental — 183 business threads | accounts: barney@timebackai.co)_
+_Last updated: 2026-06-22 17:34 UTC (incremental — 185 business threads | accounts: barney@timebackai.co)_
 
 ### ⚠️ NEEDS RESPONSE (20 threads)
 
@@ -141,10 +141,12 @@ _Last updated: 2026-06-22 17:04 UTC (incremental — 183 business threads | acco
 
 ### 🍸 Rebara (4 total, none in last 14d)
 
-### 📬 Other (125 total, 16 ⚠️ needs response — showing last 14d)
+### 📬 Other (127 total, 16 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-22 | 1 | ← | ant.wilson@supabase.com | Your Supabase Project timeback-outreach has been… | Hi there, To optimize cloud resources, we automatically pause free-tie… |
+| 2026-06-22 | 1 | ← | posts-recap@mail.instagram.c… | timebackai.co, see what's been happening on Inst… | See what&#39;s new on Instagram bar_lima_, ancestralrestaurantecafe an… |
 | 2026-06-22 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-21 | 1 | ← | stories-recap@mail.instagram… | osakarestaurante and 7 others recently added to … | View their latest stories while they&#39;re still available. Catch up … |
 | 2026-06-21 | 1 | ← | ant.wilson@supabase.com | Your Supabase Project timeback-outreach is going… | Hi there, To save on cloud resources I just did a scan of all our proj… |
@@ -168,9 +170,7 @@ _Last updated: 2026-06-22 17:04 UTC (incremental — 183 business threads | acco
 | 2026-06-11 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-10 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Wed Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-10 | 1 | ← | calendar-notification@google… | Notification: Script and blocking review  @ Wed … | Script and blocking review You have been invited by paul.keller@markha… |
-| 2026-06-09 | 1 | → | barney.elliott@gmail.com | Susan transcript | No. , , , , , , , , , , , , , , , , , , , , , , , , , , , , , No, este… |
-| 2026-06-09 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Tue Jun 9… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-_… and more (showing 25 of 125)_
+_… and more (showing 25 of 127)_
 
 ### Personal email (barney.elliott@gmail.com)
 _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --personal` to add it._
@@ -178,6 +178,27 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
 
 ## Active Tasks
 **Last updated: 2026-06-22**
+
+### Completed this session (2026-06-22) — Session G
+- [x] SAASA simulator link wired into `new_quote.html` almacén aéreo helper
+      text — clickable `<a href>` link from Abel's June 22 reply. SHOHIN "no
+      simulator — manual entry only" note added alongside. Closes ABEL_FOLLOWUPS
+      item (SAASA link). (new_quote.html almacén aéreo field hint)
+- [x] Export VB all 7 navieras attributed and wired — Abel June 22 confirmed
+      full naviera→VB→Gate Out mapping for EXPORTACION-CALLAO sheet. Rebuilt
+      `core/fcl_naviera_costs.py`: new naviera-keyed `_EXPORT_VB_BY_NAVIERA`
+      replacing old almacén-keyed `EXPORT_NAVIERA_DATA`. Stores NET pre-IGV
+      values (PDF adds 18% at render) — fixes prior double-IGV bug for CMA CGM
+      and the 5 newly attributed navieras (MSC $365, ONE $272, HAPAG LLOYD $152,
+      COSCO $100, EVERGREEN $227). New functions: `get_export_vb_net_usd(naviera)`,
+      `get_export_gate_outs(naviera)`. Routes.py updated. IMUPESA conflict resolved
+      (CMA CGM $150 vs EVERGREEN $133.50 — now per-naviera, not per-almacén).
+      Closes ABEL_FOLLOWUPS export VB item. MAERSK retención TODO(abel-F1F4) stays.
+- [x] 817 → 831 tests (+14, red-first). Full suite green throughout.
+- [x] CROSS-CHECK FINDING (not fixed): EVERGREEN import VB mismatch between two
+      of Abel's own files — Gastos VB IMPORTACION sheet has DELIVERY ORDER $250
+      + BL $62; EXPO_IMPO IMPORTACIÓN tab has $230 + $65 (net $295, total $348.10).
+      Filed as new open item in ABEL_FOLLOWUPS.md for Abel to resolve.
 
 ### Completed this session (2026-06-22) — Session F
 - [x] LURIGANCHO (PRIALE) proxy comment removed from `core/open_transport_costs.py`
@@ -368,12 +389,9 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
       resolved 2026-06-20 (Session E) via the Gastos workbook's own VB
       IMPORTACION sheet, all 14 navieras attributed. See ABEL_FOLLOWUPS.md
       Closed section.
-- [ ] **7 of 9 export VB blocks unattributed (EXPO_IMPO EXPORTACION-CALLAO
-      sheet)** — new this session (Session E). Only CMA CGM and MAERSK are
-      naviera-identified on the export side; no equivalent clean
-      per-naviera export sheet has surfaced (the Gastos workbook that
-      resolved the import side is import-only by title/content). See
-      ABEL_FOLLOWUPS.md open item.
+- [x] **Export VB all 7 navieras attributed** — resolved Session G (2026-06-22).
+      Abel confirmed full mapping; naviera-keyed table built in
+      `core/fcl_naviera_costs.py`. See Session G above.
 - [ ] **test_aereo_config_corrections.py missing from disk** — only a stale
       `.pyc` remains in `cotizador/tests/__pycache__/`, source `.py` never
       committed to git (confirmed via `git log --all` — no history for this

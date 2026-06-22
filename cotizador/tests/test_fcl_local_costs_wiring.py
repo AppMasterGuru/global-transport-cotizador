@@ -192,13 +192,16 @@ class TestFclExportVistoBueno:
         assert costeo["fcl_visto_bueno_usd"] == pytest.approx(160.0, rel=0.001)
 
     def test_unattributed_naviera_not_charged_no_guess(self, client):
-        q = _post_fcl_quote(client, {"fcl_naviera": "MSC"})
+        # MSC is now in the confirmed 7-naviera table. YANG MING is in the
+        # import-side dropdown but has no export VB mapping — use it as the
+        # unattributed control.
+        q = _post_fcl_quote(client, {"fcl_naviera": "YANG MING"})
         costeo = json.loads(q["costeo_json"])
         assert costeo.get("fcl_visto_bueno_usd") in (None, 0, 0.0)
 
     def test_visto_bueno_line_item_only_when_attributed(self, client):
         q_attributed = _post_fcl_quote(client, {"fcl_naviera": "CMA CGM"})
-        q_unattributed = _post_fcl_quote(client, {"fcl_naviera": "MSC"})
+        q_unattributed = _post_fcl_quote(client, {"fcl_naviera": "YANG MING"})
         descs_attributed = [i["description"] for i in json.loads(q_attributed["venta_json"])["line_items"]]
         descs_unattributed = [i["description"] for i in json.loads(q_unattributed["venta_json"])["line_items"]]
         assert any("Visto Bueno" in d for d in descs_attributed)
