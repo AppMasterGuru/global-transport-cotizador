@@ -60,9 +60,6 @@ _RATE_ROWS: list[tuple[str, str, float, float]] = [
     ("ZONA 4", "SJL", 920.0, 1300.0),
     ("ZONA 4", "CAJAMARQUILLA", 920.0, 1300.0),
     ("ZONA 4", "ATE VITARTE", 880.0, 1240.0),
-    # PDF column order is garbled for this one row ("LURIGANCHO(PRIALE)S/
-    # 1,240 880 S/") — used the neighboring ATE VITARTE rate (same zona,
-    # adjacent district) rather than guess; confirm with Abel if wrong.
     ("ZONA 4", "LURIGANCHO (PRIALE)", 880.0, 1240.0),
     ("ZONA 4", "CHACLACAYO", 960.0, 1350.0),
     ("ZONA 4", "LURIN", 1100.0, 1540.0),

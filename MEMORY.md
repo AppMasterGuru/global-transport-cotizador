@@ -1,5 +1,5 @@
 ## Unread Email Summary
-_Last updated: 2026-06-20 18:36 UTC (incremental — 178 business threads | accounts: barney@timebackai.co)_
+_Last updated: 2026-06-22 17:04 UTC (incremental — 183 business threads | accounts: barney@timebackai.co)_
 
 ### ⚠️ NEEDS RESPONSE (20 threads)
 
@@ -123,10 +123,11 @@ _Last updated: 2026-06-20 18:36 UTC (incremental — 178 business threads | acco
 |---|------|-----|------|----|---------|---------|
 | 1 | 2026-05-30 22:59 | ← | pricing@gt.com.pe | barney@timebackai.co | Proforma Global Transport SAC — 26-05-00… | Estimado/a Miami Foods Corp, Adjunto encontrará nuestra proforma de co… **← UNANSWERED** |
 
-### 🚢 GlobalTransport (51 total, 20 ⚠️ needs response — showing last 14d)
+### 🚢 GlobalTransport (52 total, 20 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-22 | 2 | ← | pricing@gt.com.pe | RE: FCL listo — necesito que corras F1–F4 + 4 pr… | Hola Barney, Respondo a tus preguntas. 1) LURIGANCHO (PRIALE) — transp… |
 | 2026-06-19 | 7 | → | barney@timebackai.co | Re: Cotizador — validación completa (LCL, Aéreo,… | Gracias Abel Con todo esto terminara esta fin de semana, y tu y yo hac… |
 | 2026-06-19 | 13 | ← | kalzamora@sintad.pe | RE: Análisis técnico API SCE Carga — campos requ… | Estimado Renato Buenas tardes Es un gusto saludarlo nuevamente. El mot… |
 | 2026-06-19 | 2 | ← | pricing@gt.com.pe | RE: Una pregunta más (#13) — CRAFT importación V… | TE RESPONDO BARNEY, MONTO DE VISTO BUENO CRAFT EXPORTACIÓN ES à USD160… |
@@ -140,10 +141,14 @@ _Last updated: 2026-06-20 18:36 UTC (incremental — 178 business threads | acco
 
 ### 🍸 Rebara (4 total, none in last 14d)
 
-### 📬 Other (121 total, 16 ⚠️ needs response — showing last 14d)
+### 📬 Other (125 total, 16 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-22 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-21 | 1 | ← | stories-recap@mail.instagram… | osakarestaurante and 7 others recently added to … | View their latest stories while they&#39;re still available. Catch up … |
+| 2026-06-21 | 1 | ← | ant.wilson@supabase.com | Your Supabase Project timeback-outreach is going… | Hi there, To save on cloud resources I just did a scan of all our proj… |
+| 2026-06-21 | 1 | ← | follow-suggestions@mail.inst… | timebackai.co, see comeconeme, raulmedina71 and … | New people to discover Suggested accounts based on your interests: com… |
 | 2026-06-20 | 1 | ← | posts-recaps@mail.instagram.… | timebackai.co, catch up on moments you've missed | findecultural , tynereatsaround and others posted something new. Catch… |
 | 2026-06-20 | 1 | ← | posts-recap@mail.instagram.c… | timebackai.co, see what's been happening on Inst… | See what&#39;s new on Instagram pacoyonque, osakarestaurante and other… |
 | 2026-06-19 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Fri Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
@@ -165,18 +170,35 @@ _Last updated: 2026-06-20 18:36 UTC (incremental — 178 business threads | acco
 | 2026-06-10 | 1 | ← | calendar-notification@google… | Notification: Script and blocking review  @ Wed … | Script and blocking review You have been invited by paul.keller@markha… |
 | 2026-06-09 | 1 | → | barney.elliott@gmail.com | Susan transcript | No. , , , , , , , , , , , , , , , , , , , , , , , , , , , , , No, este… |
 | 2026-06-09 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Tue Jun 9… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-08 | 1 | → | barney.elliott@gmail.com | RE: 26-06-001 Hamburg Importer GmbH EXW GT-PC — … | Buenos días, adjunto nuestra tarifa para el embarque indicado. Flete i… |
-| 2026-06-08 | 1 | → | barney.elliott@gmail.com | RE: 26-06-001 Hamburg Importer GmbH — Tarifa LCL | Buenos días, adjunto nuestra tarifa: Flete USD 450, Visto Bueno USD 16… |
-| 2026-06-08 | 1 | ← | admin@mail.capcut.com | Start your video creation today with CapCut | Dear user4975331583450 Thank you so much for choosing CapCut as your v… |
-| 2026-06-08 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 8… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-_… and more (showing 25 of 121)_
+_… and more (showing 25 of 125)_
 
 ### Personal email (barney.elliott@gmail.com)
 _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --personal` to add it._
 
 
 ## Active Tasks
-**Last updated: 2026-06-20**
+**Last updated: 2026-06-22**
+
+### Completed this session (2026-06-22) — Session F
+- [x] LURIGANCHO (PRIALE) proxy comment removed from `core/open_transport_costs.py`
+      — Abel confirmed on June 22 that S/880 general / S/1,240 IMO is correct.
+      Values were already right; removed the 3-line "proxy/needs confirmation"
+      comment. No data change. Closes ABEL_FOLLOWUPS "LURIGANCHO (PRIALE)."
+- [x] LCL Esc3 / CRAFT closed — Abel confirmed Esc3 used CRAFT and import
+      VB = $90 is correct (already correct since commit 40a5cad). No code change.
+      Closes ABEL_FOLLOWUPS "LCL Escenario 3 consolidator."
+- [x] EXPORTACION-CALLAO sheet inspected row by row. Found 7 distinct VB blocks
+      (not 9 as counted by Session E's parser). MAERSK (Block 3, VB=$160 with
+      30% RETENCIÓN, Gate DEMARES $179) and CMA CGM (Block 5, VB=$219.35, Gate
+      IMUPESA $150) cleanly attributed via desglose tokens. Blocks 1 and 6 have
+      NOTA hints in Abel's file (MSC and COSCO) but no structural naviera header
+      — held at "possible" not "confirmed." Blocks 2, 4, and 7 fully ambiguous.
+      Sheet is NOT clean like VB IMPORTACION sheet — stopped per no-guessing rule.
+      ABEL_FOLLOWUPS item #2 (export VB) updated with full block inventory;
+      question back to Abel to confirm Blocks 1/6 and resolve 2/4/7.
+- [ ] SAASA URL BLOCKED — task message had placeholder "[paste the exact URL
+      Abel sent]" not the actual URL. Cannot wire into new_quote.html until
+      Barney supplies the URL. SHOHIN "no simulator" note also pending same edit.
 
 ### Completed this session (2026-06-20) — Session E
 - [x] FCL wired into the live quote form (closes TODO(abel-Q7)) —
