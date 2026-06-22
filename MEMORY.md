@@ -217,9 +217,8 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
       Sheet is NOT clean like VB IMPORTACION sheet — stopped per no-guessing rule.
       ABEL_FOLLOWUPS item #2 (export VB) updated with full block inventory;
       question back to Abel to confirm Blocks 1/6 and resolve 2/4/7.
-- [ ] SAASA URL BLOCKED — task message had placeholder "[paste the exact URL
-      Abel sent]" not the actual URL. Cannot wire into new_quote.html until
-      Barney supplies the URL. SHOHIN "no simulator" note also pending same edit.
+- [x] SAASA URL — resolved in Session G. URL supplied by Barney, wired into
+      new_quote.html. SHOHIN note added. See Session G entry above.
 
 ### Completed this session (2026-06-20) — Session E
 - [x] FCL wired into the live quote form (closes TODO(abel-Q7)) —
