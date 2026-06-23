@@ -6,7 +6,7 @@ Abel's format (Meeting 3, 22:10):
    Body: one paragraph — greeting, incoterm, origin, destination,
    packing list/dimensions attached. No more."
 
-LCL  → MSL, CRAFT, SACO, VANGUARD, ECU WORLDWIDE (from providers DB)
+LCL  → MSL, CRAFT, SACO, ECU WORLDWIDE (from providers DB)
 Aéreo → LAN, American Airlines, United (from providers DB where available)
 FCL  → generic naviera template
 
@@ -34,7 +34,7 @@ from config.signatures import get_signature, signature_text  # noqa: E402
 # LCL providers now come from the providers DB. These are the defaults used
 # for email drafts when the DB has no entries.
 
-LCL_PROVIDERS = ["MSL", "CRAFT", "SACO", "VANGUARD", "ECU WORLDWIDE"]
+LCL_PROVIDERS = ["MSL", "CRAFT", "SACO", "ECU WORLDWIDE"]
 
 AEREO_PROVIDERS = ["LAN Airlines", "American Airlines", "United Airlines"]
 

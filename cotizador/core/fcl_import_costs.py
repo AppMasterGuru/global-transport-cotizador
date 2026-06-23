@@ -511,12 +511,12 @@ VB_IMPORTACION_DATA: dict = {
          "factura_agent": "COSCO", "p_unit": 390.0, "unit": "Cntr."},
     ]},
     "EVERGREEN": {"concepts": [
+        # Abel 2026-06-22: EXPO_IMPO IMPORTACIÓN tab is authoritative ($230 DO + $65 BL = $295 net).
+        # Gastos workbook figures ($250 DO + PEN 25 + $62 BL) were stale — discarded.
         {"concept": "DELIVERY ORDER", "currency": "USD",
-         "factura_agent": "GREENANDES PERU", "p_unit": 250.0, "unit": "Cntr."},
-        {"concept": "GASTOS ADMINISTRATIVOS", "currency": "PEN",
-         "factura_agent": "GREENANDES PERU", "p_unit": 25.0, "unit": "Factura"},
-        {"concept": "BL TRANSMISSION FEE", "currency": "USD",
-         "factura_agent": "GREENANDES PERU", "p_unit": 62.0, "unit": "BL"},
+         "factura_agent": "GREENANDES PERU", "p_unit": 230.0, "unit": "Cntr."},
+        {"concept": "BL TRANSMISIÓN FEE", "currency": "USD",
+         "factura_agent": "GREENANDES PERU", "p_unit": 65.0, "unit": "BL"},
     ]},
     "HAMBURG SUD / ALIANCA": {"concepts": [
         {"concept": "Container Control", "currency": "USD",

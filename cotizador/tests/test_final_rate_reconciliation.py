@@ -147,30 +147,20 @@ class TestCraftImportVbReverted20260619:
         assert c["visto_bueno_export_usd"] != 170.0  # old unverified value
 
 
-# ── FIX 1: VANGUARD still missing — fail-safe intact ─────────────────────────
+# ── FIX 1: No consolidator has a missing VB rate — startup warning is silent ──
 
-class TestVanguardMissingRateFailing:
-    """VANGUARD has no confirmed rate; startup warning must list it only."""
+class TestNoMissingVbRates:
+    """After all Abel-confirmed rates are set and VANGUARD is removed, no
+    consolidator should appear in the startup missing-rate lists."""
 
-    def test_vanguard_import_still_none(self):
-        c = get_consolidator("VANGUARD")
-        assert c["visto_bueno_import_usd"] is None
-        assert vb_rate_missing(c, "importacion") is True
-        assert visto_bueno_net_usd(c, "importacion") == 0.0
-
-    def test_vanguard_export_still_none(self):
-        c = get_consolidator("VANGUARD")
-        assert c["visto_bueno_export_usd"] is None
-        assert vb_rate_missing(c, "exportacion") is True
-
-    def test_startup_warning_lists_only_vanguard(self):
-        """After all Abel-confirmed rates are set, only VANGUARD should appear
-        in the startup missing-rate warnings."""
-        assert _MISSING_IMPORT_VB == ["VANGUARD"], (
-            f"Expected only VANGUARD in missing import VB, got: {_MISSING_IMPORT_VB}"
+    def test_missing_import_vb_list_is_empty(self):
+        assert _MISSING_IMPORT_VB == [], (
+            f"Expected no missing import VB, got: {_MISSING_IMPORT_VB}"
         )
-        assert _MISSING_EXPORT_VB == ["VANGUARD"], (
-            f"Expected only VANGUARD in missing export VB, got: {_MISSING_EXPORT_VB}"
+
+    def test_missing_export_vb_list_is_empty(self):
+        assert _MISSING_EXPORT_VB == [], (
+            f"Expected no missing export VB, got: {_MISSING_EXPORT_VB}"
         )
 
 
@@ -265,3 +255,32 @@ class TestDdpBanner:
         assert resp.status_code == 200
         body = resp.data.decode("utf-8")
         assert "NO está incluido automáticamente" not in body
+
+
+# ── VANGUARD removed — Abel confirmed 2026-06-22 ─────────────────────────────
+
+class TestVanguardRemovedAbel20260622:
+    """Abel 2026-06-22: VANGUARD no longer exists as a consolidator.
+    Must be absent from the active list; no startup warning fires for it."""
+
+    def test_vanguard_not_in_active_consolidators(self):
+        from core.transport import CONSOLIDATORS
+        assert "VANGUARD" not in CONSOLIDATORS
+
+    def test_vanguard_lookup_raises(self):
+        with pytest.raises(ValueError):
+            get_consolidator("VANGUARD")
+
+    def test_vanguard_not_in_missing_vb_import_list(self):
+        assert "VANGUARD" not in _MISSING_IMPORT_VB
+
+    def test_vanguard_not_in_missing_vb_export_list(self):
+        assert "VANGUARD" not in _MISSING_EXPORT_VB
+
+    def test_missing_vb_lists_are_empty(self):
+        assert _MISSING_IMPORT_VB == []
+        assert _MISSING_EXPORT_VB == []
+
+    def test_vanguard_not_in_lcl_providers(self):
+        from core.provider_emails import LCL_PROVIDERS
+        assert "VANGUARD" not in LCL_PROVIDERS

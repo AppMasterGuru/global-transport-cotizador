@@ -3,25 +3,7 @@
 **Purpose:** Running list of items that need Abel's confirmation, correction, 
 or input before go-live. Add to this file at the end of every build session 
 when something new surfaces.
-**Last updated:** 2026-06-22
-
----
-
-## Open — needs Abel response
-
-### 1. EVERGREEN import VB — source file mismatch (FCL import)
-**Source:** Discovered during Session G cross-check (2026-06-22)
-**Issue:** Two source files disagree on the EVERGREEN import VB amount:
-- **Gastos workbook (VB IMPORTACION sheet)** — currently live in production:
-  DELIVERY ORDER $250 + GASTOS ADMINISTRATIVOS PEN 25 + BL TRANSMISSION $62
-  (hardcoded in `core/fcl_import_costs.py` `VB_IMPORTACION_DATA["EVERGREEN"]`)
-- **EXPO_IMPO.xlsx IMPORTACIÓN tab** — DELIVERY ORDER $230 + BL TRANSMISIÓN $65
-  = net $295, total $348.10 (with 18% IGV)
-These numbers do not agree. The two files are both Abel's own documents.
-**Not auto-fixed** — awaiting Abel confirmation of which values are current.
-**Question for Abel:** EVERGREEN import VB — is the correct breakdown
-DELIVERY ORDER $250 + BL $62 (Gastos workbook) or DELIVERY ORDER $230 + BL $65
-(EXPO_IMPO IMPORTACIÓN tab)? Which file is more up to date?
+**Last updated:** 2026-06-23
 
 ---
 
@@ -36,6 +18,28 @@ report results.
 ---
 
 ## Closed — resolved
+
+### EVERGREEN import VB — RESOLVED 2026-06-23
+**Source:** Cross-check mismatch flagged in Session G (2026-06-22)
+**Resolution:** Abel confirmed EXPO_IMPO IMPORTACIÓN tab is authoritative:
+DELIVERY ORDER $230 net + BL TRANSMISIÓN FEE $65 net = **$295 net total**
+(total with 18% IGV = $348.10). Gastos workbook figures ($250/$62) were stale.
+**Action taken:** `VB_IMPORTACION_DATA["EVERGREEN"]` in `core/fcl_import_costs.py`
+updated to $230 DO + $65 BL. GASTOS ADMINISTRATIVOS PEN 25 removed (stale artifact).
+Gate outs paired with import: TPP $176.50, IMUPESA $190.50, DP World Logistics $120.50 net.
+3 new red-first tests added; 839 tests green. Session H, 2026-06-23.
+
+### VANGUARD consolidator — RESOLVED 2026-06-23
+**Source:** Railway deploy logs — "VB FALTANTE — sin tarifa confirmada: VANGUARD"
+**Resolution:** Abel confirmed "ya no existe, no tiene que ser considerado."
+**Action taken:** VANGUARD removed from:
+- `core/transport.py` CONSOLIDATORS dict
+- `core/provider_emails.py` LCL_PROVIDERS list (now 4 providers)
+- `core/provider_reply_parser.py` _DOMAIN_MAP + _EXPECTED_PROVIDERS["lcl"] now 4
+- `procedures/rules.py` APPROVED_LCL_CONSOLIDATORS frozenset
+Startup warning "VB FALTANTE — sin tarifa confirmada: VANGUARD" no longer fires.
+6 new red-first tests added; existing VANGUARD tests updated. 839 tests, 0 warnings.
+Session H, 2026-06-23.
 
 ### SAASA almacén aéreo simulator link — RESOLVED 2026-06-22
 **Source:** Abel Q11 reply, June 19; URL supplied by Barney June 22

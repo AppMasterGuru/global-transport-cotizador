@@ -1,5 +1,5 @@
 ## Unread Email Summary
-_Last updated: 2026-06-22 17:34 UTC (incremental — 185 business threads | accounts: barney@timebackai.co)_
+_Last updated: 2026-06-23 16:04 UTC (incremental — 188 business threads | accounts: barney@timebackai.co)_
 
 ### ⚠️ NEEDS RESPONSE (20 threads)
 
@@ -123,10 +123,11 @@ _Last updated: 2026-06-22 17:34 UTC (incremental — 185 business threads | acco
 |---|------|-----|------|----|---------|---------|
 | 1 | 2026-05-30 22:59 | ← | pricing@gt.com.pe | barney@timebackai.co | Proforma Global Transport SAC — 26-05-00… | Estimado/a Miami Foods Corp, Adjunto encontrará nuestra proforma de co… **← UNANSWERED** |
 
-### 🚢 GlobalTransport (52 total, 20 ⚠️ needs response — showing last 14d)
+### 🚢 GlobalTransport (53 total, 20 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-23 | 2 | ← | pricing@gt.com.pe | RE: Sistema actualizado — correr F1–F4 hoy + 2 p… | Hola Barney, ADJUNTO LOS GASTOS DE VISTO BUENO DE EVERGREEN IMPORTACIÓ… |
 | 2026-06-22 | 2 | ← | pricing@gt.com.pe | RE: FCL listo — necesito que corras F1–F4 + 4 pr… | Hola Barney, Respondo a tus preguntas. 1) LURIGANCHO (PRIALE) — transp… |
 | 2026-06-19 | 7 | → | barney@timebackai.co | Re: Cotizador — validación completa (LCL, Aéreo,… | Gracias Abel Con todo esto terminara esta fin de semana, y tu y yo hac… |
 | 2026-06-19 | 13 | ← | kalzamora@sintad.pe | RE: Análisis técnico API SCE Carga — campos requ… | Estimado Renato Buenas tardes Es un gusto saludarlo nuevamente. El mot… |
@@ -135,16 +136,17 @@ _Last updated: 2026-06-22 17:34 UTC (incremental — 185 business threads | acco
 | 2026-06-14 | 1 | → | barney@timebackai.co | Cotizador — validación final de tarifas (5 casos… | Abel, ya están listos todos los ajustes con tus números confirmados. T… |
 | 2026-06-13 | 1 | → | barney@timebackai.co |  | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
 | 2026-06-09 | 2 | ← | ralvarez@gt.com.pe | RE: Cotizador — listos para arrancar | Muy bien!! gracias AD JP Best Regards / Saludos Cordiales Renato Alvar… |
-| 2026-06-08 | 1 | → | barney.elliott@gmail.com | RE: 26-06-001 Hamburg Importer GmbH EXW GT-PC — … | Buenos días, adjunto nuestra tarifa para el embarque indicado. Flete i… |
 
 ### 🏢 Becamm (2 total, none in last 14d)
 
 ### 🍸 Rebara (4 total, none in last 14d)
 
-### 📬 Other (127 total, 16 ⚠️ needs response — showing last 14d)
+### 📬 Other (129 total, 16 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
+| 2026-06-23 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Tue Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-23 | 1 | ← | team@m.ngrok.com | [ngrok news] Sam shrunk Kubernetes. I'm shrinkin… | Plus major speed ups in Traffic Inspector, cert provisioning, and beyo… |
 | 2026-06-22 | 1 | ← | ant.wilson@supabase.com | Your Supabase Project timeback-outreach has been… | Hi there, To optimize cloud resources, we automatically pause free-tie… |
 | 2026-06-22 | 1 | ← | posts-recap@mail.instagram.c… | timebackai.co, see what's been happening on Inst… | See what&#39;s new on Instagram bar_lima_, ancestralrestaurantecafe an… |
 | 2026-06-22 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
@@ -168,16 +170,29 @@ _Last updated: 2026-06-22 17:34 UTC (incremental — 185 business threads | acco
 | 2026-06-13 | 1 | → | barney@timebackai.co |  | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
 | 2026-06-12 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Fri Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
 | 2026-06-11 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-10 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Wed Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-10 | 1 | ← | calendar-notification@google… | Notification: Script and blocking review  @ Wed … | Script and blocking review You have been invited by paul.keller@markha… |
-_… and more (showing 25 of 127)_
+_… and more (showing 25 of 129)_
 
 ### Personal email (barney.elliott@gmail.com)
 _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --personal` to add it._
 
 
 ## Active Tasks
-**Last updated: 2026-06-22**
+**Last updated: 2026-06-23**
+
+### Completed this session (2026-06-23) — Session H
+- [x] EVERGREEN import VB corrected — Abel confirmed EXPO_IMPO IMPORTACIÓN tab
+      is authoritative: DELIVERY ORDER $230 + BL TRANSMISIÓN FEE $65 = **$295 net**
+      ($348.10 total w/IGV). Stale Gastos workbook values ($250 DO + PEN 25 + $62 BL)
+      discarded. `VB_IMPORTACION_DATA["EVERGREEN"]` in `core/fcl_import_costs.py`
+      updated; 3 red-first tests added. Closes ABEL_FOLLOWUPS EVERGREEN item.
+- [x] VANGUARD removed — Abel: "ya no existe, no tiene que ser considerado."
+      Removed from `core/transport.py` CONSOLIDATORS, `core/provider_emails.py`
+      LCL_PROVIDERS (now 4), `core/provider_reply_parser.py` _DOMAIN_MAP +
+      _EXPECTED_PROVIDERS["lcl"]=4, `procedures/rules.py` APPROVED_LCL_CONSOLIDATORS.
+      Startup warning "VB FALTANTE — sin tarifa confirmada: VANGUARD" no longer fires.
+      6 red-first tests added; existing VANGUARD tests updated. Closes ABEL_FOLLOWUPS
+      VANGUARD item.
+- [x] 831 → 839 tests (+8 net, all red-first). Full suite green, 0 warnings.
 
 ### Completed this session (2026-06-22) — Session G
 - [x] SAASA simulator link wired into `new_quote.html` almacén aéreo helper
@@ -195,10 +210,7 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
       (CMA CGM $150 vs EVERGREEN $133.50 — now per-naviera, not per-almacén).
       Closes ABEL_FOLLOWUPS export VB item. MAERSK retención TODO(abel-F1F4) stays.
 - [x] 817 → 831 tests (+14, red-first). Full suite green throughout.
-- [x] CROSS-CHECK FINDING (not fixed): EVERGREEN import VB mismatch between two
-      of Abel's own files — Gastos VB IMPORTACION sheet has DELIVERY ORDER $250
-      + BL $62; EXPO_IMPO IMPORTACIÓN tab has $230 + $65 (net $295, total $348.10).
-      Filed as new open item in ABEL_FOLLOWUPS.md for Abel to resolve.
+- [x] EVERGREEN import VB mismatch found and resolved in Session H above.
 
 ### Completed this session (2026-06-22) — Session F
 - [x] LURIGANCHO (PRIALE) proxy comment removed from `core/open_transport_costs.py`

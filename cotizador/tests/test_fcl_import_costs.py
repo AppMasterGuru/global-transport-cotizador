@@ -477,4 +477,25 @@ class TestRealImportReferenceData:
         c = get_fcl_import_local_costs(g_locales, mbl, "MAERSK / SEALAND", vb_importacion=totals)
         assert c["thc_20"] == pytest.approx(110.0, rel=0.001)
         assert c["mbl_usd"] == pytest.approx(55.0, rel=0.001)
-        assert c["vb_importacion_usd"] == pytest.approx(442.0, rel=0.001)
+
+
+# ── EVERGREEN import VB — Abel confirmed 2026-06-22 ──────────────────────────
+
+class TestEvergreenImportVbAbel20260622:
+    """Abel 2026-06-22: EVERGREEN import VB = $230 DO + $65 BL = $295 net.
+    Previous values ($250 DO + PEN 25 gastos + $62 BL) were from the stale
+    Gastos workbook; the EXPO_IMPO IMPORTACIÓN tab ($230+$65) is authoritative."""
+
+    def test_evergreen_import_vb_net_295(self):
+        totals = build_vb_importacion_totals(get_vb_importacion_data(), num_containers=1)
+        assert totals["EVERGREEN"]["vb_importacion_usd"] == pytest.approx(295.0, rel=0.001)
+
+    def test_evergreen_delivery_order_is_230_not_250(self):
+        concepts = get_vb_importacion_data()["EVERGREEN"]["concepts"]
+        do = next(c for c in concepts if c["concept"] == "DELIVERY ORDER")
+        assert do["p_unit"] == 230.0
+
+    def test_evergreen_bl_transmission_fee_is_65_not_62(self):
+        concepts = get_vb_importacion_data()["EVERGREEN"]["concepts"]
+        bl = next(c for c in concepts if "BL" in c["concept"].upper())
+        assert bl["p_unit"] == 65.0

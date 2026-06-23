@@ -195,7 +195,7 @@ class TestValidateLclConsolidator:
         assert "GT-P-005" in msg
 
     def test_approved_list_complete(self):
-        expected = {"MSL", "CRAFT", "SACO", "VANGUARD", "ECU WORLDWIDE", "EQ"}
+        expected = {"MSL", "CRAFT", "SACO", "ECU WORLDWIDE", "EQ"}
         assert APPROVED_LCL_CONSOLIDATORS == expected
 
 

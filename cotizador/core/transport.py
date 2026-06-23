@@ -11,7 +11,7 @@ From the demo (36:06 – 47:17):
 
 Costs are in soles (PEN). Converted to USD in the final quote via SBS rate.
 
-LCL uses consolidators (MSL, Craft, Saco, ECU Worldwide, Vanguard) — NOT direct navieras.
+LCL uses consolidators (MSL, Craft, Saco, ECU Worldwide) — NOT direct navieras.
 Abel: "Para un LCL no cotizamos con la naviera de manera directa."
 """
 
@@ -47,8 +47,8 @@ WEIGHT_BANDS: list[tuple[float, float]] = [
 # ── Consolidators (LCL only) ─────────────────────────────────────────────────
 # NET visto bueno rates (pre-IGV). IGV applied once by the PDF/display layer.
 # None = rate not yet confirmed — quote must show blank VB + user warning.
-# All values below confirmed by Abel 2026-06-13 except VANGUARD (no rate provided).
-# Import VB updated by Abel 2026-06-18: MSL=90, CRAFT=160, SACO=190, EQ=90 net.
+# All values confirmed by Abel. Import VB updated 2026-06-18: MSL=90, CRAFT=90, SACO=190, EQ=90 net.
+# VANGUARD removed 2026-06-22: no longer an active consolidator.
 
 CONSOLIDATORS: dict[str, dict] = {
     "MSL": {
@@ -74,11 +74,8 @@ CONSOLIDATORS: dict[str, dict] = {
         "visto_bueno_export_usd": 180.0,  # confirmed by Abel 2026-06-13
         "visto_bueno_import_usd": 90.0,   # confirmed by Abel 2026-06-13
     },
-    "VANGUARD": {
-        "name": "Vanguard",
-        "visto_bueno_export_usd": None,   # no rate on file — pending confirmation
-        "visto_bueno_import_usd": None,   # no rate on file — pending confirmation
-    },
+    # VANGUARD removed 2026-06-22: Abel confirmed "ya no existe, no tiene que ser
+    # considerado". Removed from active list to silence the startup VB warning.
 }
 
 # ECU WORLDWIDE and ECU are both aliases for the EQ entry (same company, different name forms).

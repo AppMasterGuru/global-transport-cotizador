@@ -13,7 +13,7 @@ module:
 All functions are safe to call in stub mode (no ANTHROPIC_API_KEY required).
 
 Expected provider counts per mode (used to determine when all have replied):
-  LCL   → 5  (MSL, CRAFT, SACO, VANGUARD, ECU WORLDWIDE)
+  LCL   → 4  (MSL, CRAFT, SACO, ECU WORLDWIDE)
   aereo → 3  (LAN Airlines, American Airlines, United Airlines)
   FCL   → 1  (generic naviera)
 """
@@ -42,7 +42,7 @@ REFERENCE_PATTERN = re.compile(r"\b(\d{2}-\d{2}-\d{3})\b")
 
 # Expected provider counts per quote mode
 _EXPECTED_PROVIDERS: dict[str, int] = {
-    "lcl":   5,
+    "lcl":   4,
     "aereo": 3,
     "fcl":   1,
 }
@@ -56,8 +56,6 @@ _DOMAIN_MAP: list[tuple[str, str]] = [
     ("craft.pe",     "CRAFT"),
     ("saco.com",     "SACO"),
     ("saco.pe",      "SACO"),
-    ("vanguardlogistics", "VANGUARD"),
-    ("vanguard.pe",  "VANGUARD"),
     ("ecuwoorldwide", "ECU WORLDWIDE"),
     ("ecuworldwide", "ECU WORLDWIDE"),
     ("ecu.pe",       "ECU WORLDWIDE"),

@@ -238,16 +238,10 @@ class TestTransport:
 
     # ── Regression: missing-rate consolidator must never crash ────────────────
 
-    def test_get_consolidator_vanguard_no_crash(self):
-        """VANGUARD is approved but has no confirmed rates — must return dict, never raise."""
-        cons = get_consolidator("VANGUARD")  # must not raise
-        assert cons["name"] == "Vanguard"
-        assert cons["visto_bueno_export_usd"] is None
-        assert cons["visto_bueno_import_usd"] is None
-        assert vb_rate_missing(cons, "exportacion") is True
-        assert vb_rate_missing(cons, "importacion") is True
-        assert visto_bueno_net_usd(cons, "exportacion") == 0.0
-        assert visto_bueno_net_usd(cons, "importacion") == 0.0
+    def test_get_consolidator_vanguard_raises(self):
+        """VANGUARD removed 2026-06-22 (Abel: 'ya no existe'). Must raise ValueError."""
+        with pytest.raises(ValueError):
+            get_consolidator("VANGUARD")
 
     def test_get_consolidator_ecu_aliases(self):
         """ECU and ECU WORLDWIDE are aliases for the EQ canonical entry."""
