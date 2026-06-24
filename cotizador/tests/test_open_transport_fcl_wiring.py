@@ -103,7 +103,7 @@ class TestOpenTransportDistrictSelected:
         q = _post_fcl_quote(client, {"open_transport_district": "CALLAO"})
         venta = json.loads(q["venta_json"])
         descriptions = [i["description"] for i in venta["line_items"]]
-        assert any("Open Transport" in d for d in descriptions)
+        assert any("Transporte Local" in d for d in descriptions)
 
     def test_general_rate_used_by_default(self, client):
         q = _post_fcl_quote(client, {"open_transport_district": "CALLAO"})
@@ -129,7 +129,7 @@ class TestOpenTransportDistrictSelected:
         })
         costeo = json.loads(q["costeo_json"])
         venta = json.loads(q["venta_json"])
-        item = next(i for i in venta["line_items"] if "Open Transport" in i["description"])
+        item = next(i for i in venta["line_items"] if i["description"] == "Transporte Local")
         assert item["total"] == pytest.approx(costeo["open_transport_usd"] * 1.25, rel=0.01)
 
     def test_district_recorded_in_costeo(self, client):

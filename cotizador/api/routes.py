@@ -369,7 +369,8 @@ def create_quote():
     # Transport (weight vs volume — Abel's rule)
     transport_soles = 0.0
     transport_result = {}
-    if weight_kg or cbm:
+    # FCL uses Open Transport district lookup; LCL weight-band calc does not apply.
+    if (weight_kg or cbm) and mode != "fcl":
         transport_result = calculate_transport(weight_kg, cbm)
         transport_soles  = transport_result["charge_soles"]
     transport_usd = soles_to_usd(transport_soles, exchange_rate)
@@ -603,6 +604,9 @@ def create_quote():
             extra_costeo_items.append({"concept": _concept, "bucket": _bucket,
                                        "valor": _valor, "factor": None,
                                        "factor_unit": None, "min_usd": None, "total": _valor})
+    # FCL has no coloader — Section 4 coloader items do not apply.
+    if mode == "fcl":
+        extra_costeo_items = []
     _extra_total = sum(ei["total"] for ei in extra_costeo_items)
 
     costeo_total = (
@@ -786,7 +790,7 @@ def create_quote():
         })
     if open_transport_usd > 0:
         local_venta_items.append({
-            "description": "Transporte Local (Open Transport)",
+            "description": "Transporte Local",
             "quantity": 1,
             "unit_price": round(open_transport_usd * m, 2),
             "total": round(open_transport_usd * m, 2),
@@ -811,20 +815,13 @@ def create_quote():
         })
     # FCL local costs (Session E) — see TODO(abel-F1F4) note above on the
     # costeo block: margin applied by default, not yet confirmed flat.
-    if fcl_port_usd > 0:
+    _fcl_puerto_total_usd = fcl_port_usd + fcl_deposito_temporal_usd
+    if _fcl_puerto_total_usd > 0:
         local_venta_items.append({
-            "description": f"Puerto ({fcl_terminal})",
+            "description": "Gastos de Puerto y Depósito",
             "quantity": 1,
-            "unit_price": round(fcl_port_usd * m, 2),
-            "total": round(fcl_port_usd * m, 2),
-            **_FLAGS_LOCAL,
-        })
-    if fcl_deposito_temporal_usd > 0:
-        local_venta_items.append({
-            "description": "Depósito Temporal (DPW)",
-            "quantity": 1,
-            "unit_price": round(fcl_deposito_temporal_usd * m, 2),
-            "total": round(fcl_deposito_temporal_usd * m, 2),
+            "unit_price": round(_fcl_puerto_total_usd * m, 2),
+            "total": round(_fcl_puerto_total_usd * m, 2),
             **_FLAGS_LOCAL,
         })
     if mode == "fcl" and (fcl_customs_commission_usd or fcl_customs_gastos_operativos_usd):
@@ -850,7 +847,7 @@ def create_quote():
             "quantity": 1,
             "unit_price": round(fcl_visto_bueno_usd * m, 2),
             "total": round(fcl_visto_bueno_usd * m, 2),
-            **_FLAGS_LOCAL,
+            **_FLAGS_INTL,
         })
     if fcl_thc_usd > 0:
         local_venta_items.append({
@@ -858,7 +855,7 @@ def create_quote():
             "quantity": 1,
             "unit_price": round(fcl_thc_usd * m, 2),
             "total": round(fcl_thc_usd * m, 2),
-            **_FLAGS_LOCAL,
+            **_FLAGS_INTL,
         })
     if fcl_isps_usd > 0:
         local_venta_items.append({
@@ -866,7 +863,7 @@ def create_quote():
             "quantity": 1,
             "unit_price": round(fcl_isps_usd * m, 2),
             "total": round(fcl_isps_usd * m, 2),
-            **_FLAGS_LOCAL,
+            **_FLAGS_INTL,
         })
     if fcl_mbl_usd > 0:
         local_venta_items.append({
@@ -874,7 +871,7 @@ def create_quote():
             "quantity": 1,
             "unit_price": round(fcl_mbl_usd * m, 2),
             "total": round(fcl_mbl_usd * m, 2),
-            **_FLAGS_LOCAL,
+            **_FLAGS_INTL,
         })
     if fcl_vb_importacion_usd > 0:
         local_venta_items.append({
@@ -882,7 +879,7 @@ def create_quote():
             "quantity": 1,
             "unit_price": round(fcl_vb_importacion_usd * m, 2),
             "total": round(fcl_vb_importacion_usd * m, 2),
-            **_FLAGS_LOCAL,
+            **_FLAGS_INTL,
         })
 
     if extra_costeo_items:

@@ -10,10 +10,14 @@ when something new surfaces.
 ## Pending Abel action — validation
 
 ### 3. FCL F1–F4 scenarios
-**Status:** FCL form wired in Session E (commit 6e71960). Abel to run F1–F4
-against the live system exactly as he did for LCL and Aéreo in Parte 2, and
-report results.
-**Trigger:** Barney to notify Abel — Session E deployed to Railway.
+**Status:** FCL form wired in Session E (commit 6e71960). Abel ran F1–F4 and
+reported CONFORME on F1/F2 (2026-06-23). F1/F2 rendering fixes applied in
+Session I (2026-06-24): LCL transport suppressed, Section 4 coloader gated,
+IGV flags corrected (VB/THC/ISPS/MBL → _FLAGS_INTL), port+depósito merged,
+transport label cleaned. 864 tests green.
+**Still open — per-incoterm layer:** Abel's 3 open questions on trigger
+mechanism, concept matrix, and incoterm set are UNRESOLVED. That layer is
+blocked until Abel answers. `TODO(abel-incoterm)` in routes.py.
 
 ---
 
