@@ -64,6 +64,7 @@ from core.fcl_naviera_costs import (
     fcl_customs_agent_costs,
     get_export_vb_net_usd,
 )
+from core.fcl_agente_incoterm import build_agente_venta_items, get_incoterm_concepts
 from core.incoterms import classify_incoterm
 from core.open_transport_costs import list_open_transport_districts, open_transport_delivery_usd
 from core.port_costs import get_port_cost
@@ -342,6 +343,8 @@ def create_quote():
     margin_pct         = max(margin_pct_input, MARGIN_FLOOR)
     requester_type_raw = f.get("requester_type", "cliente").strip()
     requester_type     = requester_type_raw if requester_type_raw in ("cliente", "agente") else "cliente"
+    client_type_raw    = f.get("client_type", "cliente_local").strip().lower()
+    client_type        = client_type_raw if client_type_raw in ("agente_internacional", "cliente_local") else "cliente_local"
     operation_raw      = f.get("operation", "exportacion").strip().lower()
     operation          = operation_raw if operation_raw in ("exportacion", "importacion") else "exportacion"
 
@@ -609,6 +612,26 @@ def create_quote():
         extra_costeo_items = []
     _extra_total = sum(ei["total"] for ei in extra_costeo_items)
 
+    # Agente Internacional per-incoterm concept override (FCL only).
+    # Registry returns None for any unregistered (flujo, incoterm) pair —
+    # the code falls back to cliente_local path transparently in that case.
+    agente_incoterm_items: list[dict] | None = None
+    if mode == "fcl" and client_type == "agente_internacional":
+        _agente_flujo    = "EXPO" if operation == "exportacion" else "IMPO"
+        _agente_concepts = get_incoterm_concepts(_agente_flujo, incoterm)
+        if _agente_concepts is None:
+            logging.warning(
+                "agente_internacional: no registry entry for (%s, %s) — "
+                "falling back to cliente_local path",
+                _agente_flujo, incoterm,
+            )
+            client_type = "cliente_local"
+        else:
+            agente_incoterm_items = build_agente_venta_items(
+                _agente_concepts, num_containers, fcl_container_type,
+                open_transport_usd,
+            )
+
     costeo_total = (
         flete_usd + vb_usd + customs_usd + transport_usd + handling_aereo_usd
         + thc_usd + _extra_total + aereo_transmission_usd + aereo_handling_destino_usd
@@ -667,6 +690,7 @@ def create_quote():
         "extra_items": extra_costeo_items if extra_costeo_items else None,
         "invoice_usd": invoice_usd,
         "insurance_usd": insurance_usd,
+        "client_type": client_type,
     }
 
     m = 1 + margin_pct
@@ -882,7 +906,11 @@ def create_quote():
             **_FLAGS_INTL,
         })
 
-    if extra_costeo_items:
+    if agente_incoterm_items is not None:
+        # Agente Internacional: fixed tariff from registry — no margin uplift,
+        # no flete_item prepended (registry defines all items including freight).
+        venta_items = agente_incoterm_items
+    elif extra_costeo_items:
         # Dynamic mode: coloader-driven items — proforma mirrors what consolidator quoted.
         # bucket=="local" items use _FLAGS_LOCAL; others use _FLAGS_INTL.
         # CIF-calc items use venta_neto directly (margin already encoded in pct spread).

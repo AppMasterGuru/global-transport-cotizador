@@ -366,6 +366,14 @@
           <input type="number" name="num_containers" id="fcl-num-containers-input" min="1" step="1" value="1">
           <span class="field-hint">Afecta puerto, agente de aduana (recargo 2do contenedor) y precinto.</span>
         </label>
+        <label class="field" id="row-fcl-client-type">
+          <span class="label-text">Tipo de Cliente (FCL)</span>
+          <select name="client_type" id="fcl-client-type-select">
+            <option value="cliente_local">Cliente Local</option>
+            <option value="agente_internacional">Agente Internacional</option>
+          </select>
+          <span class="field-hint">Agente Internacional: tarifas fijas por incoterm del tarifario (sin margen adicional).</span>
+        </label>
       </div>
       <div class="form-grid">
         <label class="field field-check">
@@ -765,10 +773,12 @@
   var rowFclNaviera       = document.getElementById('row-fcl-naviera');
   var rowFclContainerType = document.getElementById('row-fcl-container-type');
   var rowFclNumContainers = document.getElementById('row-fcl-num-containers');
+  var rowFclClientType    = document.getElementById('row-fcl-client-type');
   var fclTerminalSel      = document.getElementById('fcl-terminal-select');
   var fclNavieraSel       = document.getElementById('fcl-naviera-select');
   var fclContainerTypeSel = document.getElementById('fcl-container-type-select');
   var fclNumContainersInp = document.getElementById('fcl-num-containers-input');
+  var fclClientTypeSel    = document.getElementById('fcl-client-type-select');
 
   function applyModeVisibility() {
     var mode = modeSelect.value;
@@ -781,10 +791,12 @@
     rowFclNaviera.style.display       = showOpenTransport ? '' : 'none';
     rowFclContainerType.style.display = showOpenTransport ? '' : 'none';
     rowFclNumContainers.style.display = showOpenTransport ? '' : 'none';
+    rowFclClientType.style.display    = showOpenTransport ? '' : 'none';
     if (fclTerminalSel)      { fclTerminalSel.disabled      = !showOpenTransport; }
     if (fclNavieraSel)       { fclNavieraSel.disabled       = !showOpenTransport; }
     if (fclContainerTypeSel) { fclContainerTypeSel.disabled = !showOpenTransport; }
     if (fclNumContainersInp) { fclNumContainersInp.disabled = !showOpenTransport; }
+    if (fclClientTypeSel)    { fclClientTypeSel.disabled    = !showOpenTransport; }
     // Consolidador row is shown for both LCL (auto Visto Bueno) and Aéreo
     // (consolidado destination charges — Transmission/Handling). Disabling
     // it for FCL/other modes stops the hidden <select> from still submitting
