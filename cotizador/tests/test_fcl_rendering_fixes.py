@@ -177,16 +177,19 @@ class TestFix2ExactlyOneVbOnFcl:
         assert vb_item["total"] == pytest.approx(costeo["fcl_visto_bueno_usd"] * 1.20, rel=0.01)
 
 
-# FIX 3 - Auto-program IGV-exempt + coloader concepts
+# FIX 3 - Auto-program coloader concepts + IGV treatment
+# Session L (§4) — DELIBERATE REVERSAL of the original fix #3, per Abel:
+# Visto Bueno (export + importación) and Emisión MBL are LOCAL charges issued
+# in Peru and therefore AFECTO a IGV. (THC/ISPS stay exempt — see FIX 5.)
 
-class TestFix3IgvExemptAutoPopulate:
-    def test_fcl_export_vb_marked_igv_exempt(self, client):
-        # Naviera VB export is an international naviera charge: inafecto al IGV.
+class TestFix3VbMblAfectoIgv:
+    def test_fcl_export_vb_afecto_igv(self, client):
+        # Naviera VB export is issued locally in Peru: afecto al IGV (§4 reversal).
         q = _export(client, {"fcl_naviera": "MAERSK"})
         venta = json.loads(q["venta_json"])
         vb_item = next(i for i in venta["line_items"] if i.get("description") == "Visto Bueno")
-        assert vb_item.get("is_international") is True
-        assert vb_item.get("igv_applicable") is False
+        assert vb_item.get("is_local") is True
+        assert vb_item.get("igv_applicable") is True
 
     def test_fcl_import_mbl_auto_populates_without_manual_input(self, client):
         # MBL must appear with zero Section 4 items.
@@ -195,24 +198,24 @@ class TestFix3IgvExemptAutoPopulate:
         descriptions = [i["description"] for i in venta["line_items"]]
         assert any("MBL" in d for d in descriptions)
 
-    def test_fcl_import_mbl_marked_igv_exempt(self, client):
-        # Emision MBL is a naviera charge: inafecto al IGV.
+    def test_fcl_import_mbl_afecto_igv(self, client):
+        # Emisión MBL is a locally issued charge: afecto al IGV (§4 reversal).
         q = _import_maersk(client)
         venta = json.loads(q["venta_json"])
         mbl_item = next(i for i in venta["line_items"] if "MBL" in i["description"])
-        assert mbl_item.get("is_international") is True
-        assert mbl_item.get("igv_applicable") is False
+        assert mbl_item.get("is_local") is True
+        assert mbl_item.get("igv_applicable") is True
 
-    def test_fcl_import_vb_importacion_marked_igv_exempt(self, client):
-        # VB Importacion is a naviera charge: inafecto al IGV.
+    def test_fcl_import_vb_importacion_afecto_igv(self, client):
+        # VB Importación is a locally issued charge: afecto al IGV (§4 reversal).
         q = _import_maersk(client)
         venta = json.loads(q["venta_json"])
         vb_imp = next(
             i for i in venta["line_items"]
             if "Visto Bueno (Importaci" in i["description"]
         )
-        assert vb_imp.get("is_international") is True
-        assert vb_imp.get("igv_applicable") is False
+        assert vb_imp.get("is_local") is True
+        assert vb_imp.get("igv_applicable") is True
 
     def test_fcl_customs_commission_auto_populates(self, client):
         # Customs agent commission appears without manual input (regression guard).

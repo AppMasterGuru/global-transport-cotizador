@@ -1,30 +1,40 @@
 """
 Per-incoterm concept registry for the FCL Agente Internacional path.
 
-Source: TARIFARIO AGENTES EXPO GT - 2025 - V2 (5).xlsx (sheets "FCL EXW EXPO"
-and "FCL FOB EXPO ") and TARIFARIO AGENTES IMPO GT - 2025 - V2 (4).xlsx
-(sheets "FCL DAP IMPO" and "FCL DDP IMPO"), venta (right-hand) column only.
-Abel confirmed 2026-06-26 that these sheets are authoritative and complete.
+Source: TARIFARIO AGENTES EXPO/IMPO GT - 2025 sheets define WHICH concepts
+appear per incoterm. Abel confirmed 2026-06-26 these sheets are authoritative
+for structure.
 
 Registry key: (flujo, incoterm) where flujo ∈ {"EXPO","IMPO"}.
-Four confirmed incoterms: EXPO EXW, EXPO FOB, IMPO DAP.
+Four wired incoterms: EXPO EXW, EXPO FOB, IMPO DAP, IMPO DDP.
 
-IMPO DDP — NOT in this registry. STOP condition triggered (Section 5):
-  The DDP tariff sheet (example naviera: ONE) produces amounts that differ
-  from current FCL DDP behavior in multiple ways:
-    1. BL Master: sheet=USD 37 vs ONE current MBL=USD 29.50 (+IGV).
-    2. SCAC: sheet=USD 60/BL vs ONE VB data=USD 42/Cntr — different unit
-       AND different amount.
-    3. Customs Broker: sheet=0.35% of CIF value (min USD 110) — structurally
-       different from current Alefero/OEA fixed-commission structure.
-    4. Operative Charge (USD 20/BL) and Gate in (USD 210/CONT) — concepts
-       not present in the current FCL system.
-    5. Terminal Fee: sheet=USD 245 (20STD) vs port_costs.py DPW import=USD 330;
-       APM import=USD 302.10.
-    6. Box Fee (USD 155/CONT) and Doc Fee (USD 115/BL) flagged LOCAL (+IGV) on
-       the DDP sheet, but INTL (no IGV) in the current vb_importacion layer.
-  Per the standing rule (Section 5), DDP on the agente_internacional path falls
-  back to cliente_local FCL behavior. Await Abel/Barney decision before wiring.
+Session L (Abel's reframe): the tariff sheet defines WHICH concepts appear,
+not the amounts. Naviera/port-dependent concepts carry the RESOLVED unit and
+get their amount injected at runtime from the same doc sources the
+cliente_local import path already uses — so the agente amounts MATCH the
+validated cliente_local figures:
+  - Terminal Fee  ← port_costs.get_port_cost() (merged port + depósito)
+  - THC / ISPS    ← fcl_import_costs (naviera import)
+  - BL Master / Emisión MBL ← fcl_import_costs MBL
+  - Visto Bueno (Importación) ← fcl_import_costs VB importación
+  - Customs Broker (DDP) ← fcl_customs_broker (% of CIF + floor)
+GT's own fixed service fees keep their fixed values (Operative Charge, Agency
+Fee, Coordinación, Seal, the export Customs Broker base).
+
+Two concepts have NO clean doc source — left at their sheet value and flagged
+(Session L STOP, do not guess a sheet→doc equivalence):
+  - EXW "Gate out": export gate is per-depot and multi-valued
+    (fcl_naviera_costs.get_export_gate_outs returns a dict, not one figure)
+    and is not wired into any cost var. Kept at USD 150.
+  - DAP "Gate in": no import-gate doc source exists in the system. Kept at
+    USD 205. (DDP's COST-only Gate in USD 210 is a separate new §2 value.)
+
+DDP (§2/§3/§4): THC/ISPS/MBL/VB-import/Terminal resolved from the existing
+import figures; Operative Charge USD 20/BL (venta); calculated Customs Broker;
+Delivery (Open Transport). Gate in USD 210/CONT is COST-only (added in
+routes.py costeo) and never a venta concept. The VB importación bundle already
+includes box fee / SCAC / doc fee / coordinación per naviera, so DDP does not
+itemize those again (no double-count).
 
 Adding a new incoterm later: add one entry to _REGISTRY — no other code changes.
 """
@@ -40,6 +50,8 @@ PER_CNTR       = "PER_CNTR"       # charged per container
 PER_CNTR_EXTRA = "PER_CNTR_EXTRA" # per extra container (num_containers - 1); omitted if 0
 BY_SIZE        = "BY_SIZE"        # amount varies by container type (use amount_by_size)
 DYNAMIC        = "DYNAMIC"        # amount supplied at runtime (Open Transport pickup/delivery)
+RESOLVED       = "RESOLVED"       # amount injected at runtime from a doc source
+                                  # (port_costs / naviera figures), keyed by description
 
 
 # ── Concept definition ────────────────────────────────────────────────────────
@@ -79,14 +91,16 @@ class FclConcept:
 
 
 # ── Per-incoterm registry ─────────────────────────────────────────────────────
-# Amounts are pre-IGV venta values transcribed from the TARIFARIO sheets.
-# IGV (18%) is applied at render time by the PDF layer.
+# Fixed amounts are pre-IGV venta values (GT's own service fees). RESOLVED
+# amounts are injected at runtime from doc sources. IGV (18%) is applied at
+# render time by the PDF layer.
 
 _REGISTRY: dict[tuple[str, str], tuple[FclConcept, ...]] = {
 
     # ── EXPO EXW ─────────────────────────────────────────────────────────────
-    # Source: "FCL EXW EXPO" sheet venta column (TARIFA NETA).
     # Ocean Freight is COLLECT — shown as 0 for transparency.
+    # Terminal Fee re-sourced (Session L) from port_costs export; Gate out kept
+    # fixed (no clean doc source — STOP-listed).
     ("EXPO", "EXW"): (
         FclConcept(
             "Flete Internacional (COLLECT)", PER_CNTR,
@@ -123,15 +137,18 @@ _REGISTRY: dict[tuple[str, str], tuple[FclConcept, ...]] = {
             igv_applicable=True, is_international=False,
             amount_usd=5.35,
         ),
+        # Gate out: NO clean doc source (export gate is per-depot/multi-valued,
+        # not wired). STOP-listed — kept at sheet value, do not re-source.
         FclConcept(
             "Gate out", PER_CNTR,
             igv_applicable=True, is_international=False,
             amount_usd=150.0,
         ),
+        # Terminal Fee: re-sourced from port_costs (export). Single merged
+        # port+depósito line (preserves F4). Amount injected at runtime.
         FclConcept(
-            "Terminal Fee", BY_SIZE,
+            "Terminal Fee", RESOLVED,
             igv_applicable=True, is_international=False,
-            amount_by_size={"20STD": 212.0, "40STD": 311.0, "40HC": 338.0},
         ),
         # Pick up: amount supplied at runtime from Open Transport district lookup
         FclConcept(
@@ -141,8 +158,7 @@ _REGISTRY: dict[tuple[str, str], tuple[FclConcept, ...]] = {
     ),
 
     # ── EXPO FOB ─────────────────────────────────────────────────────────────
-    # Source: "FCL FOB EXPO " sheet, notes table rows 40-43:
-    # "Los siguientes costos deben ser cobrados al exportador".
+    # Two GT fixed fees only — no naviera/port concepts to re-source.
     ("EXPO", "FOB"): (
         FclConcept(
             "Handling", PER_CNTR,
@@ -157,24 +173,21 @@ _REGISTRY: dict[tuple[str, str], tuple[FclConcept, ...]] = {
     ),
 
     # ── IMPO DAP ─────────────────────────────────────────────────────────────
-    # Source: "FCL DAP IMPO" sheet venta column (TARIFA NETA).
-    # THC and ISPS: IGV-exempt (international carrier charges) — consistent
-    # with F3 fix (Session I) and DAP sheet IGV column (empty for these rows).
+    # THC/ISPS/BL Master/Terminal re-sourced (Session L) from the naviera import
+    # docs; Coordinación/Agency kept fixed (GT fees); Gate in kept fixed (no
+    # clean doc source — STOP-listed). THC/ISPS stay IGV-exempt (international).
     ("IMPO", "DAP"): (
         FclConcept(
-            "THC", PER_CNTR,
+            "THC", RESOLVED,
             igv_applicable=False, is_international=True,
-            amount_usd=60.0,
         ),
         FclConcept(
-            "ISPS", PER_CNTR,
+            "ISPS", RESOLVED,
             igv_applicable=False, is_international=True,
-            amount_usd=39.0,
         ),
         FclConcept(
-            "BL Master", PER_BL,
+            "BL Master", RESOLVED,
             igv_applicable=True, is_international=False,
-            amount_usd=55.0,
         ),
         FclConcept(
             "Coordinación y Supervisión del Embarque", PER_CNTR,
@@ -186,15 +199,16 @@ _REGISTRY: dict[tuple[str, str], tuple[FclConcept, ...]] = {
             igv_applicable=True, is_international=False,
             amount_usd=4.75,
         ),
+        # Gate in: NO clean import-gate doc source. STOP-listed — kept fixed.
         FclConcept(
             "Gate in", PER_CNTR,
             igv_applicable=True, is_international=False,
             amount_usd=205.0,
         ),
+        # Terminal Fee: re-sourced from port_costs (import).
         FclConcept(
-            "Terminal Fee", BY_SIZE,
+            "Terminal Fee", RESOLVED,
             igv_applicable=True, is_international=False,
-            amount_by_size={"20STD": 245.0, "40STD": 345.0, "40HC": 372.0},
         ),
         # Delivery: amount supplied at runtime from Open Transport district lookup
         FclConcept(
@@ -203,7 +217,48 @@ _REGISTRY: dict[tuple[str, str], tuple[FclConcept, ...]] = {
         ),
     ),
 
-    # IMPO DDP intentionally absent — see module docstring for STOP report.
+    # ── IMPO DDP ─────────────────────────────────────────────────────────────
+    # Session L §2/§3/§4. Keeps the system's existing naviera/port figures
+    # (THC/ISPS/MBL/VB-import/Terminal, all RESOLVED), plus the §2 additions
+    # (Operative Charge venta; Gate in is COST-only in routes.py) and the §3
+    # calculated Customs Broker. §4: MBL + VB importación afecto IGV; THC/ISPS
+    # exempt. No separate Coordinación/Agency lines — they are inside the VB
+    # importación bundle (no double-count).
+    ("IMPO", "DDP"): (
+        FclConcept(
+            "THC", RESOLVED,
+            igv_applicable=False, is_international=True,
+        ),
+        FclConcept(
+            "ISPS", RESOLVED,
+            igv_applicable=False, is_international=True,
+        ),
+        FclConcept(
+            "Emisión MBL", RESOLVED,
+            igv_applicable=True, is_international=False,
+        ),
+        FclConcept(
+            "Visto Bueno (Importación)", RESOLVED,
+            igv_applicable=True, is_international=False,
+        ),
+        FclConcept(
+            "Terminal Fee", RESOLVED,
+            igv_applicable=True, is_international=False,
+        ),
+        FclConcept(
+            "Operative Charge", PER_BL,
+            igv_applicable=True, is_international=False,
+            amount_usd=20.0,
+        ),
+        FclConcept(
+            "Customs Broker", RESOLVED,
+            igv_applicable=True, is_international=False,
+        ),
+        FclConcept(
+            "Delivery", DYNAMIC,
+            igv_applicable=True, is_international=False,
+        ),
+    ),
 }
 
 
@@ -219,7 +274,7 @@ def get_incoterm_concepts(
     None is returned.
 
     flujo:    "EXPO" | "IMPO"
-    incoterm: "EXW" | "FOB" | "DAP" | ...
+    incoterm: "EXW" | "FOB" | "DAP" | "DDP" | ...
     """
     return _REGISTRY.get((flujo.upper(), incoterm.upper()))
 
@@ -229,21 +284,28 @@ def build_agente_venta_items(
     num_containers: int,
     container_type: str,
     open_transport_usd: float = 0.0,
+    resolved_amounts: Optional[dict] = None,
 ) -> list[dict]:
     """
     Build a venta line-item list from a per-incoterm concept tuple.
 
-    Registry amounts are pre-IGV tariff values that already include GT's
-    markup — no additional margin factor is applied on top.  IGV is applied
-    by the PDF render layer, the same as every other item in the cotizador.
+    Fixed registry amounts are pre-IGV tariff values that already include GT's
+    markup — no additional margin factor is applied on top.  IGV is applied by
+    the PDF render layer, the same as every other item in the cotizador.
 
     open_transport_usd: pre-IGV USD from open_transport_delivery_usd(), or 0
         when no district is selected. DYNAMIC concepts are omitted when 0.
+
+    resolved_amounts: optional {description: pre-IGV USD} mapping supplying the
+        amount for RESOLVED concepts (naviera/port-dependent figures sourced
+        from the same docs the cliente_local import path uses). A RESOLVED
+        concept whose amount is missing or <= 0 is omitted — no silent default.
 
     container_type: "20STD" | "40STD" | "40HC"
     """
     _INTL  = {"is_international": True,  "is_local": False, "igv_applicable": False}
     _LOCAL = {"is_international": False, "is_local": True,  "igv_applicable": True}
+    resolved = resolved_amounts or {}
 
     items: list[dict] = []
 
@@ -278,6 +340,14 @@ def build_agente_venta_items(
             if open_transport_usd <= 0:
                 continue
             unit_price = round(open_transport_usd, 2)
+            total      = unit_price
+            quantity   = 1
+
+        elif c.unit == RESOLVED:
+            amt = resolved.get(c.description)
+            if amt is None or amt <= 0:
+                continue  # doc figure unavailable — omit, never default
+            unit_price = round(amt, 2)
             total      = unit_price
             quantity   = 1
 

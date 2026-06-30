@@ -65,6 +65,7 @@ from core.fcl_naviera_costs import (
     get_export_vb_net_usd,
 )
 from core.fcl_agente_incoterm import build_agente_venta_items, get_incoterm_concepts
+from core.fcl_customs_broker import agente_customs_broker_fee, broker_name_from_flag
 from core.incoterms import classify_incoterm
 from core.open_transport_costs import list_open_transport_districts, open_transport_delivery_usd
 from core.port_costs import get_port_cost
@@ -409,6 +410,7 @@ def create_quote():
     fcl_isps_usd = 0.0
     fcl_mbl_usd = 0.0
     fcl_vb_importacion_usd = 0.0
+    fcl_gate_in_usd = 0.0  # Session L §2: DDP agente Gate in — COST side only
 
     if mode == "fcl":
         port = get_port_cost(fcl_terminal, operation, fcl_container_type)
@@ -627,9 +629,31 @@ def create_quote():
             )
             client_type = "cliente_local"
         else:
+            # Session L: naviera/port-dependent concepts are RESOLVED from the
+            # same doc-sourced figures the cliente_local import path computes
+            # above — so the agente amounts MATCH the validated figures.
+            _resolved_amounts = {
+                "Terminal Fee": round(fcl_port_usd + fcl_deposito_temporal_usd, 2),
+                "THC": fcl_thc_usd,
+                "ISPS": fcl_isps_usd,
+                "BL Master": fcl_mbl_usd,
+                "Emisión MBL": fcl_mbl_usd,
+                "Visto Bueno (Importación)": fcl_vb_importacion_usd,
+            }
+            if incoterm == "DDP":
+                # §3 calculated broker — % of CIF (Invoice + Insurance + Freight),
+                # same CIF definition the DDP duties table uses. requires_oea_basc
+                # selects the broker (OEA) else Alefero.
+                _cif_usd = (invoice_usd or 0.0) + (insurance_usd or 0.0) + flete_usd
+                _broker_name = broker_name_from_flag(requires_oea_basc)
+                _resolved_amounts["Customs Broker"] = agente_customs_broker_fee(
+                    _broker_name, _cif_usd
+                )
+                # §2 Gate in USD 210/contenedor — COST side only, never venta.
+                fcl_gate_in_usd = round(210.0 * num_containers, 2)
             agente_incoterm_items = build_agente_venta_items(
                 _agente_concepts, num_containers, fcl_container_type,
-                open_transport_usd,
+                open_transport_usd, resolved_amounts=_resolved_amounts,
             )
 
     costeo_total = (
@@ -639,6 +663,7 @@ def create_quote():
         + fcl_port_usd + fcl_deposito_temporal_usd + fcl_visto_bueno_usd
         + fcl_customs_commission_usd + fcl_customs_gastos_operativos_usd + fcl_customs_precinto_usd
         + fcl_thc_usd + fcl_isps_usd + fcl_mbl_usd + fcl_vb_importacion_usd
+        + fcl_gate_in_usd
     )
 
     costeo = {
@@ -673,6 +698,7 @@ def create_quote():
         "fcl_isps_usd": fcl_isps_usd if fcl_isps_usd else None,
         "fcl_mbl_usd": fcl_mbl_usd if fcl_mbl_usd else None,
         "fcl_vb_importacion_usd": fcl_vb_importacion_usd if fcl_vb_importacion_usd else None,
+        "fcl_gate_in_usd": fcl_gate_in_usd if fcl_gate_in_usd else None,
         "aereo_modalidad": aereo_modalidad if mode == "aereo" else None,
         "aereo_consolidado": aereo_consolidado if mode == "aereo" else None,
         "aereo_transmission_usd": aereo_transmission_usd if aereo_transmission_usd else None,
@@ -866,12 +892,14 @@ def create_quote():
             **_FLAGS_LOCAL,
         })
     if fcl_visto_bueno_usd > 0:
+        # Session L §4 (Abel-instructed reversal of fix #3): Visto Bueno is a
+        # locally issued charge — afecto a IGV. Was _FLAGS_INTL (exempt).
         local_venta_items.append({
             "description": "Visto Bueno",
             "quantity": 1,
             "unit_price": round(fcl_visto_bueno_usd * m, 2),
             "total": round(fcl_visto_bueno_usd * m, 2),
-            **_FLAGS_INTL,
+            **_FLAGS_LOCAL,
         })
     if fcl_thc_usd > 0:
         local_venta_items.append({
@@ -890,20 +918,24 @@ def create_quote():
             **_FLAGS_INTL,
         })
     if fcl_mbl_usd > 0:
+        # Session L §4 (Abel-instructed reversal of fix #3): Emisión MBL is a
+        # locally issued charge — afecto a IGV. Was _FLAGS_INTL (exempt).
         local_venta_items.append({
             "description": "Emisión MBL",
             "quantity": 1,
             "unit_price": round(fcl_mbl_usd * m, 2),
             "total": round(fcl_mbl_usd * m, 2),
-            **_FLAGS_INTL,
+            **_FLAGS_LOCAL,
         })
     if fcl_vb_importacion_usd > 0:
+        # Session L §4 (Abel-instructed reversal of fix #3): Visto Bueno
+        # Importación is a locally issued charge — afecto a IGV. Was _FLAGS_INTL.
         local_venta_items.append({
             "description": "Visto Bueno (Importación)",
             "quantity": 1,
             "unit_price": round(fcl_vb_importacion_usd * m, 2),
             "total": round(fcl_vb_importacion_usd * m, 2),
-            **_FLAGS_INTL,
+            **_FLAGS_LOCAL,
         })
 
     if agente_incoterm_items is not None:

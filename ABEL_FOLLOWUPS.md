@@ -9,6 +9,28 @@ when something new surfaces.
 
 ## Pending Abel action — validation
 
+### 4. Session L — FCL agente layer: §5 STOP items (no clean doc source)
+**Status:** Built 2026-06-30. Naviera/port-dependent agente amounts were
+re-sourced from the same port_costs + naviera docs the cliente_local import
+path uses (Terminal Fee, THC, ISPS, BL Master/MBL, VB importación). Two
+concepts have NO clean doc source and were LEFT at their tariff-sheet value
+and flagged — not re-sourced, not guessed:
+- **EXW "Gate out" (USD 150):** the export gate is per-depot and multi-valued
+  (`get_export_gate_outs` returns a dict; e.g. EVERGREEN has 3 depots at 2
+  amounts) and is not wired into any cost var. Confirm the single Gate-out
+  figure (or the depot-selection rule) for the agente EXW quote.
+- **DAP "Gate in" (USD 205):** no import-gate doc source exists in the system.
+  (DDP's COST-only Gate in USD 210/cntr is a separate new §2 value.) Confirm
+  the import Gate-in figure / source.
+
+**Also flag (structural, not a guess):**
+- agente **EXW** has no export "Visto Bueno" concept, so it does not charge the
+  naviera export VB the cliente_local export path charges. Confirm whether EXW
+  should include it (and whether EXW's "Coordinación" USD 214 already is it).
+- agente **DAP** itemizes GT-fixed Coordinación (190) / Agency (4.75) instead
+  of the full VB-importación bundle (which DDP uses). Confirm DAP's import
+  local-cost structure vs DDP's.
+
 ### 3. FCL F1–F4 scenarios
 **Status:** FCL form wired in Session E (commit 6e71960). Abel ran F1–F4 and
 reported CONFORME on F1/F2 (2026-06-23). F1/F2 rendering fixes applied in
