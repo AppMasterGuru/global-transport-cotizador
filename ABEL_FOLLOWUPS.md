@@ -3,7 +3,7 @@
 **Purpose:** Running list of items that need Abel's confirmation, correction, 
 or input before go-live. Add to this file at the end of every build session 
 when something new surfaces.
-**Last updated:** 2026-06-23
+**Last updated:** 2026-06-30
 
 ---
 
@@ -36,14 +36,41 @@ and flagged — not re-sourced, not guessed:
 reported CONFORME on F1/F2 (2026-06-23). F1/F2 rendering fixes applied in
 Session I (2026-06-24): LCL transport suppressed, Section 4 coloader gated,
 IGV flags corrected (VB/THC/ISPS/MBL → _FLAGS_INTL), port+depósito merged,
-transport label cleaned. 864 tests green.
-**Still open — per-incoterm layer:** Abel's 3 open questions on trigger
-mechanism, concept matrix, and incoterm set are UNRESOLVED. That layer is
-blocked until Abel answers. `TODO(abel-incoterm)` in routes.py.
+transport label cleaned. Per-incoterm layer + DDP completed in Session L
+(2026-06-30, commit 211d2d5). 966 tests green.
+**Awaiting Abel — F3 + F4 on the complete site.** Notification sent via TEXT
+June 30 ~1:12pm Lima — no reply yet. F3/F4 is Abel's technical validation
+(precursor to go-live), NOT the saldo trigger.
+**Most-likely F3/F4 correction to expect (flag in advance):** agente
+VB-importación was built at **$225** (190 coordinación + 35 admin, CMA/APL
+basis) vs Abel's ONE screenshot showing **$340** (box 155 + SCAC 60 + doc 115
++ admin 10). The figure is **naviera-dependent**, so expect Abel to flag the
+import local-cost amount/structure on a non-CMA/APL naviera. Re-source per
+naviera when he confirms.
 
 ---
 
 ## Closed — resolved
+
+### FCL Agente DDP thread — RESOLVED 2026-06-30 (Session L)
+**Source:** Abel email/text thread June 30 resolving how DDP (and the agente
+import path) should be priced.
+**Resolution (per Abel):**
+- **Amounts come from the naviera / port docs, NOT the tariff sheet.** The DDP
+  tariff sheet is STRUCTURE ONLY (which concepts appear) — never the price
+  source. THC / ISPS / MBL / VB-importación / Terminal Fee all re-sourced from
+  the existing import docs the cliente_local import path already uses.
+- **Customs Broker rates:** Alefero max(0.35% × CIF, **$110**) + IGV; OEA
+  max(0.20% × CIF, **$80**) + IGV (min floors). Selected via `requires_oea_basc`.
+  CIF = Invoice + Insurance + Freight. Implemented in `core/fcl_customs_broker.py`.
+- **IGV:** **VB (export + import) and MBL are afecto a IGV** on all paths
+  (todo VB afecto IGV; MBL emitido en Perú). THC / ISPS stay exempt.
+- **Operative Charge** ($20/BL) → **venta**. **Gate in** ($210/cntr) → **COST-only**.
+**Action taken:** DDP wired through `core/fcl_agente_incoterm.py` registry; the
+old "no DDP changes" freeze is LIFTED. 966 tests green. Commit 211d2d5.
+**Note:** cliente_local neto base unchanged, but VB+MBL IGV reversal means
+cliente_local grand totals now include IGV on those lines (totals changed) —
+authorized by Abel.
 
 ### EVERGREEN import VB — RESOLVED 2026-06-23
 **Source:** Cross-check mismatch flagged in Session G (2026-06-22)

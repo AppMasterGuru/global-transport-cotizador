@@ -2,7 +2,7 @@
 **Client:** Global Transport SAC  
 **Project:** Pipeline #1 — Cotizador (automated quoting system)  
 **Engagement lead:** Barney Elliott / TimeBack AI  
-**Last updated:** 2026-06-13
+**Last updated:** 2026-06-30
 
 ---
 
@@ -56,6 +56,12 @@ German proformas, Mandarin PDFs, French T&Cs = Pipeline #3. Don't extend templat
 ### SINTAD is manual through Pipeline #1
 SINTAD double-entry continues until Pipeline #1 is accepted. `sintad_export.py.new` is scaffolded but not wired.
 
+### FCL DDP is built per Abel — the old "no DDP changes" freeze is LIFTED
+As of Session L (2026-06-30) DDP is fully built to Abel's spec across all four FCL incoterms (EXPO EXW/FOB, IMPO DAP/DDP). The prior "don't touch DDP" rule no longer applies. Tariff sheets are STRUCTURE ONLY — prices come from the naviera/port import docs, never the sheet. See `ABEL_FOLLOWUPS.md` "FCL Agente DDP thread — RESOLVED 2026-06-30."
+
+### Default to documented, no-overcharge assumptions; let F3/F4 surface corrections
+When a number can be sourced from a doc, build it and move on. Prefer the documented, no-overcharge value and let Abel's F3/F4 validation surface the real-number corrections. Only disambiguate in writing when something genuinely cannot be guessed from the docs, or when getting it wrong would reverse already-validated work. (Reason: repeated clarification rounds irritated Abel this round — the cost of an over-cautious question now outweighs the cost of a doc-sourced value he corrects in F3/F4.)
+
 ### IGV applied ONCE — by the PDF layer
 Routes.py stores pre-IGV net values. The PDF layer applies 18% at render. Never store IGV-inclusive values as venta_neto.
 
@@ -76,11 +82,12 @@ Before any demo or go-live:
 
 ---
 
-## Current Status (2026-06-13)
+## Current Status (2026-06-30)
 
-- 522/522 tests passing.
+- 966 tests passing. Production: commit 211d2d5 on main, pushed + Railway auto-deployed June 30, `/health` 200 OK.
+- FCL Agente Internacional layer COMPLETE — all four incoterms (EXPO EXW, EXPO FOB, IMPO DAP, IMPO DDP) behind the `client_type` fork (`agente_internacional | cliente_local`). DDP doc-sourced; VB+MBL afecto IGV on all paths; Customs Broker calculated (Alefero 0.35%/$110, OEA 0.20%/$80, +IGV, CIF-based).
 - LISTENER_ENABLED=false — listener off until JP/Renato give go-live approval.
-- Abel confirmed "todo lo demás está conforme" after Demo 2 (PDF format was the last issue; now fixed).
+- Waiting on Abel: F3 + F4 on the complete site (notification sent via text June 30 ~1:12pm Lima, no reply yet). F3/F4 is Abel's technical validation, NOT the saldo trigger.
 - Pending: Abel config session (default line items, auto-add rules, transport cost logic), Renato/JP go-live session, 3 consecutive approved quotes to trigger USD 750 saldo.
 
 ---

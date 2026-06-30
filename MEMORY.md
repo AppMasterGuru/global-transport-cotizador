@@ -1,5 +1,5 @@
 ## Unread Email Summary
-_Last updated: 2026-06-24 21:32 UTC (incremental — 194 business threads | accounts: barney@timebackai.co)_
+_Last updated: 2026-06-30 23:25 UTC (incremental — 221 business threads | accounts: barney@timebackai.co)_
 
 ### ⚠️ NEEDS RESPONSE (20 threads)
 
@@ -123,62 +123,90 @@ _Last updated: 2026-06-24 21:32 UTC (incremental — 194 business threads | acco
 |---|------|-----|------|----|---------|---------|
 | 1 | 2026-05-30 22:59 | ← | pricing@gt.com.pe | barney@timebackai.co | Proforma Global Transport SAC — 26-05-00… | Estimado/a Miami Foods Corp, Adjunto encontrará nuestra proforma de co… **← UNANSWERED** |
 
-### 🚢 GlobalTransport (55 total, 20 ⚠️ needs response — showing last 14d)
+### 🚢 GlobalTransport (56 total, 20 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
-| 2026-06-24 | 3 | ← | ralvarez@gt.com.pe | RE: Gacela Airlines – presentación: alcance y un… | Gacela Airlines seria nuestro socio estrategico Best Regards / Saludos… |
-| 2026-06-23 | 6 | ← | pricing@gt.com.pe | RE: Sistema actualizado — correr F1–F4 hoy + 2 p… | Hola Barney respondiendo a lo que me indicas. Observaciones FCL (F1 y … |
+| 2026-06-30 | 13 | → | barney@timebackai.co | Re: Sistema actualizado — correr F1–F4 hoy + 2 p… | Hola Abel, Gracias, con esto se aclara casi todo. Te confirmo cómo lo … |
+| 2026-06-26 | 3 | → | barney@timebackai.co | Re: Propuesta — servicio aéreo y opción de broch… | Todo bien, Renato — gracias a ti, y entiendo perfecto lo del presupues… |
+| 2026-06-25 | 4 | → | barney@timebackai.co | Re: Gacela Airlines – presentación: alcance y un… | Hola Renato, He estado revisando la presentación con calma, pensando t… |
 | 2026-06-23 | 1 | ← | ralvarez@gt.com.pe | RV: charter de avion | Best Regards / Saludos Cordiales Renato Alvarez General Manager Av. Ma… |
 | 2026-06-22 | 2 | ← | pricing@gt.com.pe | RE: FCL listo — necesito que corras F1–F4 + 4 pr… | Hola Barney, Respondo a tus preguntas. 1) LURIGANCHO (PRIALE) — transp… |
 | 2026-06-19 | 7 | → | barney@timebackai.co | Re: Cotizador — validación completa (LCL, Aéreo,… | Gracias Abel Con todo esto terminara esta fin de semana, y tu y yo hac… |
 | 2026-06-19 | 13 | ← | kalzamora@sintad.pe | RE: Análisis técnico API SCE Carga — campos requ… | Estimado Renato Buenas tardes Es un gusto saludarlo nuevamente. El mot… |
 | 2026-06-19 | 2 | ← | pricing@gt.com.pe | RE: Una pregunta más (#13) — CRAFT importación V… | TE RESPONDO BARNEY, MONTO DE VISTO BUENO CRAFT EXPORTACIÓN ES à USD160… |
 | 2026-06-19 | 1 | → | barney@timebackai.co | Rotación de credenciales — requisito BASC | Subject: Rotación de credenciales — requisito BASC Hola David, Espero … |
-| 2026-06-14 | 1 | → | barney@timebackai.co | Cotizador — validación final de tarifas (5 casos… | Abel, ya están listos todos los ajustes con tus números confirmados. T… |
-| 2026-06-13 | 1 | → | barney@timebackai.co |  | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
 
 ### 🏢 Becamm (2 total, none in last 14d)
 
 ### 🍸 Rebara (4 total, none in last 14d)
 
-### 📬 Other (133 total, 16 ⚠️ needs response — showing last 14d)
+### 📬 Other (159 total, 16 ⚠️ needs response — showing last 14d)
 
 | Date | Msgs | Dir | From | Subject | Snippet |
 |------|------|-----|------|---------|---------|
-| 2026-06-24 | 1 | ← | posts-recap@mail.instagram.c… | timebackai.co, see what's been happening on Inst… | See what&#39;s new on Instagram cevicheria.laesquinita, bar_lima_ and … |
-| 2026-06-24 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Wed Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-23 | 1 | ← | stories-recap@mail.instagram… | mestizo_peru and 5 others recently added to thei… | View their latest stories while they&#39;re still available. Catch up … |
-| 2026-06-23 | 1 | ← | follow-suggestions@mail.inst… | timebackai.co, see comeconeme, freddydeanda and … | New people to discover Suggested accounts based on your interests: com… |
-| 2026-06-23 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Tue Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-23 | 1 | ← | team@m.ngrok.com | [ngrok news] Sam shrunk Kubernetes. I'm shrinkin… | Plus major speed ups in Traffic Inspector, cert provisioning, and beyo… |
-| 2026-06-22 | 1 | ← | ant.wilson@supabase.com | Your Supabase Project timeback-outreach has been… | Hi there, To optimize cloud resources, we automatically pause free-tie… |
-| 2026-06-22 | 1 | ← | posts-recap@mail.instagram.c… | timebackai.co, see what's been happening on Inst… | See what&#39;s new on Instagram bar_lima_, ancestralrestaurantecafe an… |
-| 2026-06-22 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-21 | 1 | ← | stories-recap@mail.instagram… | osakarestaurante and 7 others recently added to … | View their latest stories while they&#39;re still available. Catch up … |
-| 2026-06-21 | 1 | ← | ant.wilson@supabase.com | Your Supabase Project timeback-outreach is going… | Hi there, To save on cloud resources I just did a scan of all our proj… |
-| 2026-06-21 | 1 | ← | follow-suggestions@mail.inst… | timebackai.co, see comeconeme, raulmedina71 and … | New people to discover Suggested accounts based on your interests: com… |
-| 2026-06-20 | 1 | ← | posts-recaps@mail.instagram.… | timebackai.co, catch up on moments you've missed | findecultural , tynereatsaround and others posted something new. Catch… |
-| 2026-06-20 | 1 | ← | posts-recap@mail.instagram.c… | timebackai.co, see what's been happening on Inst… | See what&#39;s new on Instagram pacoyonque, osakarestaurante and other… |
-| 2026-06-19 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Fri Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-18 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-17 | 1 | ← | calendar-notification@google… | Notification: Barney x ESCALA @ Wed Jun 17, 2026… | Barney x ESCALA Daniela Cortavarría is inviting you to a scheduled Zoo… |
-| 2026-06-17 | 1 | ← | info@sector3svg.org | Invitation: Barney x ESCALA @ Wed Jun 17, 2026 2… | Barney x ESCALA Daniela Cortavarría is inviting you to a scheduled Zoo… |
-| 2026-06-17 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Wed Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-17 | 2 | ← | contabilidadaleph@viajesroxa… | Re: ÁLEPH CAJAMARCA | Buenas noches estimado Barney: Confirmamos la recepción de la segunda … |
-| 2026-06-16 | 1 | ← | no-reply@mail.instagram.com | 923647 is your Instagram code | Hi, Someone tried to sign up for an Instagram account with barney@time… |
-| 2026-06-16 | 1 | ← | calendar-notification@google… | Notification: Partido Zoé football @ Tue Jun 16,… | Partido Zoé football You have been invited by valeriaruizsalas@gmail.c… |
-| 2026-06-16 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Tue Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-| 2026-06-15 | 1 | ← | valeriaruizsalas@gmail.com | Invitation: Partido Zoé football @ Tue Jun 16, 2… | Partido Zoé football You have been invited by valeria ruiz to attend a… |
-| 2026-06-15 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 1… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
-_… and more (showing 25 of 133)_
+| 2026-06-30 | 1 | ← | security@mail.instagram.com | New login to Instagram from Chrome on Mac OS X | We noticed a new login, timebackai.co We noticed a login from a device… |
+| 2026-06-30 | 1 | ← | security@mail.instagram.com | Verify your profile | Hi timebackai.co, Someone tried to log in to your Instagram profile. I… |
+| 2026-06-30 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Tue Jun 3… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-30 | 1 | ← | workspace-noreply@google.com | [Legal Update] Changes to Google Terms of Servic… | We are updating our Terms of Service for users with access to Addition… |
+| 2026-06-29 | 1 | ← | no-reply@accounts.google.com | Security alert | A new sign-in on Apple iPhone barney@timebackai.co We noticed a new si… |
+| 2026-06-29 | 1 | ← | no-reply@mail.instagram.com | Your Instagram password has been changed | This is a confirmation that the password for your Instagram account ti… |
+| 2026-06-29 | 1 | ← | security@mail.instagram.com | New login to Instagram from Instagram on Apple i… | We noticed a new login, timebackai.co We noticed a login from a device… |
+| 2026-06-29 | 1 | ← | security@mail.instagram.com | Verify your profile | Hi timebackai.co, Someone tried to log in to your Instagram profile. I… |
+| 2026-06-29 | 1 | ← | security@mail.instagram.com | 5127232995 is your Instagram recovery code | Hi timebackai.co, Here are three easy ways to get back into Instagram.… |
+| 2026-06-29 | 1 | ← | security@facebookmail.com | Did you just log in near Lima on a new device? | Let us know if it wasn&#39;t you, TimeBack. TimeBack AI Security alert… |
+| 2026-06-29 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Mon Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-29 | 1 | ← | posts-recap@mail.instagram.c… | timebackai.co, see what's been happening on Inst… | See what&#39;s new on Instagram cevicheria.laesquinita, pacoyonque and… |
+| 2026-06-28 | 1 | ← | follow-suggestions@mail.inst… | timebackai.co, see monicahuertas10, freddydeanda… | New people to discover Suggested accounts based on your interests: mon… |
+| 2026-06-28 | 1 | → | barney@timebackai.co |  | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
+| 2026-06-27 | 1 | ← | stories-recap@mail.instagram… | santoslacasadetodos and 2 others recently added … | View their latest stories while they&#39;re still available. Catch up … |
+| 2026-06-27 | 1 | ← | posts-recaps@mail.instagram.… | timebackai.co, catch up on moments you've missed | santoslacasadetodos , mestizo_peru and others posted something new. Ca… |
+| 2026-06-27 | 1 | → | barney@timebackai.co | MUNICIPALIDAD ACTULIZADA | We are now up to date. The next payment is in August. Te AMo -- Barney… |
+| 2026-06-26 | 1 | ← | posts-recap@mail.instagram.c… | timebackai.co, see what's been happening on Inst… | See what&#39;s new on Instagram cevicheria.laesquinita, pacoyonque and… |
+| 2026-06-26 | 1 | → | barney@timebackai.co | ZOE ELLIOTT RUIZ- partida de nacimiento / DNI / … | -- Barney Elliott Founder, TimeBack AI Reclaim What Matters Most barne… |
+| 2026-06-26 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Fri Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-25 | 1 | ← | stories-recap@mail.instagram… | santoslacasadetodos and 4 others recently added … | View their latest stories while they&#39;re still available. Catch up … |
+| 2026-06-25 | 1 | ← | workspace-noreply@google.com | [Action Advised] Google Vids personal avatar fea… | Review the Administrative controls available to you. Dear administrato… |
+| 2026-06-25 | 1 | ← | follow-suggestions@mail.inst… | timebackai.co, see danielavasquez.hmd, freddydea… | New people to discover Suggested accounts based on your interests: dan… |
+| 2026-06-25 | 1 | ← | calendar-notification@google… | Notification: Standup PTSD <> Giggle @ Thu Jun 2… | Standup PTSD &lt;&gt; Giggle Join with Google Meet – You have been inv… |
+| 2026-06-25 | 1 | → | barney@timebackai.co |  | Hola Ceclia, como estas. Te escribi por whatsapp el Viernes 19 siguien… |
+_… and more (showing 25 of 159)_
 
 ### Personal email (barney.elliott@gmail.com)
 _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --personal` to add it._
 
 
 ## Active Tasks
-**Last updated: 2026-06-24**
+**Last updated: 2026-06-30**
+
+### Current status (as of 2026-06-30) — Session L
+- **Production:** commit 211d2d5 on main, pushed + Railway auto-deployed
+  June 30. `/health` 200 OK. **966 tests green.**
+- **FCL Agente Internacional layer COMPLETE** — all four incoterms (EXPO EXW,
+  EXPO FOB, IMPO DAP, IMPO DDP) behind the `client_type` fork
+  (`agente_internacional | cliente_local`).
+- **DDP wired through the registry; amounts doc-sourced** (THC / ISPS / MBL /
+  VB-import / Terminal from the existing import docs — tariff sheets are
+  STRUCTURE ONLY, never the price source, per Abel). Operative Charge $20/BL →
+  venta. Gate in $210/cntr → COST-only.
+- **Customs Broker** = `core/fcl_customs_broker.py`, calculated: Alefero
+  max(0.35% × CIF, $110) + IGV; OEA max(0.20% × CIF, $80) + IGV; selected via
+  `requires_oea_basc`; CIF = Invoice + Insurance + Freight.
+- **IGV reversal** (deliberate reversal of the F1/F2 fix #3): Visto Bueno
+  (export + import) and MBL are now **afecto a IGV on ALL paths** (agente AND
+  cliente_local); THC / ISPS stay exempt. `cliente_local` neto base unchanged,
+  but grand totals now include IGV on VB + MBL lines → **cliente_local output
+  totals changed.** Authorized by Abel (todo VB afecto IGV; MBL emitido en Perú).
+- **DDP freeze LIFTED:** the old "no DDP changes" rule no longer applies — DDP is
+  built per Abel's spec as of Session L.
+- **Waiting on Abel:** F3 + F4 on the complete site. Notification sent via TEXT
+  June 30 ~1:12pm Lima — no reply yet.
+- **Saldo:** USD 750 triggers on 3 consecutive real quotes approved by JP
+  without rewriting. F3/F4 is Abel's technical validation (precursor), NOT the
+  saldo trigger itself.
+- **Session L cost:** $85.49 (track vs $750 saldo / $1,500 Pipeline #1).
+- **Carry forward unchanged:** SINTAD deferred indefinitely; WCA pilot (20 agents)
+  waiting Renato; Listener built, `LISTENER_ENABLED=false`, waiting Renato/JP.
 
 ### Completed this session (2026-06-24) — Session I
 - [x] FIX 1 — FCL no longer runs LCL weight-band transport calc. Gate added at
@@ -200,9 +228,34 @@ _⚠️ Not swept — no token found. Run `python3 Agent/authorize_sweeper.py --
       → "Transporte Local". Company name no longer on client-facing proforma.
 - [x] 839 → 864 tests (+25 new red-first, all green). 2 existing tests in
       test_open_transport_fcl_wiring.py updated for FIX 6 label change.
-- **BLOCKED:** Per-incoterm layer (international agent concepts per incoterm) NOT
-  built. Pending Abel's 3 open questions: trigger mechanism, concept matrix,
-  incoterm set. `TODO(abel-incoterm)` marker in place.
+- [x] Per-incoterm layer built — Session J (2026-06-26). See Session J entry below.
+
+### Completed this session (2026-06-26) — Session J
+- [x] FCL Agente Internacional per-incoterm concept layer built. Commit e20d521.
+      New module `core/fcl_agente_incoterm.py`: `FclConcept` + `_REGISTRY` keyed
+      by `(flujo, incoterm)`. Three incoterms wired from tariff sheets:
+        - EXPO EXW (10 concepts): Flete COLLECT, Customs Broker, CB Extra, Operative
+          Charge, Seal, Coordinación, Agency Fee, Gate out, Terminal Fee (BY_SIZE),
+          Pick up (DYNAMIC).
+        - EXPO FOB (2 concepts): Handling, Doc Fee / Por BL.
+        - IMPO DAP (8 concepts): THC+ISPS (INTL/no-IGV), BL Master, Coordinación,
+          Agency Fee, Gate in, Terminal Fee (BY_SIZE), Delivery (DYNAMIC).
+      IMPO DDP intentionally absent — STOP condition triggered: 6 diffs between
+      DDP tariff sheet and current FCL DDP behavior (BL Master amount, SCAC unit+
+      amount, Customs Broker structure, new concepts, terminal fee, IGV flags).
+      DDP on agente_internacional path falls back to cliente_local.
+- [x] `routes.py`: `client_type` field parsed (agente_internacional | cliente_local,
+      default cliente_local). Agente path forks venta items from registry — no
+      margin uplift, no flete_item prepended. `cliente_local` path byte-for-byte
+      unchanged. `client_type` stored in `costeo` JSON for audit.
+- [x] `new_quote.html`: FCL-only `client_type` <select> added with disable-when-
+      hidden pattern; `applyModeVisibility()` updated.
+- [x] 74 new tests in `tests/test_fcl_agente_incoterm.py`: registry completeness,
+      EXW/FOB/DAP scenarios, F1–F6 fix assertions, DDP fallback, cliente_local
+      regression guards. 864 → 938 tests, all green.
+- **OPEN:** Abel config session still needed (default line items, auto-add rules,
+  transport cost logic). DDP per-incoterm wiring blocked until Abel resolves 6
+  diffs (see `core/fcl_agente_incoterm.py` module docstring).
 
 ### Completed this session (2026-06-23) — Session H
 - [x] EVERGREEN import VB corrected — Abel confirmed EXPO_IMPO IMPORTACIÓN tab
