@@ -219,7 +219,10 @@
           </div>
         </label>
       </div>
-      <!-- Repeatable package table -->
+      <!-- Repeatable package table — LCL/Aéreo only. FCL cargo is
+           container-based (§3 Tipo/N° Contenedores); this whole block is
+           hidden AND its named inputs disabled for modo=FCL. -->
+      <div id="lcl-cbm-block">
       <div class="pkg-table">
         <div class="pkg-header">
           <span>Largo (cm)</span>
@@ -243,6 +246,7 @@
         </label>
       </div>
       <input type="hidden" name="quantity" id="qty-hidden" value="1">
+      </div><!-- /lcl-cbm-block -->
     </section>
 
     <!-- SECTION 3: Costs -->
@@ -389,8 +393,11 @@
       </div>
     </section>
 
-    <!-- SECTION 4: Conceptos adicionales — split into Internacional / Local -->
-    <section class="form-section">
+    <!-- SECTION 4: Conceptos adicionales — split into Internacional / Local.
+         Coloader is an LCL-only concept: the whole section is hidden and
+         extra_items_json disabled for modo=FCL (FCL local costs come from the
+         naviera/port engine paths, never from form literals). -->
+    <section class="form-section" id="coloader-section">
       <h2>4. Conceptos adicionales del coloader <span style="font-weight:normal;color:#6b7280;font-size:14px;">opcional</span></h2>
       <p class="field-hint" style="margin-bottom:14px;">
         Flete Internacional y THC se agregan automáticamente desde la sección anterior.
@@ -461,6 +468,10 @@
 
   function currentOperation() {
     return (document.getElementById('operation-select') || {}).value || 'exportacion';
+  }
+
+  function currentMode() {
+    return (document.getElementById('mode-select') || {}).value || 'lcl';
   }
 
   // Update the VB hint in Section 3 whenever consolidator or operation changes
@@ -666,6 +677,16 @@
     document.getElementById('intl-rows').innerHTML = '';
     document.getElementById('local-rows').innerHTML = '';
 
+    // FCL has no coloader — never populate the LCL/coloader default items.
+    // These are LCL/consolidator numbers (VB, Desconsolidación, Almacén 220,
+    // Agente de Aduana CIF 0.30/0.35); FCL local costs come from the
+    // naviera/port engine paths (fcl_naviera_costs / fcl_import_costs /
+    // port_costs / fcl_customs_broker). Abel F3/F4 blocker 2026-07-02.
+    if (currentMode() === 'fcl') {
+      syncJson(); // rows just cleared → extra_items_json = "[]"
+      return;
+    }
+
     // VB default MUST come from VB_RATES (consolidator × operation) — never a
     // bare literal. A bare literal silently overrides the engine's correct
     // per-consolidator VB on submit (2026-06-18 CRAFT/SACO undercharge bug).
@@ -713,6 +734,7 @@
   var consSel     = document.getElementById('consolidator-select');
   var incotermSel = document.getElementById('incoterm-select');
   var ddpFields   = document.getElementById('ddp-cif-fields');
+  var modeSel     = document.getElementById('mode-select');
 
   function updateDdpFieldsVisibility() {
     if (!incotermSel || !ddpFields) return;
@@ -741,6 +763,14 @@
   if (consSel) {
     consSel.addEventListener('change', function () {
       updateVbHint();
+      populateDefaults(currentOperation());
+    });
+  }
+  if (modeSel) {
+    // Rebuild Section 4 from scratch on every mode switch: entering FCL
+    // clears the coloader rows (extra_items_json = "[]"); leaving FCL
+    // repopulates fresh defaults — FCL→LCL→FCL can't resurrect stale rows.
+    modeSel.addEventListener('change', function () {
       populateDefaults(currentOperation());
     });
   }
@@ -779,10 +809,26 @@
   var fclContainerTypeSel = document.getElementById('fcl-container-type-select');
   var fclNumContainersInp = document.getElementById('fcl-num-containers-input');
   var fclClientTypeSel    = document.getElementById('fcl-client-type-select');
+  var lclCbmBlock         = document.getElementById('lcl-cbm-block');
+  var coloaderSection     = document.getElementById('coloader-section');
+  var cbmDirectInp        = document.getElementById('cbm-direct');
+  var qtyHiddenInp        = document.getElementById('qty-hidden');
+  var extraItemsJsonInp   = document.getElementById('extra_items_json');
 
   function applyModeVisibility() {
     var mode = modeSelect.value;
-    var showOpenTransport = (mode === 'fcl');
+    var isFcl = (mode === 'fcl');
+    var showOpenTransport = isFcl;
+    // §2 package/CBM block and §4 coloader section are LCL/Aéreo concepts —
+    // hidden for FCL. Their named inputs (volume_cbm, quantity,
+    // extra_items_json) are also disabled: a hidden-but-enabled input still
+    // submits, and would inject stale LCL values into an FCL quote (same
+    // bug class as the aereo consolidator dropdown fix, 94e29d2).
+    if (lclCbmBlock)       { lclCbmBlock.style.display     = isFcl ? 'none' : ''; }
+    if (coloaderSection)   { coloaderSection.style.display = isFcl ? 'none' : ''; }
+    if (cbmDirectInp)      { cbmDirectInp.disabled      = isFcl; }
+    if (qtyHiddenInp)      { qtyHiddenInp.disabled      = isFcl; }
+    if (extraItemsJsonInp) { extraItemsJsonInp.disabled = isFcl; }
     rowOpenTransportDistrict.style.display  = showOpenTransport ? '' : 'none';
     rowOpenTransportHazardous.style.display = showOpenTransport ? '' : 'none';
     if (openTransportDistrictSel)  { openTransportDistrictSel.disabled  = !showOpenTransport; }
