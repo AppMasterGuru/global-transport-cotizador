@@ -139,25 +139,36 @@ class TestFobConceptList:
     def concepts(self):
         return get_incoterm_concepts("EXPO", "FOB")
 
-    def test_exactly_two_concepts(self, concepts):
-        assert len(concepts) == 2
+    # Abel F3 2026-07-02: FOB gained a Flete Internacional (COLLECT, 0.00)
+    # concept — the FCL FOB EXPO sheet carries an Ocean Freight row same as
+    # EXW; without it the proforma dropped the whole flete section.
+    def test_exactly_three_concepts(self, concepts):
+        assert len(concepts) == 3
+
+    def test_flete_collect_first(self, concepts):
+        flete = concepts[0]
+        assert flete.description == "Flete Internacional (COLLECT)"
+        assert flete.amount_usd == 0.0
+        assert flete.unit == PER_CNTR
+        assert flete.is_collect is True
+        assert flete.is_international is True
+        assert flete.igv_applicable is False
 
     def test_handling_amount(self, concepts):
-        handling = concepts[0]
+        handling = concepts[1]
         assert handling.description == "Handling"
         assert handling.amount_usd == 85.0
         assert handling.unit == PER_CNTR
         assert handling.igv_applicable is True
 
     def test_doc_fee_amount(self, concepts):
-        doc = concepts[1]
+        doc = concepts[2]
         assert doc.description == "Doc Fee / Por BL"
         assert doc.amount_usd == 25.0
         assert doc.unit == PER_BL
         assert doc.igv_applicable is True
 
-    def test_no_resolved_or_intl_items(self, concepts):
-        assert not any(c.is_international for c in concepts)
+    def test_no_resolved_items(self, concepts):
         assert not any(c.unit == RESOLVED for c in concepts)
 
 
@@ -342,18 +353,30 @@ class TestBuildFobItems:
     def concepts(self):
         return get_incoterm_concepts("EXPO", "FOB")
 
-    def test_exactly_two_items_one_container(self, concepts):
+    # Abel F3 2026-07-02: FOB now also emits Flete Internacional (COLLECT,
+    # 0.00, exempt) so the proforma flete section renders — 3 items total.
+    def test_exactly_three_items_one_container(self, concepts):
         items = build_agente_venta_items(concepts, 1, "20STD")
-        assert len(items) == 2
+        assert len(items) == 3
+
+    def test_flete_collect_emitted_at_zero(self, concepts):
+        items = build_agente_venta_items(concepts, 1, "20STD")
+        flete = items[0]
+        assert flete["description"] == "Flete Internacional (COLLECT)"
+        assert flete["total"] == 0.0
+        assert flete["is_international"] is True
+        assert flete["igv_applicable"] is False
 
     def test_handling_scales_with_containers(self, concepts):
         items = build_agente_venta_items(concepts, 2, "20STD")
         handling = next(i for i in items if i["description"] == "Handling")
         assert handling["total"] == 170.0  # 85 × 2
 
-    def test_both_items_local_with_igv(self, concepts):
+    def test_gt_fee_items_local_with_igv(self, concepts):
         items = build_agente_venta_items(concepts, 1, "20STD")
         for item in items:
+            if item["description"] == "Flete Internacional (COLLECT)":
+                continue
             assert item["is_local"] is True
             assert item["igv_applicable"] is True
 

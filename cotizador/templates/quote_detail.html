@@ -675,7 +675,7 @@
         <tbody>
           {% for item in intl_items %}
           <tr>
-            <td>{{ item.description }}</td>
+            <td>{{ item.description | concept_label }}</td>
             {% if has_factor %}
               {% if item.factor_value is defined and item.factor_value %}
               <td class="num">USD {{ "%.2f"|format(item.unit_rate or 0) }}/{{ item.factor_unit or 'W/M' }}</td>
@@ -712,7 +712,7 @@
         <tbody>
           {% for item in local_items %}
           <tr>
-            <td>{{ item.description }}</td>
+            <td>{{ item.description | concept_label }}</td>
             <td class="num">USD {{ "%.2f"|format(item.total) }}</td>
             <td class="num">USD {{ "%.2f"|format(item.total * 0.18) }}</td>
             <td class="num">USD {{ "%.2f"|format(item.total * 1.18) }}</td>
@@ -761,7 +761,7 @@
         <tbody>
           {% for item in quote.venta_json.line_items %}
           <tr>
-            <td>{{ item.description }}</td>
+            <td>{{ item.description | concept_label }}</td>
             {% if has_factor %}
               {% if item.factor_value is defined and item.factor_value %}
               <td class="num">USD {{ "%.2f"|format(item.unit_rate or 0) }}/{{ item.factor_unit or 'W/M' }}</td>

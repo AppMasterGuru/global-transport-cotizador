@@ -121,7 +121,11 @@
 
   <h1>Nueva Cotización</h1>
 
-  <form method="POST" action="{{ url_for('cotizador.create_quote') }}" class="quote-form">
+  <!-- autocomplete=off: browser session-restore re-applies control values
+       (e.g. modo=FCL) on back/refresh WITHOUT firing change events, leaving
+       the JS-driven visibility in the wrong state (LCL fields shown, FCL
+       selectors hidden — Abel F3 EXW screenshot, 2026-07-02). -->
+  <form method="POST" action="{{ url_for('cotizador.create_quote') }}" class="quote-form" autocomplete="off">
 
     <!-- SECTION 1: Client & Mode -->
     <section class="form-section">
@@ -782,6 +786,17 @@
   populateDefaults(currentOperation());
   updateVbHint();
 
+  // Re-sync after browser-restored control state (back/refresh session
+  // restore re-applies select values without change events). Only rebuild
+  // Section 4 when it is actually desynced — never wipe user rows.
+  window.addEventListener('pageshow', function () {
+    updateDdpFieldsVisibility();
+    if (currentMode() === 'fcl' &&
+        document.querySelectorAll('.extra-row').length > 0) {
+      populateDefaults(currentOperation());
+    }
+  });
+
 })();
 
 // ── Mode visibility: consolidador / aerolínea rows ────────────────────────────
@@ -861,6 +876,10 @@
 
   modeSelect.addEventListener('change', applyModeVisibility);
   applyModeVisibility();
+  // Browser session-restore can set modo without a change event — re-apply
+  // visibility whenever the page is shown so the field set always matches
+  // the modo the user sees (Abel F3 EXW, 2026-07-02).
+  window.addEventListener('pageshow', applyModeVisibility);
 })();
 
 // ── Package dimensions calculator ─────────────────────────────────────────────

@@ -37,7 +37,7 @@ import sqlite3
 from datetime import datetime, timedelta, timezone
 
 from flask import (
-    Blueprint, Response, flash, jsonify,
+    Blueprint, Response, flash, jsonify, make_response,
     redirect, render_template, request, url_for,
 )
 
@@ -204,11 +204,16 @@ def api_dashboard_quotes():
 
 @bp.route("/quote/new", methods=["GET"])
 def new_quote_form():
-    return render_template(
+    html = render_template(
         "new_quote.html",
         open_transport_districts=list_open_transport_districts(),
         fcl_navieras=sorted(get_g_locales_data()),
     )
+    resp = make_response(html)
+    # The form's field gating ships in this page's inline JS — a cached copy
+    # keeps serving pre-fix gating after a deploy (Abel F3, 2026-07-02).
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 def _auto_send_provider_emails(ref: str, quote: dict, actor: str) -> None:

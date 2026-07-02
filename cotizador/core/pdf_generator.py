@@ -13,6 +13,7 @@ WeasyPrint for offline rendering — no external fonts, no Google Fonts.
 from __future__ import annotations
 
 import os
+import re
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -98,6 +99,21 @@ def _template_for_lang(lang: str) -> Path:
     return p if p.exists() else _TEMPLATE_PATH
 
 
+_PAYMENT_SUFFIX_RE = re.compile(r"\s*\((?:COLLECT|PREPAID)\)\s*$", re.IGNORECASE)
+
+
+def strip_payment_suffix(description: str) -> str:
+    """
+    Display label for a venta concept: the payment condition suffix
+    "(COLLECT)"/"(PREPAID)" stays in the data model (venta_json keeps the
+    full description + is_collect flag) but must never reach a client-facing
+    label — Abel F3, 2026-07-02: the concept is just "Flete Internacional".
+    Applied on every render surface (proforma ES/EN here; quote_detail via
+    the `concept_label` Jinja filter).
+    """
+    return _PAYMENT_SUFFIX_RE.sub("", description or "")
+
+
 def _build_flete_table(intl_items: list[dict], lang: str = "es") -> str:
     """HTML table for Section 1: international freight charges (no IGV)."""
     if not intl_items:
@@ -111,7 +127,7 @@ def _build_flete_table(intl_items: list[dict], lang: str = "es") -> str:
 
     rows = ""
     for item in intl_items:
-        desc  = item.get("description", "")
+        desc  = strip_payment_suffix(item.get("description", ""))
         total = item.get("total") or 0
         if has_factor and item.get("factor_value") is not None:
             rate  = item.get("unit_rate") or 0
@@ -164,7 +180,7 @@ def _build_local_table(local_items: list[dict], lang: str = "es") -> str:
 
     rows = ""
     for item in local_items:
-        desc  = item.get("description", "")
+        desc  = strip_payment_suffix(item.get("description", ""))
         neto  = item.get("total") or 0
         rows += (
             f'<tr><td>{desc}</td>'

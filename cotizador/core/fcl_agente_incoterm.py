@@ -158,8 +158,18 @@ _REGISTRY: dict[tuple[str, str], tuple[FclConcept, ...]] = {
     ),
 
     # ── EXPO FOB ─────────────────────────────────────────────────────────────
-    # Two GT fixed fees only — no naviera/port concepts to re-source.
+    # GT fixed fees — no naviera/port concepts to re-source.
+    # Flete Internacional added 2026-07-02 (Abel F3): the FCL FOB EXPO tariff
+    # sheet carries an "Ocean Freight" concept row (COLLECT, shown at 0) same
+    # as EXW — the registry omitted it, so the proforma dropped the whole
+    # "Costos de Flete Internacional" section (FOB's other items are all
+    # local). Concept emission only; USD 0.00 is a valid render.
     ("EXPO", "FOB"): (
+        FclConcept(
+            "Flete Internacional (COLLECT)", PER_CNTR,
+            igv_applicable=False, is_international=True,
+            amount_usd=0.0, is_collect=True,
+        ),
         FclConcept(
             "Handling", PER_CNTR,
             igv_applicable=True, is_international=False,

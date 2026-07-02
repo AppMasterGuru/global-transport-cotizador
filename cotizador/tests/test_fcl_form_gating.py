@@ -212,6 +212,48 @@ def _post(client, data):
     return dict(row)
 
 
+class TestRestoredStateResync:
+    """
+    Abel F3 Item 2 (2026-07-02): the EXW screenshot (modo=FCL showing LCL
+    fields, FCL selectors hidden) matches a browser that restored control
+    state WITHOUT firing change events (session restore on back/refresh) or a
+    cached pre-fix page — the gating itself keys on mode across all live
+    paths (verified per-incoterm × client_type × operation). These pin the
+    two hardening measures.
+    """
+
+    def test_form_disables_browser_autofill_restore(self, template_src):
+        m = re.search(r"<form[^>]*class=\"quote-form\"[^>]*>", template_src)
+        assert m and 'autocomplete="off"' in m.group(0), (
+            "quote form needs autocomplete=\"off\" — browser session-restore "
+            "re-applies modo/incoterm without change events, desyncing the "
+            "JS-driven field gating"
+        )
+
+    def test_pageshow_reapplies_mode_visibility(self, template_src):
+        assert re.search(
+            r"window\.addEventListener\('pageshow',\s*applyModeVisibility\)",
+            template_src,
+        ), "applyModeVisibility must re-run on pageshow (restored-state resync)"
+
+    def test_pageshow_clears_desynced_fcl_coloader_rows(self, template_src):
+        m = re.search(
+            r"window\.addEventListener\('pageshow',\s*function\s*\(\)\s*\{(.*?)\}\);",
+            template_src, re.S,
+        )
+        assert m, "pageshow resync handler missing from Section 4 IIFE"
+        body = m.group(1)
+        assert "currentMode() === 'fcl'" in body
+        assert "populateDefaults(currentOperation())" in body
+
+    def test_new_quote_form_is_never_cached(self, client):
+        resp = client.get("/quote/new")
+        assert resp.status_code == 200
+        assert resp.headers.get("Cache-Control") == "no-store", (
+            "a cached form page keeps serving pre-fix gating after a deploy"
+        )
+
+
 class TestFclSubmitIgnoresColoaderLiterals:
     def test_cliente_local_gastos_locales_from_engine(self, client):
         row = _post(client, {**_FCL_IMPORT_BASE, "client_type": "cliente_local"})

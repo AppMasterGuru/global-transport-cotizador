@@ -34,6 +34,11 @@ def create_app() -> Flask:
     app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-only-change-in-prod")
     app.config["APP_BASE_URL"] = os.environ.get("APP_BASE_URL", "http://localhost:5000")
 
+    # Client-facing concept labels never show the payment condition suffix
+    # ("(COLLECT)"/"(PREPAID)") — data model keeps it; render strips it.
+    from core.pdf_generator import strip_payment_suffix
+    app.jinja_env.filters["concept_label"] = strip_payment_suffix
+
     app.register_blueprint(bp)
 
     with app.app_context():
