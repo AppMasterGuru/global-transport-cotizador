@@ -135,12 +135,25 @@
           <span class="label-text">Cliente *</span>
           <input type="text" name="client_name" required placeholder="Universal Cargo SA">
         </label>
-        <label class="field">
+        <!-- Unified Agente/Cliente selector (Abel 2026-07-06, "son lo mismo").
+             ONE control replacing the former separate §1 "Solicitante"
+             (requester_type) input AND the FCL "Tipo de Cliente" (client_type)
+             selector — Abel confirmed they were the same choice. Its VALUE
+             preserves the FCL pricing-fork semantics
+             (agente_internacional | cliente_local); routes.py derives
+             requester_type (agente | cliente) from it at ingest, so the DB /
+             SINTAD "Tipo Solicitante" / quote_detail "Solicitante" keep working
+             unchanged. Present on EVERY mode and NOT mode-gated: on FCL its
+             change re-runs the per-incoterm concept gating (applyModeVisibility);
+             on LCL/aéreo it is pricing-inert and feeds only requester_type +
+             display. -->
+        <label class="field" id="row-fcl-client-type">
           <span class="label-text">Solicitante *</span>
-          <select name="requester_type" required>
-            <option value="agente">Agente</option>
-            <option value="cliente">Cliente</option>
+          <select name="client_type" id="fcl-client-type-select" required>
+            <option value="cliente_local">Cliente</option>
+            <option value="agente_internacional">Agente</option>
           </select>
+          <span class="field-hint">En FCL, «Agente» aplica tarifas fijas por incoterm del tarifario (sin margen adicional).</span>
         </label>
         <label class="field">
           <span class="label-text">Operación *</span>
@@ -200,21 +213,6 @@
         <label class="field">
           <span class="label-text">Destino *</span>
           <input type="text" name="destination" required placeholder="Miami, USA">
-        </label>
-        <!-- Tipo de Cliente is the FCL agente/local pricing fork that drives the
-             per-incoterm concept gating — it lives here at the top (§1) alongside
-             modo/incoterm so switching agente↔local reactively re-runs the
-             concept/field pass. FCL-only: applyModeVisibility hides AND disables
-             this row for non-FCL modes (it is not a §3 cost, so it must not sit
-             below the costs it governs). Single control ⇒ one unambiguous
-             client_type value serialized on submit. -->
-        <label class="field" id="row-fcl-client-type">
-          <span class="label-text">Tipo de Cliente (FCL)</span>
-          <select name="client_type" id="fcl-client-type-select">
-            <option value="cliente_local">Cliente Local</option>
-            <option value="agente_internacional">Agente Internacional</option>
-          </select>
-          <span class="field-hint">Agente Internacional: tarifas fijas por incoterm del tarifario (sin margen adicional).</span>
         </label>
       </div>
     </section>
@@ -913,12 +911,15 @@
     rowFclNaviera.style.display       = showOpenTransport ? '' : 'none';
     rowFclContainerType.style.display = showOpenTransport ? '' : 'none';
     rowFclNumContainers.style.display = showOpenTransport ? '' : 'none';
-    rowFclClientType.style.display    = showOpenTransport ? '' : 'none';
+    // NOTE: the unified agente/cliente selector (row-fcl-client-type) is NOT
+    // mode-gated. It now also feeds the server-side requester_type derivation
+    // and SINTAD/display on LCL/aéreo, so it stays visible + enabled on every
+    // mode. On FCL its change still re-runs the per-incoterm gating below; on
+    // LCL/aéreo agenteFieldSet() returns null so it is pricing-inert.
     if (fclTerminalSel)      { fclTerminalSel.disabled      = !showOpenTransport; }
     if (fclNavieraSel)       { fclNavieraSel.disabled       = !showOpenTransport; }
     if (fclContainerTypeSel) { fclContainerTypeSel.disabled = !showOpenTransport; }
     if (fclNumContainersInp) { fclNumContainersInp.disabled = !showOpenTransport; }
-    if (fclClientTypeSel)    { fclClientTypeSel.disabled    = !showOpenTransport; }
     // Consolidador row is shown for both LCL (auto Visto Bueno) and Aéreo
     // (consolidado destination charges — Transmission/Handling). Disabling
     // it for FCL/other modes stops the hidden <select> from still submitting

@@ -213,24 +213,57 @@ class TestLclFleteRateFactorColumns:
             assert item.get("factor_value") is None
 
 
-# ── requester_type ─────────────────────────────────────────────────────────────
+# ── requester_type (DERIVED from the unified client_type field) ────────────────
+# Abel unified the two overlapping agente/cliente controls 2026-07-06 ("es mejor
+# unificar el campo porque son lo mismo"). The separate "Solicitante"
+# (requester_type) input is GONE from the form. requester_type is now derived
+# server-side from the single client_type selector:
+#   agente_internacional → agente,  cliente_local → cliente.
+# The DB column, SINTAD "Tipo Solicitante", and quote_detail "Solicitante" all
+# read that derived value unchanged (no schema change).
 
 class TestRequesterType:
     def test_default_is_cliente(self, client):
-        q = _post_quote(client, {"requester_type": ""})
+        # No client_type on the form → cliente_local default → requester cliente.
+        q = _post_quote(client, {})
         assert q["requester_type"] == "cliente"
 
-    def test_agente_stored_correctly(self, client):
-        q = _post_quote(client, {"requester_type": "agente"})
+    def test_agente_derived_from_agente_internacional(self, client):
+        q = _post_quote(client, {"client_type": "agente_internacional"})
         assert q["requester_type"] == "agente"
 
-    def test_invalid_value_defaults_to_cliente(self, client):
-        q = _post_quote(client, {"requester_type": "unknown"})
+    def test_cliente_derived_from_cliente_local(self, client):
+        q = _post_quote(client, {"client_type": "cliente_local"})
         assert q["requester_type"] == "cliente"
 
-    def test_cliente_stored_correctly(self, client):
-        q = _post_quote(client, {"requester_type": "cliente"})
+    def test_invalid_client_type_defaults_to_cliente(self, client):
+        q = _post_quote(client, {"client_type": "unknown"})
         assert q["requester_type"] == "cliente"
+
+    def test_legacy_requester_type_input_is_ignored(self, client):
+        # The separate Solicitante input no longer exists; a stray requester_type
+        # in the POST body must NOT override the client_type-derived value.
+        q = _post_quote(client, {
+            "client_type": "cliente_local", "requester_type": "agente",
+        })
+        assert q["requester_type"] == "cliente"
+
+
+# ── client_type is the FCL pricing fork ONLY — inert off-FCL ───────────────────
+# The unified field is present on every mode (it feeds requester_type + SINTAD +
+# display), but it must NEVER branch pricing outside FCL. venta is byte-for-byte
+# identical on LCL/aéreo regardless of the agente/cliente choice.
+
+class TestClientTypePricingInertOffFcl:
+    def test_lcl_venta_unchanged_by_client_type(self, client):
+        local  = _post_quote(client, {"client_type": "cliente_local"})
+        agente = _post_quote(client, {"client_type": "agente_internacional"})
+        assert local["venta_json"] == agente["venta_json"]
+
+    def test_aereo_venta_unchanged_by_client_type(self, client):
+        local  = _post_aereo_quote(client, {"client_type": "cliente_local"})
+        agente = _post_aereo_quote(client, {"client_type": "agente_internacional"})
+        assert local["venta_json"] == agente["venta_json"]
 
 
 # ── /acuses route ─────────────────────────────────────────────────────────────
@@ -515,14 +548,24 @@ class TestLclAlmacenDefaultClosedQ1:
         assert "valor: 250" not in snippet
 
 
-class TestDefaultRequesterTypeAgente:
-    def test_form_default_is_agente(self, client):
+# ── Unified selector default (Abel 2026-07-06; was TestDefaultRequesterTypeAgente)
+# The former separate "Solicitante" select defaulted to Agente, while the
+# client_type selector — and the server-absent requester_type — defaulted to
+# cliente_local/cliente: an inconsistency. Unifying the fields onto client_type
+# resolves it to a SINGLE default, Cliente (cliente_local). cliente_local MUST
+# stay the default so a default FCL submit keeps the cliente_local pricing path
+# (no regression to the agente fixed-tariff fork, fc187a2).
+
+class TestUnifiedSelectorDefaultIsCliente:
+    def test_form_default_is_cliente_local(self, client):
         resp = client.get("/quote/new")
         assert resp.status_code == 200
         html = resp.data.decode()
-        agente_pos = html.find('value="agente"')
-        cliente_pos = html.find('value="cliente"')
-        assert agente_pos < cliente_pos
+        cliente_pos = html.find('value="cliente_local"')
+        agente_pos  = html.find('value="agente_internacional"')
+        assert cliente_pos != -1 and agente_pos != -1
+        # cliente_local rendered first ⇒ it is the selected default option.
+        assert cliente_pos < agente_pos
 
 
 class TestAcusesRoute:

@@ -421,28 +421,44 @@ class TestAgenteGatingPreservesHardening:
         ), "pageshow must still re-run applyModeVisibility (now incl. agente gating)"
 
 
-# ── D. Single top-of-form client_type selector (Abel F3/F4 2026-07-06, pass 2) ─
-# Abel flagged the FCL form for reading as if the agente/cliente selector rendered
-# twice: §1 "Solicitante" (requester_type: Agente|Cliente) at the top and §3
-# "Tipo de Cliente" (client_type: Cliente Local|Agente Internacional) at the
-# bottom. The per-incoterm concept gating keys on client_type, so that single
-# control must live once, at the TOP of the form (§1 Cliente y Modo, alongside
-# incoterm/idioma/origen/destino), driving the gating off one unambiguous field —
-# not buried in §3 Tarifas y Costos below the costs it governs.
+# ── D. Unified agente/cliente selector (Abel 2026-07-06, "son lo mismo") ───────
+# Abel confirmed in writing the agente/cliente choice repeated twice and asked to
+# unify: §1 "Solicitante" (requester_type: Agente|Cliente, all modes, feeds
+# SINTAD) and "Tipo de Cliente" (client_type: Cliente Local|Agente Internacional,
+# the FCL pricing fork) were "lo mismo". They collapse into ONE visible selector:
+#   • single control, name="client_type", values agente_internacional|cliente_local,
+#     display "Agente | Cliente" — preserves the FCL pricing-fork semantics;
+#   • present on EVERY mode (no longer FCL-mode-gated), since it now also feeds the
+#     server-side requester_type derivation + SINTAD + display on LCL/aéreo;
+#   • the separate requester_type input is REMOVED;
+#   • FCL per-incoterm concept gating still keys off it via applyModeVisibility.
 
-class TestClientTypeSingleTopSelector:
+class TestUnifiedAgenteClienteSelector:
     def test_exactly_one_client_type_control(self, template_src):
         assert template_src.count('name="client_type"') == 1, (
-            "client_type must render exactly once — no duplicate selector"
+            "client_type must render exactly once — the single unified selector"
         )
+
+    def test_separate_requester_type_input_is_removed(self, template_src):
+        # The old §1 "Solicitante" <select name="requester_type"> is gone — the
+        # unified client_type field is the sole agente/cliente control.
+        assert 'name="requester_type"' not in template_src, (
+            "the separate Solicitante (requester_type) input must be removed — "
+            "requester_type is now derived server-side from client_type"
+        )
+
+    def test_unified_field_offers_agente_and_cliente(self, template_src):
+        # Values map to the FCL fork; display reads naturally on all modes.
+        assert 'value="agente_internacional"' in template_src
+        assert 'value="cliente_local"' in template_src
 
     def test_client_type_lives_in_section_1_top(self, template_src):
         ct = template_src.index('name="client_type"')
         s1 = template_src.index('<!-- SECTION 1')
         s2 = template_src.index('<!-- SECTION 2')
         assert s1 < ct < s2, (
-            "the single client_type selector must live in SECTION 1 (top), "
-            "alongside incoterm/idioma/origen/destino — not §3 Tarifas y Costos"
+            "the unified selector must live in SECTION 1 (top), alongside "
+            "cliente/operación/modo/incoterm — not §3 Tarifas y Costos"
         )
 
     def test_client_type_precedes_costs_section(self, template_src):
@@ -450,27 +466,91 @@ class TestClientTypeSingleTopSelector:
         costs = template_src.index('<h2>3. Tarifas y Costos</h2>')
         assert ct < costs, "client_type must render before §3 Tarifas y Costos"
 
-    def test_client_type_row_still_mode_gated_and_wired(self, template_src):
-        # Relocating to §1 must not drop the FCL mode-gating or the change→gating
-        # wiring: the row stays id-tagged, applyModeVisibility hides/disables it
-        # for non-FCL modes, and its change event re-runs the per-incoterm pass.
+    def test_unified_field_present_on_all_modes_not_mode_gated(self, template_src):
+        # Because it now feeds requester_type/SINTAD on LCL/aéreo, the selector
+        # must NOT be hidden or disabled for non-FCL modes — the old FCL-only
+        # gating on the row/select is removed.
+        assert not _re.search(
+            r"rowFclClientType\.style\.display\s*=\s*showOpenTransport",
+            template_src,
+        ), "unified selector row must NOT be FCL-mode-gated (all modes see it)"
+        assert not _re.search(
+            r"fclClientTypeSel\.disabled\s*=\s*!showOpenTransport",
+            template_src,
+        ), "unified selector must NOT be disabled for non-FCL modes"
+
+    def test_unified_field_still_drives_fcl_incoterm_gating(self, template_src):
+        # The row/select stay id-tagged and the change event still re-runs the
+        # per-incoterm concept pass (FCL agente path unchanged).
         assert 'id="row-fcl-client-type"' in template_src
         assert 'id="fcl-client-type-select"' in template_src
         assert _re.search(
-            r"rowFclClientType\.style\.display\s*=\s*showOpenTransport",
-            template_src,
-        ), "client_type row must stay hidden for non-FCL modes after the move"
-        assert _re.search(
-            r"if\s*\(fclClientTypeSel\)\s*\{\s*fclClientTypeSel\.disabled\s*=\s*!showOpenTransport",
-            template_src,
-        ), "client_type select must stay disabled for non-FCL modes after the move"
-        assert _re.search(
             r"fclClientTypeSel\.addEventListener\('change', applyModeVisibility\)",
             template_src,
-        ), "the single client_type selector must drive the per-incoterm gating"
+        ), "the unified selector must still drive the per-incoterm gating"
 
     def test_client_type_serializes_single_value(self, client):
         # One field name ⇒ Werkzeug MultiDict has exactly one value; routes.py
         # f.get('client_type') is unambiguous (no last/first-write-wins).
         html = client.get('/quote/new').data.decode()
         assert html.count('name="client_type"') == 1
+
+
+# ── E. SINTAD "Tipo Solicitante" derives from the unified field (all modes) ────
+# The SINTAD pre-fill's "Tipo Solicitante" reads quotes.requester_type, which is
+# now derived from client_type. Confirm the derived label is correct on FCL, LCL
+# and aéreo — the unified field feeds SINTAD identically across modes.
+
+_LCL_SINTAD = {
+    "client_name": "SINTAD LCL SA", "client_email": "s@test.com",
+    "mode": "lcl", "incoterm": "FOB", "operation": "exportacion",
+    "origin": "Lima, Peru", "destination": "Hamburg, Germany",
+    "cargo_description": "cargo", "weight": "500", "weight_unit": "kg",
+    "volume_cbm": "2.0", "flete_lcl": "200", "consolidator": "MSL",
+    "staff_code": "GT-PC", "language": "es", "margin_pct": "20",
+}
+
+_AEREO_SINTAD = {
+    "client_name": "SINTAD Aereo SA", "client_email": "s@test.com",
+    "mode": "aereo", "incoterm": "FOB", "operation": "exportacion",
+    "origin": "Lima, Peru", "destination": "Los Angeles, USA",
+    "cargo_description": "cargo", "weight": "300", "weight_unit": "kg",
+    "volume_cbm": "200", "flete_rate_aereo": "5",
+    "staff_code": "GT-PC", "language": "es", "margin_pct": "20",
+}
+
+
+def _sintad_tipo_solicitante(row: dict) -> str:
+    import io
+    import openpyxl
+    from core.sintad_export import generate_sintad_excel
+    wb = openpyxl.load_workbook(io.BytesIO(generate_sintad_excel(row)))
+    ws = wb["Datos Generales"]
+    for r in range(1, ws.max_row + 1):
+        if ws.cell(row=r, column=1).value == "Tipo Solicitante":
+            return ws.cell(row=r, column=2).value
+    raise AssertionError("'Tipo Solicitante' row not found in Datos Generales")
+
+
+class TestSintadRequesterDerivation:
+    def test_fcl_agente_sintad_tipo_solicitante_is_agente(self, client):
+        row = _post(client, {**_FCL_IMPORT_BASE,
+                             "client_type": "agente_internacional"})
+        assert row["requester_type"] == "agente"
+        assert _sintad_tipo_solicitante(row) == "Agente"
+
+    def test_fcl_cliente_local_sintad_tipo_solicitante_is_cliente(self, client):
+        row = _post(client, {**_FCL_IMPORT_BASE, "client_type": "cliente_local"})
+        assert row["requester_type"] == "cliente"
+        assert _sintad_tipo_solicitante(row) == "Cliente"
+
+    def test_lcl_agente_sintad_tipo_solicitante_is_agente(self, client):
+        row = _post(client, {**_LCL_SINTAD,
+                             "client_type": "agente_internacional"})
+        assert row["requester_type"] == "agente"
+        assert _sintad_tipo_solicitante(row) == "Agente"
+
+    def test_aereo_cliente_sintad_tipo_solicitante_is_cliente(self, client):
+        row = _post(client, {**_AEREO_SINTAD, "client_type": "cliente_local"})
+        assert row["requester_type"] == "cliente"
+        assert _sintad_tipo_solicitante(row) == "Cliente"

@@ -355,10 +355,15 @@ def create_quote():
     requires_oea_basc  = f.get("requires_oea_basc") == "on"
     margin_pct_input   = float(f.get("margin_pct", 20) or 20) / 100
     margin_pct         = max(margin_pct_input, MARGIN_FLOOR)
-    requester_type_raw = f.get("requester_type", "cliente").strip()
-    requester_type     = requester_type_raw if requester_type_raw in ("cliente", "agente") else "cliente"
     client_type_raw    = f.get("client_type", "cliente_local").strip().lower()
     client_type        = client_type_raw if client_type_raw in ("agente_internacional", "cliente_local") else "cliente_local"
+    # Solicitante (requester_type) is DERIVED from the unified client_type
+    # selector — Abel unified the two overlapping agente/cliente fields
+    # 2026-07-06 ("es mejor unificar el campo porque son lo mismo"). There is no
+    # separate requester_type form input; any stray value is ignored. The DB
+    # column, SINTAD "Tipo Solicitante", and quote_detail "Solicitante" keep
+    # working unchanged off this derived value (no schema change).
+    requester_type     = "agente" if client_type == "agente_internacional" else "cliente"
     operation_raw      = f.get("operation", "exportacion").strip().lower()
     operation          = operation_raw if operation_raw in ("exportacion", "importacion") else "exportacion"
 

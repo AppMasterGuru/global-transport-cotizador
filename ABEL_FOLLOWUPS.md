@@ -102,6 +102,44 @@ Verified by jsdom drive of the served page: all 4 incoterms × both
 client_types + incoterm churn + FOB→EXW→FOB non-resurrection (119/119 checks).
 **Commit:** this pass.
 
+### Unify Solicitante + Tipo de Cliente into ONE field — RESOLVED 2026-07-06 (pass 3)
+**Abel's decision (in writing, 2026-07-06):** "es mejor unificar el campo porque
+son lo mismo." This answers the pass-2 "Flag for Abel" below: the two
+agente/cliente dropdowns — §1 "Solicitante" (`requester_type`: Agente | Cliente,
+all-modes, feeds SINTAD) and "Tipo de Cliente" (`client_type`:
+agente_internacional | cliente_local, the FCL pricing fork) — collapse into ONE
+control. The `requester_type` ↔ `client_type` reconciliation is now **RESOLVED**.
+**Design (server-side derivation, minimal blast radius):**
+- ONE visible selector at the top of §1, `name="client_type"`, label
+  "Solicitante *", display **Cliente | Agente**, values `cliente_local |
+  agente_internacional` — the value preserves the FCL pricing-fork semantics, so
+  `client_type` and the per-incoterm gating are unchanged. Default = Cliente
+  (`cliente_local`) — kept so a default FCL submit stays on the cliente_local
+  pricing path (no regression to the agente fixed-tariff fork).
+- The separate `<select name="requester_type">` input is **removed**.
+- At ingest (`routes.py`), `requester_type` is **derived** from the unified value
+  (`agente_internacional`→`agente`, `cliente_local`→`cliente`) and persisted
+  exactly as before. `quotes.requester_type` (no schema change), quote_detail
+  "Solicitante", and SINTAD "Tipo Solicitante" all keep working with NO
+  downstream changes. A stray `requester_type` in the POST body is ignored.
+- The unified field is **present on every mode and NOT mode-gated** (it now feeds
+  requester_type + SINTAD + display on LCL/aéreo). On FCL its change still drives
+  the per-incoterm concept gating; on LCL/aéreo `agenteFieldSet()` returns null,
+  so it is **pricing-inert** (LCL & aéreo `venta_json` byte-for-byte identical
+  regardless of the agente/cliente choice — pinned by test).
+**Edge case explicitly waived per Abel's instruction:** a cliente-local shipment
+requested by an agente can no longer set Solicitante=Agente independently —
+SINTAD "Tipo Solicitante" now derives from the pricing client type by design
+("son lo mismo").
+**Verification:** full suite **1049 green** (1039 + 10 new: derivation, legacy-
+input-ignored, LCL/aéreo pricing-inert byte-for-byte, SINTAD Tipo-Solicitante on
+FCL/LCL/aéreo, unified-selector template guards, unified default). jsdom drive:
+all checks pass — one control / no requester_type input; visible+enabled on LCL,
+aéreo, FCL; pricing-inert off-FCL; FCL per-incoterm gating fires across all 4
+incoterms × both toggle values. cliente_local FCL byte-for-byte; 98daf2e/00adcf6/
+fc187a2 hardening preserved.
+**Commit:** this pass.
+
 ### FCL client_type — single top-of-form selector — RESOLVED 2026-07-06 (pass 2)
 **Source:** Abel F3/F4 July 6 — the FCL New-Quote form read as if the
 agente/cliente selector rendered "twice, top and bottom," and the per-incoterm
