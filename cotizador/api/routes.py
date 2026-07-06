@@ -355,8 +355,12 @@ def create_quote():
     requires_oea_basc  = f.get("requires_oea_basc") == "on"
     margin_pct_input   = float(f.get("margin_pct", 20) or 20) / 100
     margin_pct         = max(margin_pct_input, MARGIN_FLOOR)
-    client_type_raw    = f.get("client_type", "cliente_local").strip().lower()
-    client_type        = client_type_raw if client_type_raw in ("agente_internacional", "cliente_local") else "cliente_local"
+    # Default = agente_internacional. GT's business is structurally agent-to-agent —
+    # WCA counterparties act as both client and provider ("socio estratégico"), so the
+    # absent/invalid case resolves to the agente path (JP discovery, Meeting 1). The old
+    # cliente_local default no longer reflects the default requester.
+    client_type_raw    = f.get("client_type", "agente_internacional").strip().lower()
+    client_type        = client_type_raw if client_type_raw in ("agente_internacional", "cliente_local") else "agente_internacional"
     # Solicitante (requester_type) is DERIVED from the unified client_type
     # selector — Abel unified the two overlapping agente/cliente fields
     # 2026-07-06 ("es mejor unificar el campo porque son lo mismo"). There is no

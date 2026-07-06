@@ -31,6 +31,9 @@ _BASE_FORM = {
     "client_name": "DDP Wiring Test SA",
     "client_email": "test@ddpwiring.com",
     "mode": "fcl",
+    # Ingest default flipped to agente_internacional; pin cliente_local so this
+    # suite keeps exercising the cliente_local FCL path byte-for-byte.
+    "client_type": "cliente_local",
     "incoterm": "DDP",
     "origin": "Shanghai, China",
     "destination": "Callao, Peru",

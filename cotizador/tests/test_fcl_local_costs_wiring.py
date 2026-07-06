@@ -63,6 +63,9 @@ _BASE_FCL_EXPORT_FORM = {
     "client_name": "Test Exporter SA",
     "client_email": "test@exporter.com",
     "mode": "fcl",
+    # Ingest default flipped to agente_internacional; pin cliente_local so this
+    # suite keeps exercising the cliente_local FCL path byte-for-byte.
+    "client_type": "cliente_local",
     "incoterm": "FOB",
     "origin": "Callao, Peru",
     "destination": "Hamburg, Germany",

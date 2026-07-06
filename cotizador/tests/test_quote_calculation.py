@@ -193,6 +193,9 @@ class TestLclFleteRateFactorColumns:
     def test_fcl_does_not_render_factor_columns(self, client):
         q = _post_quote(client, {
             "mode": "fcl",
+            # Ingest default flipped to agente_internacional; pin cliente_local
+            # so this stays the cliente_local FCL path byte-for-byte.
+            "client_type": "cliente_local",
             "flete_lcl": "2000",
             "flete_rate_lcl": "",
         })
@@ -223,10 +226,11 @@ class TestLclFleteRateFactorColumns:
 # read that derived value unchanged (no schema change).
 
 class TestRequesterType:
-    def test_default_is_cliente(self, client):
-        # No client_type on the form → cliente_local default → requester cliente.
+    def test_default_is_agente(self, client):
+        # No client_type on the form → agente_internacional default → requester
+        # agente. GT is structurally agent-to-agent (JP discovery, Meeting 1).
         q = _post_quote(client, {})
-        assert q["requester_type"] == "cliente"
+        assert q["requester_type"] == "agente"
 
     def test_agente_derived_from_agente_internacional(self, client):
         q = _post_quote(client, {"client_type": "agente_internacional"})
@@ -236,9 +240,9 @@ class TestRequesterType:
         q = _post_quote(client, {"client_type": "cliente_local"})
         assert q["requester_type"] == "cliente"
 
-    def test_invalid_client_type_defaults_to_cliente(self, client):
+    def test_invalid_client_type_defaults_to_agente(self, client):
         q = _post_quote(client, {"client_type": "unknown"})
-        assert q["requester_type"] == "cliente"
+        assert q["requester_type"] == "agente"
 
     def test_legacy_requester_type_input_is_ignored(self, client):
         # The separate Solicitante input no longer exists; a stray requester_type
@@ -276,7 +280,8 @@ class TestSintadTnM3:
         assert costeo.get("flete_factor_unit") == "m³"
 
     def test_sintad_export_tn_m3_blank_for_fcl(self, client):
-        q = _post_quote(client, {"mode": "fcl", "flete_lcl": "2000", "flete_rate_lcl": "", "volume_cbm": "30"})
+        q = _post_quote(client, {"mode": "fcl", "client_type": "cliente_local",
+                                  "flete_lcl": "2000", "flete_rate_lcl": "", "volume_cbm": "30"})
         costeo = json.loads(q["costeo_json"])
         assert costeo.get("flete_factor") is None
 
@@ -548,24 +553,25 @@ class TestLclAlmacenDefaultClosedQ1:
         assert "valor: 250" not in snippet
 
 
-# ── Unified selector default (Abel 2026-07-06; was TestDefaultRequesterTypeAgente)
-# The former separate "Solicitante" select defaulted to Agente, while the
-# client_type selector — and the server-absent requester_type — defaulted to
-# cliente_local/cliente: an inconsistency. Unifying the fields onto client_type
-# resolves it to a SINGLE default, Cliente (cliente_local). cliente_local MUST
-# stay the default so a default FCL submit keeps the cliente_local pricing path
-# (no regression to the agente fixed-tariff fork, fc187a2).
+# ── Unified selector default (2026-07-06: flipped cliente → agente) ────────────
+# GT's business is structurally agent-to-agent — WCA counterparties act as both
+# client and provider ("socio estratégico"), so agente_internacional is the
+# default requester (JP discovery, Meeting 1). The unified client_type selector
+# marks the agente option `selected`, and routes.py resolves an absent/invalid
+# client_type to agente_internacional. cliente_local stays fully available — it
+# is just no longer the implicit default.
 
-class TestUnifiedSelectorDefaultIsCliente:
-    def test_form_default_is_cliente_local(self, client):
+class TestUnifiedSelectorDefaultIsAgente:
+    def test_form_default_is_agente_internacional(self, client):
         resp = client.get("/quote/new")
         assert resp.status_code == 200
         html = resp.data.decode()
-        cliente_pos = html.find('value="cliente_local"')
-        agente_pos  = html.find('value="agente_internacional"')
-        assert cliente_pos != -1 and agente_pos != -1
-        # cliente_local rendered first ⇒ it is the selected default option.
-        assert cliente_pos < agente_pos
+        assert 'value="cliente_local"' in html
+        assert 'value="agente_internacional"' in html
+        # agente_internacional carries `selected` ⇒ it is the default option.
+        assert 'value="agente_internacional" selected' in html
+        # cliente_local is present but NOT the selected default.
+        assert 'value="cliente_local" selected' not in html
 
 
 class TestAcusesRoute:

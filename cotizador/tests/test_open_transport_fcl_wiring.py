@@ -54,6 +54,9 @@ _BASE_FCL_FORM = {
     "client_name": "Test Importer SA",
     "client_email": "test@importer.com",
     "mode": "fcl",
+    # Ingest default flipped to agente_internacional; pin cliente_local so this
+    # suite keeps exercising the cliente_local FCL path byte-for-byte.
+    "client_type": "cliente_local",
     "incoterm": "DAP",
     "origin": "Shanghai, China",
     "destination": "Callao, Peru",
