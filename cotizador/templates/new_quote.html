@@ -271,13 +271,13 @@
           <input type="number" name="flete_rate_aereo" step="0.01" min="0" placeholder="Ej: 4.50">
           <span class="field-hint">Si se ingresa, el flete = tarifa × peso facturable (max real vs volumétrico). Deja vacío para usar monto fijo.</span>
         </label>
-        <label class="field">
+        <label class="field" id="row-thc-rate">
           <span class="label-text">THC Tarifa (USD/W/M) <em style="font-weight:normal;color:#6b7280;">opcional</em></span>
-          <input type="number" name="thc_rate" step="0.01" min="0" placeholder="Ej: 12.00">
+          <input type="number" name="thc_rate" id="thc-rate-input" step="0.01" min="0" placeholder="Ej: 12.00">
         </label>
-        <label class="field">
+        <label class="field" id="row-thc-min">
           <span class="label-text">THC Mínimo (USD) <em style="font-weight:normal;color:#6b7280;">opcional</em></span>
-          <input type="number" name="thc_min" step="0.01" min="0" placeholder="Ej: 33.00">
+          <input type="number" name="thc_min" id="thc-min-input" step="0.01" min="0" placeholder="Ej: 33.00">
           <span class="field-hint">Si THC tarifa × TN/M3 &lt; mínimo, se cobra el mínimo.</span>
         </label>
         <label class="field" id="row-consolidador">
@@ -384,8 +384,8 @@
         </label>
       </div>
       <div class="form-grid">
-        <label class="field field-check">
-          <input type="checkbox" name="requires_oea_basc">
+        <label class="field field-check" id="row-requires-oea-basc">
+          <input type="checkbox" name="requires_oea_basc" id="requires-oea-basc-check">
           <span class="label-text">Cliente requiere agente OEA+BASC</span>
           <span class="field-hint">Ej: Farmex. Costo mayor que Alefero estándar.</span>
         </label>
@@ -744,11 +744,14 @@
     if (!incotermSel || !ddpFields) return;
     var isDdp = incotermSel.value === 'DDP';
     ddpFields.style.display = isDdp ? 'flex' : 'none';
+    // Hidden inputs still submit with the form — disable them AND clear any
+    // value so a figure typed while DDP was selected can't stale-submit to a
+    // non-DDP quote (94e29d2 pattern). Re-enabled when DDP is selected.
+    var invoiceInput   = document.getElementById('invoice-usd-input');
+    var insuranceInput = document.getElementById('insurance-usd-input');
+    if (invoiceInput)   { invoiceInput.disabled   = !isDdp; }
+    if (insuranceInput) { insuranceInput.disabled = !isDdp; }
     if (!isDdp) {
-      // Hidden inputs still submit with the form — clear them so a stale
-      // value typed while DDP was selected can't reach a non-DDP quote.
-      var invoiceInput   = document.getElementById('invoice-usd-input');
-      var insuranceInput = document.getElementById('insurance-usd-input');
       if (invoiceInput)   invoiceInput.value = '';
       if (insuranceInput) insuranceInput.value = '';
     }
@@ -829,6 +832,57 @@
   var cbmDirectInp        = document.getElementById('cbm-direct');
   var qtyHiddenInp        = document.getElementById('qty-hidden');
   var extraItemsJsonInp   = document.getElementById('extra_items_json');
+  var incotermSel         = document.getElementById('incoterm-select');
+  var operationSel        = document.getElementById('operation-select');
+  var rowThcRate          = document.getElementById('row-thc-rate');
+  var rowThcMin           = document.getElementById('row-thc-min');
+  var thcRateInp          = document.getElementById('thc-rate-input');
+  var thcMinInp           = document.getElementById('thc-min-input');
+  var rowRequiresOeaBasc  = document.getElementById('row-requires-oea-basc');
+  var requiresOeaBascChk  = document.getElementById('requires-oea-basc-check');
+
+  // ── Per-incoterm field visibility (agente_internacional FCL) ───────────────
+  // Injected from the server (agente_field_visibility_map) so the form gating
+  // stays in lock-step with the concept registry. Keyed "FLUJO/INCOTERM"; each
+  // value flags which OPTIONAL inputs belong to that incoterm's cost structure.
+  // cliente_local and non-FCL modes impose NO per-incoterm restriction — their
+  // field set is byte-for-byte the pre-existing behavior (Session J invariant).
+  var AGENTE_FIELDS = {{ agente_incoterm_fields | tojson }};
+
+  function setRow(row, input, show) {
+    if (row)   { row.style.display = show ? '' : 'none'; }
+    // Hidden inputs still submit — disable so a value typed under another
+    // incoterm can't stale-submit (same bug class as 94e29d2).
+    if (input) { input.disabled = !show; }
+  }
+
+  // The concept-derived field set for the CURRENT selection, or null when no
+  // agente per-incoterm restriction applies (cliente_local / non-FCL / an
+  // incoterm with no registry entry → agente falls back to cliente_local).
+  function agenteFieldSet() {
+    if (modeSelect.value !== 'fcl') return null;
+    if (!fclClientTypeSel || fclClientTypeSel.value !== 'agente_internacional') return null;
+    var flujo = (operationSel && operationSel.value === 'importacion') ? 'IMPO' : 'EXPO';
+    var inc = incotermSel ? (incotermSel.value || '').toUpperCase() : '';
+    return AGENTE_FIELDS[flujo + '/' + inc] || null;
+  }
+
+  function applyAgenteIncotermVisibility() {
+    var fs = agenteFieldSet();
+    // THC (tarifa + mínimo) and the OEA+BASC checkbox are visible in every mode
+    // by default; only an agente incoterm whose structure omits that concept
+    // hides (and disables) them. fs === null ⇒ restore the always-on baseline.
+    setRow(rowThcRate, thcRateInp, fs ? fs.thc : true);
+    setRow(rowThcMin,  thcMinInp,  fs ? fs.thc : true);
+    setRow(rowRequiresOeaBasc, requiresOeaBascChk, fs ? fs.oea : true);
+    if (!fs) return;  // no agente restriction — mode-based visibility stands
+    // These FCL rows were just shown by applyModeVisibility; narrow them to the
+    // selected incoterm's structure (FOB ⇒ all four hidden + disabled).
+    setRow(rowFclNaviera,             fclNavieraSel,             fs.naviera);
+    setRow(rowFclTerminal,            fclTerminalSel,            fs.terminal);
+    setRow(rowOpenTransportDistrict,  openTransportDistrictSel,  fs.transporte);
+    setRow(rowOpenTransportHazardous, openTransportHazardousChk, fs.transporte);
+  }
 
   function applyModeVisibility() {
     var mode = modeSelect.value;
@@ -872,13 +926,24 @@
     rowAlmacenAereo.style.display = (mode === 'aereo') ? '' : 'none';
     rowModalidad.style.display    = (mode === 'aereo') ? '' : 'none';
     if (modalidadSel) { modalidadSel.disabled = (mode !== 'aereo'); }
+    // Narrow the FCL agente field set to the selected incoterm's structure.
+    // Runs last so it can hide/disable rows the mode logic just showed.
+    applyAgenteIncotermVisibility();
   }
 
   modeSelect.addEventListener('change', applyModeVisibility);
+  // Incoterm / operación / tipo-de-cliente all change which agente fields
+  // apply, so each must re-run the full visibility pass (which re-shows the
+  // mode-based rows, then re-narrows to the new incoterm — clearing any stale
+  // per-incoterm state, same clear-on-switch guarantee as 1cef182).
+  if (incotermSel)      { incotermSel.addEventListener('change', applyModeVisibility); }
+  if (operationSel)     { operationSel.addEventListener('change', applyModeVisibility); }
+  if (fclClientTypeSel) { fclClientTypeSel.addEventListener('change', applyModeVisibility); }
   applyModeVisibility();
-  // Browser session-restore can set modo without a change event — re-apply
-  // visibility whenever the page is shown so the field set always matches
-  // the modo the user sees (Abel F3 EXW, 2026-07-02).
+  // Browser session-restore can set modo/incoterm without a change event —
+  // re-apply visibility whenever the page is shown so the field set always
+  // matches what the user sees (Abel F3 EXW, 2026-07-02; extended F3/F4
+  // 2026-07-06 to the per-incoterm agente gating).
   window.addEventListener('pageshow', applyModeVisibility);
 })();
 

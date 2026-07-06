@@ -158,27 +158,21 @@ _REGISTRY: dict[tuple[str, str], tuple[FclConcept, ...]] = {
     ),
 
     # ── EXPO FOB ─────────────────────────────────────────────────────────────
-    # GT fixed fees — no naviera/port concepts to re-source.
-    # Flete Internacional added 2026-07-02 (Abel F3): the FCL FOB EXPO tariff
-    # sheet carries an "Ocean Freight" concept row (COLLECT, shown at 0) same
-    # as EXW — the registry omitted it, so the proforma dropped the whole
-    # "Costos de Flete Internacional" section (FOB's other items are all
-    # local). Concept emission only; USD 0.00 is a valid render.
+    # Ocean Freight ONLY (Abel F3/F4 2026-07-06). The FCL FOB EXPO TARIFA NETA
+    # (client-facing right-hand block of the tab) lists a single client concept:
+    # Ocean Freight (COLLECT, by container size, 0.00). The Handling 85 / Doc
+    # Fee 25 that Session J (e20d521) put here come from a SEPARATE lower table
+    # on the same tab headed "Los siguientes costos deben ser cobrados al
+    # exportador" — origin costs billed directly to the exporter, NOT part of
+    # the FOB net tariff. Under FOB the consignee/agent arranges main carriage
+    # collect, so the only client-facing line is the collect ocean freight.
+    # Concept emission only; USD 0.00 is a valid render (keeps the proforma
+    # "Costos de Flete Internacional" section present).
     ("EXPO", "FOB"): (
         FclConcept(
             "Flete Internacional (COLLECT)", PER_CNTR,
             igv_applicable=False, is_international=True,
             amount_usd=0.0, is_collect=True,
-        ),
-        FclConcept(
-            "Handling", PER_CNTR,
-            igv_applicable=True, is_international=False,
-            amount_usd=85.0,
-        ),
-        FclConcept(
-            "Doc Fee / Por BL", PER_BL,
-            igv_applicable=True, is_international=False,
-            amount_usd=25.0,
         ),
     ),
 
@@ -378,3 +372,59 @@ def build_agente_venta_items(
 def registered_incoterms() -> list[tuple[str, str]]:
     """Return all (flujo, incoterm) pairs currently in the registry."""
     return list(_REGISTRY.keys())
+
+
+# ── Per-incoterm form-field visibility ────────────────────────────────────────
+# The New Quote form gates each OPTIONAL agente FCL input on whether the concept
+# it feeds is present in the selected incoterm's registry set. Deriving the map
+# from _REGISTRY keeps the form and the costeo in lock-step: adding/removing a
+# concept automatically shows/hides its input. Structural inputs (Flete
+# Internacional, Tipo/N° Contenedor, Margen, the client-type selector) are not
+# gated — they apply to every FCL agente quote.
+
+# Concepts whose amount is resolved from the selected naviera's import docs; the
+# Naviera selector is only meaningful when one of these is in the structure.
+_NAVIERA_SOURCED = frozenset({
+    "THC", "ISPS", "BL Master", "Emisión MBL", "Visto Bueno (Importación)",
+})
+
+
+def agente_field_visibility(flujo: str, incoterm: str) -> Optional[dict]:
+    """
+    Which optional New-Quote FCL inputs apply to (flujo, incoterm) on the
+    agente_internacional path, derived from the concept registry. Returns None
+    for an unregistered pair (agente then falls back to cliente_local, so the
+    form imposes no per-incoterm restriction).
+
+    Keys (all bool):
+      naviera     Naviera (FCL)                    ← naviera-sourced RESOLVED
+      terminal    Terminal Portuario (FCL)         ← Terminal Fee
+      thc         THC Tarifa + THC Mínimo          ← THC / ISPS
+      transporte  Transporte Local (district + IMO)← DYNAMIC (Pick up/Delivery)
+      oea         Cliente requiere agente OEA+BASC ← Customs Broker
+      ddp_cif     Valor Factura + Seguro           ← DDP CIF (DDP only)
+    """
+    concepts = get_incoterm_concepts(flujo, incoterm)
+    if concepts is None:
+        return None
+    descs = {c.description for c in concepts}
+    return {
+        "naviera":    bool(descs & _NAVIERA_SOURCED),
+        "terminal":   "Terminal Fee" in descs,
+        "thc":        bool(descs & {"THC", "ISPS"}),
+        "transporte": any(c.unit == DYNAMIC for c in concepts),
+        "oea":        "Customs Broker" in descs,
+        "ddp_cif":    incoterm.upper() == "DDP",
+    }
+
+
+def agente_field_visibility_map() -> dict[str, dict]:
+    """
+    Field-visibility for every registered incoterm, keyed "FLUJO/INCOTERM"
+    (e.g. "EXPO/FOB"). Injected into new_quote.html so the form-JS gating stays
+    in lock-step with _REGISTRY.
+    """
+    return {
+        f"{flujo}/{inc}": agente_field_visibility(flujo, inc)
+        for flujo, inc in _REGISTRY
+    }

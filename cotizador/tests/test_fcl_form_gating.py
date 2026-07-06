@@ -309,3 +309,113 @@ class TestFclSubmitIgnoresColoaderLiterals:
         almacen = next(i for i in lines if i["description"] == "Almacén")
         m = 1 + float(row["margin_pct"])
         assert almacen["total"] == pytest.approx(round(220 * m, 2))
+
+
+# ── C. Per-incoterm agente field gating (Abel F3/F4 2026-07-06) ───────────────
+# The optional New-Quote FCL inputs must render/serialize per incoterm on the
+# agente_internacional path, driven by the concept registry. FOB (Ocean Freight
+# only) hides every optional input; EXW/DAP/DDP show exactly their structure.
+# cliente_local is unaffected (byte-for-byte). DOM behaviour across all four
+# incoterms × both client_types (incl. incoterm churn and FOB→EXW→FOB
+# non-resurrection) is verified out-of-band via jsdom on the served page; these
+# pins guard the server→form contract and the JS wiring.
+
+import re as _re  # noqa: E402
+
+from core.fcl_agente_incoterm import agente_field_visibility_map  # noqa: E402
+
+# Newly gated rows/inputs and the field→row map the JS drives.
+_GATED_ROW_IDS = ("row-thc-rate", "row-thc-min", "row-requires-oea-basc")
+_GATED_INPUT_IDS = ("thc-rate-input", "thc-min-input", "requires-oea-basc-check")
+
+
+class TestAgenteFieldsInjection:
+    def test_served_page_injects_registry_map(self, client):
+        # The single source of truth for the JS gating is the server-injected
+        # map — it must equal agente_field_visibility_map() exactly.
+        html = client.get("/quote/new").data.decode()
+        m = _re.search(r"var AGENTE_FIELDS = (\{.*?\});", html)
+        assert m, "AGENTE_FIELDS must be injected into the served form"
+        served = json.loads(m.group(1))
+        assert served == agente_field_visibility_map()
+
+    def test_fob_hides_every_optional_field(self, client):
+        html = client.get("/quote/new").data.decode()
+        m = _re.search(r"var AGENTE_FIELDS = (\{.*?\});", html)
+        fob = json.loads(m.group(1))["EXPO/FOB"]
+        assert not any(fob.values()), (
+            "FOB is Ocean-Freight-only — every optional input must be gated off"
+        )
+
+    def test_import_incoterms_show_naviera_and_thc(self, client):
+        html = client.get("/quote/new").data.decode()
+        fields = json.loads(_re.search(r"var AGENTE_FIELDS = (\{.*?\});", html).group(1))
+        for key in ("IMPO/DAP", "IMPO/DDP"):
+            assert fields[key]["naviera"] is True
+            assert fields[key]["thc"] is True
+        assert fields["IMPO/DDP"]["ddp_cif"] is True
+        assert fields["IMPO/DAP"]["ddp_cif"] is False
+
+
+class TestAgenteGatingTemplateWiring:
+    def test_new_gated_rows_have_ids(self, template_src):
+        for rid in _GATED_ROW_IDS:
+            assert f'id="{rid}"' in template_src, f"{rid} row must be id-tagged"
+        for iid in _GATED_INPUT_IDS:
+            assert f'id="{iid}"' in template_src, f"{iid} input must be id-tagged"
+
+    def test_apply_agente_visibility_defined_and_called(self, template_src):
+        assert "function applyAgenteIncotermVisibility()" in template_src
+        # applyModeVisibility must invoke it (runs last so it can hide/disable
+        # rows the mode logic just showed).
+        m = _re.search(r"function applyModeVisibility\(\)\s*\{(.*?)\n  \}",
+                       template_src, _re.S)
+        assert m and "applyAgenteIncotermVisibility()" in m.group(1), (
+            "applyModeVisibility must call applyAgenteIncotermVisibility"
+        )
+
+    def test_setrow_disables_hidden_inputs(self, template_src):
+        # Hidden inputs must be disabled so they can't stale-submit.
+        m = _re.search(r"function setRow\(row, input, show\)\s*\{(.*?)\n  \}",
+                       template_src, _re.S)
+        assert m, "setRow helper missing"
+        assert _re.search(r"input\.disabled\s*=\s*!show", m.group(1))
+
+    def test_gating_restricted_to_agente_fcl(self, template_src):
+        # agenteFieldSet must return null (no restriction) unless mode is FCL
+        # AND client_type is agente_internacional — cliente_local unchanged.
+        m = _re.search(r"function agenteFieldSet\(\)\s*\{(.*?)\n  \}",
+                       template_src, _re.S)
+        assert m, "agenteFieldSet helper missing"
+        body = m.group(1)
+        assert "modeSelect.value !== 'fcl'" in body
+        assert "'agente_internacional'" in body
+
+    def test_incoterm_operation_clienttype_rerun_visibility(self, template_src):
+        # Each of these changes which agente fields apply → must re-run the
+        # full visibility pass (clear-on-switch, 1cef182).
+        for sel in ("incotermSel", "operationSel", "fclClientTypeSel"):
+            assert _re.search(
+                sel + r"\.addEventListener\('change', applyModeVisibility\)",
+                template_src,
+            ), f"{sel} change must re-run applyModeVisibility"
+
+    def test_ddp_cif_inputs_disabled_when_not_ddp(self, template_src):
+        # invoice/insurance are hidden for non-DDP — disable them too.
+        assert _re.search(r"invoiceInput\.disabled\s*=\s*!isDdp", template_src)
+        assert _re.search(r"insuranceInput\.disabled\s*=\s*!isDdp", template_src)
+
+
+class TestAgenteGatingPreservesHardening:
+    """The 98daf2e protections must survive the per-incoterm layer."""
+
+    def test_form_page_still_no_store(self, client):
+        assert client.get("/quote/new").headers.get("Cache-Control") == "no-store"
+
+    def test_autocomplete_off_and_pageshow_resync_intact(self, template_src):
+        m = _re.search(r"<form[^>]*class=\"quote-form\"[^>]*>", template_src)
+        assert m and 'autocomplete="off"' in m.group(0)
+        assert _re.search(
+            r"window\.addEventListener\('pageshow', applyModeVisibility\)",
+            template_src,
+        ), "pageshow must still re-run applyModeVisibility (now incl. agente gating)"

@@ -64,7 +64,11 @@ from core.fcl_naviera_costs import (
     fcl_customs_agent_costs,
     get_export_vb_net_usd,
 )
-from core.fcl_agente_incoterm import build_agente_venta_items, get_incoterm_concepts
+from core.fcl_agente_incoterm import (
+    agente_field_visibility_map,
+    build_agente_venta_items,
+    get_incoterm_concepts,
+)
 from core.fcl_customs_broker import agente_customs_broker_fee, broker_name_from_flag
 from core.incoterms import classify_incoterm
 from core.open_transport_costs import list_open_transport_districts, open_transport_delivery_usd
@@ -208,6 +212,10 @@ def new_quote_form():
         "new_quote.html",
         open_transport_districts=list_open_transport_districts(),
         fcl_navieras=sorted(get_g_locales_data()),
+        # Per-incoterm field visibility for the agente_internacional FCL path —
+        # keyed "FLUJO/INCOTERM"; the form JS shows an optional input only when
+        # its concept is in that incoterm's registry set (Abel F3/F4 2026-07-06).
+        agente_incoterm_fields=agente_field_visibility_map(),
     )
     resp = make_response(html)
     # The form's field gating ships in this page's inline JS — a cached copy

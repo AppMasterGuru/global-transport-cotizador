@@ -81,6 +81,83 @@ class TestRegistry:
                 assert c.description and isinstance(c.description, str)
 
 
+# ── Per-incoterm structure == Excel TARIFA NETA ──────────────────────────────
+# Each registry entry's ordered concept set must equal the client-facing
+# TARIFA NETA block (right-hand table) of its FCL tab in the 2025 tarifarios.
+# Abel F3/F4 2026-07-06: "el incoterm determina la estructura de costos" —
+# the incoterm's Excel tab is authoritative for WHICH concepts appear.
+#
+#   EXPO FOB tab  → Ocean Freight ONLY (Handling/Doc Fee sit in a separate
+#                   "cobrados al exportador" table, not the net tariff).
+#   EXPO EXW tab  → full export set (10 concepts).
+#   IMPO DAP tab  → import set (8 concepts).
+#   IMPO DDP tab  → import set; Box Fee/SCAC/Doc Fee/Seal/Gate-in are folded
+#                   into the RESOLVED "Visto Bueno (Importación)" naviera
+#                   bundle (Session L no-double-count; Gate in is COST-only).
+
+_TARIFA_NETA_STRUCTURE = {
+    ("EXPO", "FOB"): (
+        "Flete Internacional (COLLECT)",
+    ),
+    ("EXPO", "EXW"): (
+        "Flete Internacional (COLLECT)",
+        "Customs Broker",
+        "Customs Broker — Contenedor Adicional",
+        "Operative Charge",
+        "Seal",
+        "Coordinación y Supervisión del Embarque",
+        "Agency Fee",
+        "Gate out",
+        "Terminal Fee",
+        "Pick up",
+    ),
+    ("IMPO", "DAP"): (
+        "THC",
+        "ISPS",
+        "BL Master",
+        "Coordinación y Supervisión del Embarque",
+        "Agency Fee",
+        "Gate in",
+        "Terminal Fee",
+        "Delivery",
+    ),
+    ("IMPO", "DDP"): (
+        "THC",
+        "ISPS",
+        "Emisión MBL",
+        "Visto Bueno (Importación)",
+        "Terminal Fee",
+        "Operative Charge",
+        "Customs Broker",
+        "Delivery",
+    ),
+}
+
+
+class TestPerIncotermStructureMatchesExcel:
+    @pytest.mark.parametrize("key,expected", list(_TARIFA_NETA_STRUCTURE.items()))
+    def test_emitted_concept_set_equals_excel(self, key, expected):
+        flujo, inc = key
+        concepts = get_incoterm_concepts(flujo, inc)
+        emitted = tuple(c.description for c in concepts)
+        assert emitted == expected, (
+            f"{flujo} {inc}: registry structure diverged from the Excel "
+            f"TARIFA NETA. Got {emitted}, expected {expected}"
+        )
+
+    def test_fob_is_ocean_freight_only(self):
+        # Explicit FOB pin (Abel F3/F4 priority): only Flete Internacional is
+        # emitted — Handling, Doc Fee, THC, Terminal Fee, Transporte and Agente
+        # de Aduana must all be absent from the client-facing FOB structure.
+        concepts = get_incoterm_concepts("EXPO", "FOB")
+        descs = {c.description for c in concepts}
+        assert descs == {"Flete Internacional (COLLECT)"}
+        for forbidden in ("Handling", "Doc Fee / Por BL", "THC", "ISPS",
+                          "Terminal Fee", "Delivery", "Pick up",
+                          "Customs Broker", "Gate out"):
+            assert forbidden not in descs, f"FOB must not carry {forbidden!r}"
+
+
 # ── EXW concept list ──────────────────────────────────────────────────────────
 
 class TestExwConceptList:
@@ -132,20 +209,23 @@ class TestExwConceptList:
         assert dyn[0].description == "Pick up"
 
 
-# ── FOB concept list (unchanged — no naviera/port concepts) ───────────────────
+# ── FOB concept list — Ocean Freight only (Abel F3/F4 2026-07-06) ─────────────
+# The FCL FOB EXPO TARIFA NETA (client-facing right-hand block) lists ONE
+# client concept: Ocean Freight (COLLECT, by container size, 0.00). Handling
+# 85 / Doc Fee 25 belong to a SEPARATE lower table headed "Los siguientes
+# costos deben ser cobrados al exportador" (origin costs billed to the
+# exporter) — not the net tariff. Session J (e20d521) read that lower table by
+# mistake; F3/F4 corrects FOB to Ocean Freight only.
 
 class TestFobConceptList:
     @pytest.fixture
     def concepts(self):
         return get_incoterm_concepts("EXPO", "FOB")
 
-    # Abel F3 2026-07-02: FOB gained a Flete Internacional (COLLECT, 0.00)
-    # concept — the FCL FOB EXPO sheet carries an Ocean Freight row same as
-    # EXW; without it the proforma dropped the whole flete section.
-    def test_exactly_three_concepts(self, concepts):
-        assert len(concepts) == 3
+    def test_exactly_one_concept(self, concepts):
+        assert len(concepts) == 1
 
-    def test_flete_collect_first(self, concepts):
+    def test_flete_collect_only(self, concepts):
         flete = concepts[0]
         assert flete.description == "Flete Internacional (COLLECT)"
         assert flete.amount_usd == 0.0
@@ -154,19 +234,10 @@ class TestFobConceptList:
         assert flete.is_international is True
         assert flete.igv_applicable is False
 
-    def test_handling_amount(self, concepts):
-        handling = concepts[1]
-        assert handling.description == "Handling"
-        assert handling.amount_usd == 85.0
-        assert handling.unit == PER_CNTR
-        assert handling.igv_applicable is True
-
-    def test_doc_fee_amount(self, concepts):
-        doc = concepts[2]
-        assert doc.description == "Doc Fee / Por BL"
-        assert doc.amount_usd == 25.0
-        assert doc.unit == PER_BL
-        assert doc.igv_applicable is True
+    def test_no_handling_or_doc_fee(self, concepts):
+        descs = {c.description for c in concepts}
+        assert "Handling" not in descs
+        assert "Doc Fee / Por BL" not in descs
 
     def test_no_resolved_items(self, concepts):
         assert not any(c.unit == RESOLVED for c in concepts)
@@ -346,18 +417,17 @@ class TestBuildExwItems:
             assert "Open Transport" not in item["description"]
 
 
-# ── build_agente_venta_items — FOB ───────────────────────────────────────────
+# ── build_agente_venta_items — FOB (Ocean Freight only) ──────────────────────
 
 class TestBuildFobItems:
     @pytest.fixture
     def concepts(self):
         return get_incoterm_concepts("EXPO", "FOB")
 
-    # Abel F3 2026-07-02: FOB now also emits Flete Internacional (COLLECT,
-    # 0.00, exempt) so the proforma flete section renders — 3 items total.
-    def test_exactly_three_items_one_container(self, concepts):
+    # Abel F3/F4 2026-07-06: FOB emits ONLY the collect ocean-freight line.
+    def test_exactly_one_item(self, concepts):
         items = build_agente_venta_items(concepts, 1, "20STD")
-        assert len(items) == 3
+        assert len(items) == 1
 
     def test_flete_collect_emitted_at_zero(self, concepts):
         items = build_agente_venta_items(concepts, 1, "20STD")
@@ -367,18 +437,16 @@ class TestBuildFobItems:
         assert flete["is_international"] is True
         assert flete["igv_applicable"] is False
 
-    def test_handling_scales_with_containers(self, concepts):
+    def test_no_handling_or_doc_fee_items(self, concepts):
+        # Handling / Doc Fee were the only local items — removed under F3/F4.
         items = build_agente_venta_items(concepts, 2, "20STD")
-        handling = next(i for i in items if i["description"] == "Handling")
-        assert handling["total"] == 170.0  # 85 × 2
+        descs = {i["description"] for i in items}
+        assert "Handling" not in descs
+        assert "Doc Fee / Por BL" not in descs
 
-    def test_gt_fee_items_local_with_igv(self, concepts):
+    def test_no_local_items_remain(self, concepts):
         items = build_agente_venta_items(concepts, 1, "20STD")
-        for item in items:
-            if item["description"] == "Flete Internacional (COLLECT)":
-                continue
-            assert item["is_local"] is True
-            assert item["igv_applicable"] is True
+        assert not any(i.get("is_local") for i in items)
 
 
 # ── build_agente_venta_items — DAP ───────────────────────────────────────────
@@ -610,3 +678,77 @@ class TestF1ToF6OnAgentePath:
         )
         for item in items:
             assert "Open Transport" not in item["description"]
+
+
+# ── Per-incoterm form-field visibility (registry-derived) ─────────────────────
+# The New Quote form gates each agente_internacional FCL input on whether the
+# concept it feeds is in the selected incoterm's registry set (Abel F3/F4
+# 2026-07-06: "el incoterm determina la estructura de costos"). This helper is
+# the single source of truth the template injects into the form JS, so the
+# field set can never drift from _REGISTRY.
+#
+# Field → concept mapping:
+#   naviera     → naviera-sourced RESOLVED charges (THC/ISPS/BL Master/
+#                 Emisión MBL/Visto Bueno Importación)
+#   terminal    → Terminal Fee
+#   thc         → THC / ISPS
+#   transporte  → the DYNAMIC Open-Transport concept (Pick up / Delivery)
+#   oea         → Customs Broker
+#   ddp_cif     → DDP CIF inputs (Valor Factura + Seguro) — DDP only
+# (Flete Internacional, Tipo/N° Contenedor, Margen and the client-type selector
+#  are structural to every FCL agente quote and stay ungated.)
+
+_EXPECTED_FIELD_VISIBILITY = {
+    ("EXPO", "FOB"): {"naviera": False, "terminal": False, "thc": False,
+                      "transporte": False, "oea": False, "ddp_cif": False},
+    ("EXPO", "EXW"): {"naviera": False, "terminal": True,  "thc": False,
+                      "transporte": True,  "oea": True,  "ddp_cif": False},
+    ("IMPO", "DAP"): {"naviera": True,  "terminal": True,  "thc": True,
+                      "transporte": True,  "oea": False, "ddp_cif": False},
+    ("IMPO", "DDP"): {"naviera": True,  "terminal": True,  "thc": True,
+                      "transporte": True,  "oea": True,  "ddp_cif": True},
+}
+
+
+class TestAgenteFieldVisibility:
+    @pytest.mark.parametrize("key,expected",
+                             list(_EXPECTED_FIELD_VISIBILITY.items()))
+    def test_matches_expected(self, key, expected):
+        from core.fcl_agente_incoterm import agente_field_visibility
+        flujo, inc = key
+        assert agente_field_visibility(flujo, inc) == expected
+
+    def test_unregistered_incoterm_returns_none(self):
+        from core.fcl_agente_incoterm import agente_field_visibility
+        # agente falls back to cliente_local for these → no field restriction.
+        assert agente_field_visibility("EXPO", "CIF") is None
+        assert agente_field_visibility("IMPO", "FOB") is None
+
+    def test_fob_hides_all_optional_inputs(self):
+        from core.fcl_agente_incoterm import agente_field_visibility
+        vis = agente_field_visibility("EXPO", "FOB")
+        assert not any(vis.values()), (
+            "FOB is Ocean-Freight-only: every optional input must be hidden"
+        )
+
+    def test_case_insensitive(self):
+        from core.fcl_agente_incoterm import agente_field_visibility
+        assert (agente_field_visibility("expo", "exw")
+                == agente_field_visibility("EXPO", "EXW"))
+
+
+class TestAgenteFieldVisibilityMap:
+    def test_map_has_all_registered_incoterms(self):
+        from core.fcl_agente_incoterm import (agente_field_visibility_map,
+                                              registered_incoterms)
+        m = agente_field_visibility_map()
+        for flujo, inc in registered_incoterms():
+            assert f"{flujo}/{inc}" in m
+
+    def test_map_values_match_helper(self):
+        from core.fcl_agente_incoterm import (agente_field_visibility,
+                                              agente_field_visibility_map,
+                                              registered_incoterms)
+        m = agente_field_visibility_map()
+        for flujo, inc in registered_incoterms():
+            assert m[f"{flujo}/{inc}"] == agente_field_visibility(flujo, inc)
