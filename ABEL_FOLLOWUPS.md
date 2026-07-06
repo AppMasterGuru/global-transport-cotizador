@@ -102,6 +102,37 @@ Verified by jsdom drive of the served page: all 4 incoterms × both
 client_types + incoterm churn + FOB→EXW→FOB non-resurrection (119/119 checks).
 **Commit:** this pass.
 
+### FCL client_type — single top-of-form selector — RESOLVED 2026-07-06 (pass 2)
+**Source:** Abel F3/F4 July 6 — the FCL New-Quote form read as if the
+agente/cliente selector rendered "twice, top and bottom," and the per-incoterm
+concept gating should fire off the top one.
+**Finding (the dedup, honestly):** the form has, and has only ever had (since
+Session J, e20d521), ONE `client_type` control — verified on the *served* page
+(`name="client_type"` count = 1) and across git history. There was no duplicate
+`client_type` <select> to remove. The perceived "two" are two *different*
+agente/cliente-flavored dropdowns: §1 "Solicitante" (`requester_type`:
+Agente | Cliente — a generic all-modes field) at the top, and §3 "Tipo de
+Cliente" (`client_type`: Cliente Local | Agente Internacional — the FCL pricing
+fork) at the bottom.
+**Resolution:** the single `client_type` selector was relocated from §3 Tarifas
+y Costos to §1 Cliente y Modo (top), alongside modo/incoterm/idioma/origen/
+destino, so the concept gating fires off a top-of-form control. No JS change was
+needed — every binding (`fclClientTypeSel` change→`applyModeVisibility`,
+`agenteFieldSet` read) is by id (`fcl-client-type-select`), so the DOM move left
+the wiring intact. `routes.py` reads it with `f.get("client_type")` (single
+value, no `getlist`) → one unambiguous serialization (jsdom: FormData
+`getAll("client_type").length === 1`). It stays FCL-only (hidden AND disabled
+for non-FCL modes). **cliente_local is byte-for-byte unchanged**; the 00adcf6/
+98daf2e hardening (Cache-Control: no-store, pageshow resync, autocomplete="off",
+disabled-when-hidden) is preserved. Verified: full suite 1039 green (1034 + 5
+new template/serialization guards) and jsdom drive 132/132 (single-selector
+position + all 4 incoterms × both operations × both client_types).
+**Flag for Abel:** `requester_type` ("Solicitante", top) was left as-is — it is a
+separate field, not the `client_type` fork. If his "twice" actually meant the
+Solicitante vs. Tipo-de-Cliente overlap (both ask agente/cliente), confirm
+whether Solicitante should be removed/merged — that would be a separate change.
+**Commit:** this pass.
+
 ### FCL F3 render + form-gating fixes — LOGGED 2026-07-06 (July 2 commits)
 **Backfill — the two commits below predate this log's prior "last updated":**
 - **2b60bdc** — Gated the New-Quote form's §2 CBM/package block and §4 coloader

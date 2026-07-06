@@ -419,3 +419,58 @@ class TestAgenteGatingPreservesHardening:
             r"window\.addEventListener\('pageshow', applyModeVisibility\)",
             template_src,
         ), "pageshow must still re-run applyModeVisibility (now incl. agente gating)"
+
+
+# ── D. Single top-of-form client_type selector (Abel F3/F4 2026-07-06, pass 2) ─
+# Abel flagged the FCL form for reading as if the agente/cliente selector rendered
+# twice: §1 "Solicitante" (requester_type: Agente|Cliente) at the top and §3
+# "Tipo de Cliente" (client_type: Cliente Local|Agente Internacional) at the
+# bottom. The per-incoterm concept gating keys on client_type, so that single
+# control must live once, at the TOP of the form (§1 Cliente y Modo, alongside
+# incoterm/idioma/origen/destino), driving the gating off one unambiguous field —
+# not buried in §3 Tarifas y Costos below the costs it governs.
+
+class TestClientTypeSingleTopSelector:
+    def test_exactly_one_client_type_control(self, template_src):
+        assert template_src.count('name="client_type"') == 1, (
+            "client_type must render exactly once — no duplicate selector"
+        )
+
+    def test_client_type_lives_in_section_1_top(self, template_src):
+        ct = template_src.index('name="client_type"')
+        s1 = template_src.index('<!-- SECTION 1')
+        s2 = template_src.index('<!-- SECTION 2')
+        assert s1 < ct < s2, (
+            "the single client_type selector must live in SECTION 1 (top), "
+            "alongside incoterm/idioma/origen/destino — not §3 Tarifas y Costos"
+        )
+
+    def test_client_type_precedes_costs_section(self, template_src):
+        ct = template_src.index('name="client_type"')
+        costs = template_src.index('<h2>3. Tarifas y Costos</h2>')
+        assert ct < costs, "client_type must render before §3 Tarifas y Costos"
+
+    def test_client_type_row_still_mode_gated_and_wired(self, template_src):
+        # Relocating to §1 must not drop the FCL mode-gating or the change→gating
+        # wiring: the row stays id-tagged, applyModeVisibility hides/disables it
+        # for non-FCL modes, and its change event re-runs the per-incoterm pass.
+        assert 'id="row-fcl-client-type"' in template_src
+        assert 'id="fcl-client-type-select"' in template_src
+        assert _re.search(
+            r"rowFclClientType\.style\.display\s*=\s*showOpenTransport",
+            template_src,
+        ), "client_type row must stay hidden for non-FCL modes after the move"
+        assert _re.search(
+            r"if\s*\(fclClientTypeSel\)\s*\{\s*fclClientTypeSel\.disabled\s*=\s*!showOpenTransport",
+            template_src,
+        ), "client_type select must stay disabled for non-FCL modes after the move"
+        assert _re.search(
+            r"fclClientTypeSel\.addEventListener\('change', applyModeVisibility\)",
+            template_src,
+        ), "the single client_type selector must drive the per-incoterm gating"
+
+    def test_client_type_serializes_single_value(self, client):
+        # One field name ⇒ Werkzeug MultiDict has exactly one value; routes.py
+        # f.get('client_type') is unambiguous (no last/first-write-wins).
+        html = client.get('/quote/new').data.decode()
+        assert html.count('name="client_type"') == 1

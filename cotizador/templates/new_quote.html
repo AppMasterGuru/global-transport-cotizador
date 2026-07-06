@@ -201,6 +201,21 @@
           <span class="label-text">Destino *</span>
           <input type="text" name="destination" required placeholder="Miami, USA">
         </label>
+        <!-- Tipo de Cliente is the FCL agente/local pricing fork that drives the
+             per-incoterm concept gating — it lives here at the top (§1) alongside
+             modo/incoterm so switching agente↔local reactively re-runs the
+             concept/field pass. FCL-only: applyModeVisibility hides AND disables
+             this row for non-FCL modes (it is not a §3 cost, so it must not sit
+             below the costs it governs). Single control ⇒ one unambiguous
+             client_type value serialized on submit. -->
+        <label class="field" id="row-fcl-client-type">
+          <span class="label-text">Tipo de Cliente (FCL)</span>
+          <select name="client_type" id="fcl-client-type-select">
+            <option value="cliente_local">Cliente Local</option>
+            <option value="agente_internacional">Agente Internacional</option>
+          </select>
+          <span class="field-hint">Agente Internacional: tarifas fijas por incoterm del tarifario (sin margen adicional).</span>
+        </label>
       </div>
     </section>
 
@@ -373,14 +388,6 @@
           <span class="label-text">N° Contenedores (FCL)</span>
           <input type="number" name="num_containers" id="fcl-num-containers-input" min="1" step="1" value="1">
           <span class="field-hint">Afecta puerto, agente de aduana (recargo 2do contenedor) y precinto.</span>
-        </label>
-        <label class="field" id="row-fcl-client-type">
-          <span class="label-text">Tipo de Cliente (FCL)</span>
-          <select name="client_type" id="fcl-client-type-select">
-            <option value="cliente_local">Cliente Local</option>
-            <option value="agente_internacional">Agente Internacional</option>
-          </select>
-          <span class="field-hint">Agente Internacional: tarifas fijas por incoterm del tarifario (sin margen adicional).</span>
         </label>
       </div>
       <div class="form-grid">
