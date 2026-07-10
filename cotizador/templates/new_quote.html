@@ -854,6 +854,29 @@
   // field set is byte-for-byte the pre-existing behavior (Session J invariant).
   var AGENTE_FIELDS = {{ agente_incoterm_fields | tojson }};
 
+  // Naviera option lists. Import (G. LOCALES) is the default DOM state and is
+  // used for DAP/DDP and every cliente_local quote (byte-for-byte). Export
+  // (EXPORTACION-CALLAO) is swapped in only for the agente EXW structure, whose
+  // VB + Gate Out resolve from the export naviera sheet (Abel 2026-07-10).
+  var FCL_NAVIERAS_IMPORT = {{ fcl_navieras | tojson }};
+  var FCL_NAVIERAS_EXPORT = {{ fcl_export_navieras | tojson }};
+
+  function setNavieraOptions(list) {
+    if (!fclNavieraSel) return;
+    var current = fclNavieraSel.value;
+    fclNavieraSel.innerHTML = '';
+    var ph = document.createElement('option');
+    ph.value = ''; ph.textContent = '— Seleccionar —';
+    fclNavieraSel.appendChild(ph);
+    list.forEach(function (n) {
+      var o = document.createElement('option');
+      o.value = n; o.textContent = n;
+      fclNavieraSel.appendChild(o);
+    });
+    // Preserve the prior pick if it exists in the new list; else reset.
+    fclNavieraSel.value = (list.indexOf(current) !== -1) ? current : '';
+  }
+
   function setRow(row, input, show) {
     if (row)   { row.style.display = show ? '' : 'none'; }
     // Hidden inputs still submit — disable so a value typed under another
@@ -937,6 +960,16 @@
     // Narrow the FCL agente field set to the selected incoterm's structure.
     // Runs last so it can hide/disable rows the mode logic just showed.
     applyAgenteIncotermVisibility();
+    // Naviera option list: the agente EXW (EXPO) structure resolves VB + Gate
+    // Out from the EXPORTACION-CALLAO naviera sheet, so its dropdown must offer
+    // the EXPORT navieras. Every other case — agente DAP/DDP (import) and every
+    // cliente_local quote — keeps the IMPORT list (byte-for-byte). fs.naviera is
+    // true only for EXW among EXPO incoterms (FOB hides it), so this fires for
+    // EXW alone. setNavieraOptions preserves a still-valid current pick.
+    var navFs = agenteFieldSet();
+    var useExportNavieras = !!(navFs && navFs.naviera &&
+                               operationSel && operationSel.value === 'exportacion');
+    setNavieraOptions(useExportNavieras ? FCL_NAVIERAS_EXPORT : FCL_NAVIERAS_IMPORT);
   }
 
   modeSelect.addEventListener('change', applyModeVisibility);

@@ -122,10 +122,108 @@ class TestExwResolved:
         assert tf["total"] == pytest.approx(expected, rel=0.001)
         assert tf["igv_applicable"] is True
 
-    def test_gate_out_kept_fixed(self, client):
+    def test_gate_out_naviera_sourced_with_depot_recorded(self, client):
+        # Abel 2026-07-10: Gate out now comes from the selected naviera. Base
+        # fixture is CMA CGM → IMUPESA 150 net (coincidentally 150, but now
+        # depot-attributed and audited — no longer a static placeholder).
         row = _post(client, dict(_BASE_EXPORT_EXW))
         gate = next(i for i in _lines(row) if i["description"] == "Gate out")
-        assert gate["total"] == 150.0
+        assert gate["total"] == 150.0  # CMA CGM IMUPESA net
+        assert gate["igv_applicable"] is True
+        costeo = _costeo(row)
+        assert costeo["fcl_gate_out_usd"] == 150.0
+        assert costeo["fcl_gate_out_depot"] == "IMUPESA"
+
+    def test_visto_bueno_exportacion_present_afecto_igv(self, client):
+        # New naviera-sourced VB line — CMA CGM net 219.35, afecto a IGV.
+        row = _post(client, dict(_BASE_EXPORT_EXW))
+        vb = next(i for i in _lines(row) if i["description"] == "Visto Bueno (Exportación)")
+        assert vb["total"] == pytest.approx(219.35, rel=0.001)
+        assert vb["igv_applicable"] is True and vb["is_local"] is True
+
+    def test_coordinacion_and_vb_both_present_no_double_count(self, client):
+        # Step 0b: Coordinación 214 (GT fee) and VB (Exportación) are distinct —
+        # both appear, exactly once each. The export VB bundle never contained
+        # Coordinación (only the import VB does).
+        lines = _lines(_post(client, dict(_BASE_EXPORT_EXW)))
+        coord = [i for i in lines if "Coordinación" in i["description"]]
+        vb = [i for i in lines if i["description"] == "Visto Bueno (Exportación)"]
+        assert len(coord) == 1 and coord[0]["unit_price"] == 214.0
+        assert len(vb) == 1
+
+    def test_no_static_150_gate_out_when_naviera_gate_differs(self, client):
+        # Prove Gate out is not the old static 150: COSCO → FARGOLINE 125.5.
+        data = {**_BASE_EXPORT_EXW, "fcl_naviera": "COSCO"}
+        row = _post(client, data)
+        gate = next(i for i in _lines(row) if i["description"] == "Gate out")
+        assert gate["total"] == pytest.approx(125.5, rel=0.001)
+        assert gate["total"] != 150.0
+        assert _costeo(row)["fcl_gate_out_depot"] == "FARGOLINE"
+
+    def test_gate_out_scales_per_container(self, client):
+        # MSC MEDLOG 152 net × 2 containers = 304.
+        data = {**_BASE_EXPORT_EXW, "fcl_naviera": "MSC", "num_containers": "2"}
+        row = _post(client, data)
+        gate = next(i for i in _lines(row) if i["description"] == "Gate out")
+        assert gate["quantity"] == 2
+        assert gate["total"] == pytest.approx(304.0, rel=0.001)
+
+
+# ── EXW per-naviera VB + Gate Out (Session G confirmed figures) ────────────────
+
+_EXW_NAVIERA_EXPECTATIONS = [
+    # naviera,        vb_net,   gate_depot,           gate_net
+    ("MSC",           365.0,    "MEDLOG",             152.0),
+    ("ONE",           272.0,    "CONTRANS",           150.0),
+    ("MAERSK",        160.0,    "DEMARES",            179.0),
+    ("HAPAG LLOYD",   152.0,    "RANSA",              150.0),
+    ("CMA CGM",       219.35,   "IMUPESA",            150.0),
+    ("COSCO",         100.0,    "FARGOLINE",          125.5),
+    ("EVERGREEN",     227.0,    "DP WORLD LOGISTICS", 120.5),
+]
+
+
+class TestExwPerNaviera:
+    @pytest.mark.parametrize("naviera,vb_net,depot,gate_net",
+                             _EXW_NAVIERA_EXPECTATIONS)
+    def test_vb_and_gate_out_match_naviera_docs(self, client, naviera, vb_net,
+                                                depot, gate_net):
+        row = _post(client, {**_BASE_EXPORT_EXW, "fcl_naviera": naviera})
+        lines = _lines(row)
+        vb = next(i for i in lines if i["description"] == "Visto Bueno (Exportación)")
+        gate = next(i for i in lines if i["description"] == "Gate out")
+        assert vb["total"] == pytest.approx(vb_net, rel=0.001), naviera
+        assert gate["total"] == pytest.approx(gate_net, rel=0.001), naviera
+        costeo = _costeo(row)
+        assert costeo["fcl_gate_out_depot"] == depot, naviera
+        assert costeo["fcl_gate_out_usd"] == pytest.approx(gate_net, rel=0.001)
+
+
+# ── cliente_local export regression (byte-for-byte: gate-out never added) ──────
+
+class TestClienteLocalExportUnchanged:
+    def _cliente_local_exw(self):
+        return {**_BASE_EXPORT_EXW, "client_type": "cliente_local"}
+
+    def test_cliente_local_charges_vb_but_never_gate_out(self, client):
+        # cliente_local export has always charged the naviera VB (once) and NEVER
+        # a Gate Out — the new agente EXW gate-out wiring must not leak into it.
+        row = _post(client, self._cliente_local_exw())
+        lines = _lines(row)
+        descs = {i["description"] for i in lines}
+        assert "Visto Bueno" in descs         # cliente_local VB line (unchanged)
+        assert "Gate out" not in descs        # never charged for cliente_local
+        costeo = _costeo(row)
+        assert costeo.get("fcl_gate_out_usd") is None
+        assert costeo.get("fcl_gate_out_depot") is None
+
+    def test_cliente_local_vb_value_unchanged(self, client):
+        # CMA CGM export VB 219.35 × margin — the cliente_local figure is
+        # untouched by the agente path change.
+        row = _post(client, self._cliente_local_exw())
+        vb = next(i for i in _lines(row) if i["description"] == "Visto Bueno")
+        m = 1 + float(row["margin_pct"])
+        assert vb["total"] == pytest.approx(round(219.35 * m, 2), rel=0.001)
 
 
 # ── DAP: THC/ISPS/BL Master re-sourced, matching cliente_local ────────────────

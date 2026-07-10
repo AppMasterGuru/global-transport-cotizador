@@ -42,6 +42,7 @@ from core.fcl_agente_incoterm import (
     PER_CNTR,
     PER_CNTR_EXTRA,
     RESOLVED,
+    RESOLVED_PER_CNTR,
     FclConcept,
     build_agente_venta_items,
     get_incoterm_concepts,
@@ -89,7 +90,12 @@ class TestRegistry:
 #
 #   EXPO FOB tab  → Ocean Freight ONLY (Handling/Doc Fee sit in a separate
 #                   "cobrados al exportador" table, not the net tariff).
-#   EXPO EXW tab  → full export set (10 concepts).
+#   EXPO EXW tab  → full export set (10 tab concepts) PLUS the naviera-sourced
+#                   "Visto Bueno (Exportación)" (Abel 2026-07-10: EXW must pick
+#                   a naviera and compute VB + Gate Out from it). VB is NOT a
+#                   TARIFA-NETA-tab line — it comes from the EXPORTACION-CALLAO
+#                   naviera sheet (get_export_vb_net_usd) — and Gate out is now
+#                   naviera-sourced per-container (was a static $150 placeholder).
 #   IMPO DAP tab  → import set (8 concepts).
 #   IMPO DDP tab  → import set; Box Fee/SCAC/Doc Fee/Seal/Gate-in are folded
 #                   into the RESOLVED "Visto Bueno (Importación)" naviera
@@ -106,6 +112,7 @@ _TARIFA_NETA_STRUCTURE = {
         "Operative Charge",
         "Seal",
         "Coordinación y Supervisión del Embarque",
+        "Visto Bueno (Exportación)",
         "Agency Fee",
         "Gate out",
         "Terminal Fee",
@@ -192,11 +199,38 @@ class TestExwConceptList:
         assert tf.igv_applicable is True
         assert tf.is_international is False
 
-    def test_gate_out_kept_fixed_no_clean_doc_source(self, concepts):
-        # STOP-listed: export gate is per-depot/multi-valued — left at sheet value.
+    def test_gate_out_is_naviera_sourced_per_container(self, concepts):
+        # Abel 2026-07-10 reversed the STOP: Gate out is now sourced from the
+        # selected naviera (resolve_export_gate_out) per container. No static
+        # $150 remnant — amount is injected at runtime, per container.
         gate = next(c for c in concepts if c.description == "Gate out")
-        assert gate.unit == PER_CNTR
-        assert gate.amount_usd == 150.0
+        assert gate.unit == RESOLVED_PER_CNTR
+        assert gate.amount_usd is None
+        assert gate.igv_applicable is True
+        assert gate.is_international is False
+
+    def test_no_static_150_gate_out_remnant(self, concepts):
+        # Guard: no EXW concept may carry the old static 150 placeholder.
+        assert not any(c.amount_usd == 150.0 for c in concepts)
+
+    def test_visto_bueno_exportacion_resolved_afecto_igv(self, concepts):
+        # New naviera-sourced concept (Abel 2026-07-10). RESOLVED (charged once
+        # per shipment, matching the cliente_local export VB), afecto a IGV
+        # (Session L rule: todo VB afecto). NOT the Coordinación fee.
+        vb = next(c for c in concepts if c.description == "Visto Bueno (Exportación)")
+        assert vb.unit == RESOLVED
+        assert vb.amount_usd is None
+        assert vb.igv_applicable is True
+        assert vb.is_international is False
+
+    def test_coordinacion_kept_alongside_vb_no_double_count(self, concepts):
+        # Step 0b determination: the export VB bundle does NOT contain
+        # Coordinación (import VB does) — so Coordinación 214 is a distinct GT
+        # fee that stays. Both concepts coexist; adding VB does not remove it.
+        coord = next(c for c in concepts
+                     if c.description == "Coordinación y Supervisión del Embarque")
+        assert coord.unit == PER_CNTR
+        assert coord.amount_usd == 214.0
 
     def test_per_cntr_extra_present(self, concepts):
         extra = [c for c in concepts if c.unit == PER_CNTR_EXTRA]
@@ -393,10 +427,38 @@ class TestBuildExwItems:
         tf = [i for i in items if i["description"] == "Terminal Fee"]
         assert tf == []
 
-    def test_gate_out_still_charged_fixed(self, concepts):
-        items = self._items(concepts)
+    def test_gate_out_omitted_when_naviera_unresolved(self, concepts):
+        # Naviera-sourced now: with no resolved Gate out amount (no naviera
+        # picked), the line is omitted — no silent static-150 default.
+        items = self._items(concepts, resolved_amounts=None)
+        assert [i for i in items if i["description"] == "Gate out"] == []
+
+    def test_gate_out_resolved_per_container(self, concepts):
+        # Injected naviera gate-out net, charged per container (e.g. MSC MEDLOG
+        # 152 net × 2 containers = 304, unit_price 152, qty 2).
+        items = self._items(concepts, num_containers=2,
+                            resolved_amounts={"Gate out": 152.0})
         gate = next(i for i in items if i["description"] == "Gate out")
-        assert gate["total"] == 150.0
+        assert gate["unit_price"] == 152.0
+        assert gate["quantity"] == 2
+        assert gate["total"] == 304.0
+        assert gate["is_local"] is True
+        assert gate["igv_applicable"] is True
+
+    def test_visto_bueno_exportacion_resolved_once(self, concepts):
+        # VB (Exportación) charged once per shipment (per BL), NOT per container
+        # — matches the cliente_local export VB. Afecto a IGV.
+        items = self._items(concepts, num_containers=3,
+                            resolved_amounts={"Visto Bueno (Exportación)": 365.0})
+        vb = next(i for i in items if i["description"] == "Visto Bueno (Exportación)")
+        assert vb["total"] == 365.0  # flat per BL, not × 3
+        assert vb["quantity"] == 1
+        assert vb["is_local"] is True
+        assert vb["igv_applicable"] is True
+
+    def test_visto_bueno_exportacion_omitted_when_unresolved(self, concepts):
+        items = self._items(concepts, resolved_amounts=None)
+        assert [i for i in items if i["description"] == "Visto Bueno (Exportación)"] == []
 
     def test_dynamic_pickup_omitted_when_zero(self, concepts):
         items = self._items(concepts, open_transport_usd=0.0)
@@ -701,7 +763,7 @@ class TestF1ToF6OnAgentePath:
 _EXPECTED_FIELD_VISIBILITY = {
     ("EXPO", "FOB"): {"naviera": False, "terminal": False, "thc": False,
                       "transporte": False, "oea": False, "ddp_cif": False},
-    ("EXPO", "EXW"): {"naviera": False, "terminal": True,  "thc": False,
+    ("EXPO", "EXW"): {"naviera": True,  "terminal": True,  "thc": False,
                       "transporte": True,  "oea": True,  "ddp_cif": False},
     ("IMPO", "DAP"): {"naviera": True,  "terminal": True,  "thc": True,
                       "transporte": True,  "oea": False, "ddp_cif": False},

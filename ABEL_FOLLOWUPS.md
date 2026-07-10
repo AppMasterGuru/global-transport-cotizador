@@ -3,7 +3,7 @@
 **Purpose:** Running list of items that need Abel's confirmation, correction, 
 or input before go-live. Add to this file at the end of every build session 
 when something new surfaces.
-**Last updated:** 2026-07-06
+**Last updated:** 2026-07-10
 
 ---
 
@@ -13,23 +13,24 @@ when something new surfaces.
 **Status:** Built 2026-06-30. Naviera/port-dependent agente amounts were
 re-sourced from the same port_costs + naviera docs the cliente_local import
 path uses (Terminal Fee, THC, ISPS, BL Master/MBL, VB importación). Two
-concepts have NO clean doc source and were LEFT at their tariff-sheet value
-and flagged — not re-sourced, not guessed:
-- **EXW "Gate out" (USD 150):** the export gate is per-depot and multi-valued
-  (`get_export_gate_outs` returns a dict; e.g. EVERGREEN has 3 depots at 2
-  amounts) and is not wired into any cost var. Confirm the single Gate-out
-  figure (or the depot-selection rule) for the agente EXW quote.
-- **DAP "Gate in" (USD 205):** no import-gate doc source exists in the system.
-  (DDP's COST-only Gate in USD 210/cntr is a separate new §2 value.) Confirm
-  the import Gate-in figure / source.
+concepts had NO clean doc source and were LEFT at their tariff-sheet value
+and flagged — the EXW pair is now RESOLVED (Abel 2026-07-10, see Closed);
+DAP "Gate in" is still open:
+- **EXW "Gate out" (was USD 150): RESOLVED 2026-07-10** — Abel confirmed EXW
+  selects a naviera and computes Gate Out from it. Now naviera-sourced per
+  container via `resolve_export_gate_out`. See Closed entry below.
+- **DAP "Gate in" (USD 205): STILL OPEN** — no import-gate doc source exists in
+  the system. (DDP's COST-only Gate in USD 210/cntr is a separate new §2 value.)
+  Confirm the import Gate-in figure / source. (Untouched this pass.)
 
 **Also flag (structural, not a guess):**
-- agente **EXW** has no export "Visto Bueno" concept, so it does not charge the
-  naviera export VB the cliente_local export path charges. Confirm whether EXW
-  should include it (and whether EXW's "Coordinación" USD 214 already is it).
+- agente **EXW** export "Visto Bueno": **RESOLVED 2026-07-10** — Abel confirmed
+  EXW must compute the naviera export VB. It is NOT the "Coordinación" USD 214
+  fee (Step 0b: the export VB bundle does not contain Coordinación — the import
+  VB does). Both now render as distinct lines. See Closed entry below.
 - agente **DAP** itemizes GT-fixed Coordinación (190) / Agency (4.75) instead
   of the full VB-importación bundle (which DDP uses). Confirm DAP's import
-  local-cost structure vs DDP's.
+  local-cost structure vs DDP's. (Still open — untouched this pass.)
 
 ### 3. FCL F1–F4 scenarios
 **Status:** FCL form wired in Session E (commit 6e71960). Abel ran F1–F4 and
@@ -51,6 +52,55 @@ naviera when he confirms.
 ---
 
 ## Closed — resolved
+
+### FCL agente EXW — naviera-sourced Visto Bueno + Gate Out — RESOLVED 2026-07-10
+**Abel's instruction (2026-07-10, verbatim):** "EXW–EXPO: no aparece la naviera
+con la que vamos a trabajar, por ende el sistema no calcularía correctamente los
+gastos de Visto Bueno, Gate Out de la naviera." → agente EXW must select a
+naviera and compute the export Visto Bueno + Gate Out from it. This resolves
+item #4's EXW "Gate out" STOP and the EXW-VB/Coordinación flag.
+**What was built (wiring, not new data — the figures are Abel-confirmed since
+Session G, `core/fcl_naviera_costs._EXPORT_VB_BY_NAVIERA`):**
+- EXW now shows the **Naviera** selector, offering **exactly the 7 export
+  navieras** (MSC, ONE, MAERSK, HAPAG LLOYD, CMA CGM, COSCO, EVERGREEN). The
+  New-Quote form JS swaps the dropdown to the EXPORTACION-CALLAO list when the
+  agente EXW structure is active; DAP/DDP and every cliente_local quote keep the
+  G. LOCALES import list (byte-for-byte).
+- **Visto Bueno (Exportación)** added to `_REGISTRY[(EXPO,EXW)]` — RESOLVED from
+  `get_export_vb_net_usd(naviera)` (the SAME net cliente_local export charges),
+  once per shipment, **afecto a IGV**. Per-naviera nets: MSC 365, ONE 272,
+  HAPAG 152, COSCO 100, EVERGREEN 227, MAERSK 160, CMA CGM 219.35.
+- **Gate out** changed from the static USD 150 placeholder to naviera-sourced
+  **per container** via `resolve_export_gate_out(naviera)`, afecto a IGV. No
+  double-charge (the 150 placeholder is gone).
+- Naviera + resolved Gate-out depot flow into `costeo_json`
+  (`fcl_gate_out_usd`, `fcl_gate_out_depot`) for audit.
+**Step 0b determination (Coordinación vs VB):** the export VB bundle is a
+DISTINCT concept from the fixed **Coordinación y Supervisión del Embarque
+USD 214** GT fee — the export VB desgloses (Despacho/Documentario/HBL; Seal/Box
+Fee/Admin/Doc Fee; Box Fee/Coverage) do **not** contain Coordinación, whereas
+the *import* VB explicitly bundles it (`VISTO BUENO (COORDINACIÓN… | AGENCY
+FEE)`). So VB was **ADDED** and Coordinación **KEPT** — both render as separate
+lines, no double-count. Excel-confirmed by the F3/F4 note below ("EXW genuinely
+has no export Visto Bueno line").
+**Depot resolution (Step 0a — no mechanism existed to reuse):** cliente_local
+has NEVER charged export Gate Out — it charges the naviera VB only
+(`routes.py`), and `get_export_gate_outs` was wired nowhere in production. With
+no depot-selection field/rule to mirror, `resolve_export_gate_out` picks the
+**minimum-net depot** (no-overcharge default per CLAUDE.md), ties broken
+alphabetically, and records the depot for F4. 6 of 7 navieras have a single
+depot; only EVERGREEN has a real spread (IMUPESA 133.50 vs TPP / DP-World
+120.50 — 120.50 chosen).
+**Still open — TODO(abel-F1F4):** (a) **MAERSK** VB $160 is retención-inclusive
+(30% retención, base $112), not IGV — passed through as-is; retención treatment
+still unresolved. (b) **EVERGREEN Gate-out depot** — confirm whether the
+minimum-net (DP WORLD LOGISTICS / TPP $120.50) is correct or IMUPESA ($133.50)
+should apply. (c) confirm the export VB "Metal Security Seal" (ONE bundle) vs
+the separate EXW "Seal" $10 line is not a double-count for that one naviera.
+**Verification:** 1084 tests green (+35 vs 1049); jsdom drive of the served page
+14/14 (EXW naviera visible+enabled+7-export-options; FOB hidden+disabled;
+EXW↔FOB non-resurrection with valid-pick preserved; DAP + cliente_local keep the
+import list). **Commit:** this pass.
 
 ### FCL FOB agente structure — Ocean Freight ONLY — RESOLVED 2026-07-06
 **Source:** Abel F3/F4 feedback July 6 — "el incoterm determina la estructura

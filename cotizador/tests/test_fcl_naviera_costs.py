@@ -21,6 +21,7 @@ import pytest
 
 from core.fcl_naviera_costs import (
     apply_second_container_surcharges,
+    export_naviera_options,
     fcl_customs_agent_costs,
     fcl_oea_basc_commission_per_container_usd,
     fcl_oea_basc_commission_total_usd,
@@ -32,6 +33,7 @@ from core.fcl_naviera_costs import (
     get_export_visto_bueno,
     parse_export_naviera_sheet,
     precinto_total_usd,
+    resolve_export_gate_out,
     second_container_surcharge,
 )
 
@@ -325,6 +327,74 @@ class TestExportNavieraData:
 
     def test_gate_outs_empty_for_unknown_naviera(self):
         assert get_export_gate_outs("UNKNOWN") == {}
+
+
+class TestResolveExportGateOut:
+    """resolve_export_gate_out() collapses a naviera's (possibly multi-depot)
+    export Gate Out into ONE figure for the agente EXW quote. There is no
+    depot-selection mechanism in the cotizador (cliente_local has never charged
+    export Gate Out — it only charges VB), so it picks the no-overcharge
+    (minimum-net) depot deterministically and records which one, for Abel F4."""
+
+    def test_single_depot_navieras(self):
+        # Navieras with one depot resolve to that depot unambiguously.
+        for naviera, depot, net in [
+            ("MSC", "MEDLOG", 152.0),
+            ("MAERSK", "DEMARES", 179.0),
+            ("HAPAG LLOYD", "RANSA", 150.0),
+            ("CMA CGM", "IMUPESA", 150.0),
+            ("COSCO", "FARGOLINE", 125.5),
+        ]:
+            g = resolve_export_gate_out(naviera)
+            assert g["depot"] == depot, naviera
+            assert g["net"] == pytest.approx(net, rel=0.001), naviera
+
+    def test_one_ties_resolve_to_alphabetical_min(self):
+        # ONE: CONTRANS 150 vs DPW 150 — equal net, deterministic tie-break
+        # (alphabetical) → CONTRANS.
+        g = resolve_export_gate_out("ONE")
+        assert g["net"] == pytest.approx(150.0, rel=0.001)
+        assert g["depot"] == "CONTRANS"
+
+    def test_evergreen_picks_lowest_net_no_overcharge(self):
+        # EVERGREEN: TPP 120.5 / IMUPESA 133.5 / DP WORLD LOGISTICS 120.5.
+        # No-overcharge default = minimum net (120.5); tie broken alphabetically
+        # → "DP WORLD LOGISTICS" (before "TPP").
+        g = resolve_export_gate_out("EVERGREEN")
+        assert g["net"] == pytest.approx(120.5, rel=0.001)
+        assert g["depot"] == "DP WORLD LOGISTICS"
+
+    def test_carries_igv_and_total_fields(self):
+        g = resolve_export_gate_out("MSC")
+        assert g["igv"] == pytest.approx(27.36, rel=0.001)
+        assert g["total"] == pytest.approx(179.36, rel=0.001)
+
+    def test_unknown_naviera_returns_none(self):
+        assert resolve_export_gate_out("UNKNOWN CARRIER") is None
+
+    def test_case_insensitive(self):
+        assert resolve_export_gate_out("cosco")["depot"] == "FARGOLINE"
+
+
+class TestExportNavieraOptions:
+    """The agente EXW Naviera dropdown must offer EXACTLY the navieras that have
+    an export VB table entry — no more (an off-list naviera has no VB/gate to
+    resolve) and no less (Abel's carrier must be selectable)."""
+
+    def test_exactly_the_seven_export_navieras(self):
+        assert export_naviera_options() == sorted([
+            "MSC", "ONE", "MAERSK", "HAPAG LLOYD", "CMA CGM", "COSCO", "EVERGREEN",
+        ])
+
+    def test_every_option_resolves_a_vb_and_gate_out(self):
+        for n in export_naviera_options():
+            assert get_export_vb_net_usd(n) is not None, n
+            assert resolve_export_gate_out(n) is not None, n
+
+    def test_maersk_included_despite_retencion_todo(self):
+        # MAERSK's $160 is retención-inclusive (open TODO abel-F1F4) — it must
+        # still be selectable; the retención treatment is a separate pass.
+        assert "MAERSK" in export_naviera_options()
 
 
 class TestFclCustomsAgentCostsDispatch:

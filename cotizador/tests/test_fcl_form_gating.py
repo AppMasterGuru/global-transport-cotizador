@@ -323,6 +323,7 @@ class TestFclSubmitIgnoresColoaderLiterals:
 import re as _re  # noqa: E402
 
 from core.fcl_agente_incoterm import agente_field_visibility_map  # noqa: E402
+from core.fcl_naviera_costs import export_naviera_options  # noqa: E402
 
 # Newly gated rows/inputs and the field→row map the JS drives.
 _GATED_ROW_IDS = ("row-thc-rate", "row-thc-min", "row-requires-oea-basc")
@@ -355,6 +356,70 @@ class TestAgenteFieldsInjection:
             assert fields[key]["thc"] is True
         assert fields["IMPO/DDP"]["ddp_cif"] is True
         assert fields["IMPO/DAP"]["ddp_cif"] is False
+
+    def test_exw_now_shows_naviera(self, client):
+        # Abel 2026-07-10: EXW must select a naviera (VB + Gate Out come from it).
+        html = client.get("/quote/new").data.decode()
+        fields = json.loads(_re.search(r"var AGENTE_FIELDS = (\{.*?\});", html).group(1))
+        assert fields["EXPO/EXW"]["naviera"] is True
+        # FOB is still Ocean-Freight-only — no naviera.
+        assert fields["EXPO/FOB"]["naviera"] is False
+
+
+class TestNavieraOptionSwap:
+    """The agente EXW dropdown must offer the EXPORT navieras (VB + Gate Out come
+    from the EXPORTACION-CALLAO sheet); DAP/DDP and cliente_local keep the IMPORT
+    list. The swap is driven by JS on the served page so it stays incoterm-aware
+    without a page reload; DOM behaviour (incl. EXW↔FOB non-resurrection) is
+    verified out-of-band via jsdom. These pin the server→form contract + wiring."""
+
+    def test_export_naviera_list_injected_and_exact(self, client):
+        html = client.get("/quote/new").data.decode()
+        m = _re.search(r"var FCL_NAVIERAS_EXPORT = (\[.*?\]);", html)
+        assert m, "FCL_NAVIERAS_EXPORT must be injected into the served form"
+        served = json.loads(m.group(1))
+        assert served == export_naviera_options(), (
+            "EXW dropdown must offer exactly the export-VB navieras"
+        )
+
+    def test_import_naviera_list_still_injected(self, template_src):
+        assert "var FCL_NAVIERAS_IMPORT =" in template_src, (
+            "the import naviera list must remain for DAP/DDP + cliente_local"
+        )
+
+    def test_set_naviera_options_defined(self, template_src):
+        assert "function setNavieraOptions(list)" in template_src
+
+    def test_set_naviera_options_preserves_current_value(self, template_src):
+        m = _re.search(r"function setNavieraOptions\(list\)\s*\{(.*?)\n  \}",
+                       template_src, _re.S)
+        assert m, "setNavieraOptions helper missing"
+        body = m.group(1)
+        # keeps a still-valid pick, resets otherwise
+        assert "indexOf(current)" in body
+
+    def test_swap_gated_to_agente_export(self, template_src):
+        # The export list is used only when the agente field set applies AND the
+        # operation is exportacion (⇒ EXW, the only EXPO incoterm with naviera).
+        m = _re.search(r"function applyModeVisibility\(\)\s*\{(.*?)\n  \}",
+                       template_src, _re.S)
+        assert m, "applyModeVisibility not found"
+        body = m.group(1)
+        assert "setNavieraOptions(" in body, (
+            "applyModeVisibility must swap naviera options"
+        )
+        assert "FCL_NAVIERAS_EXPORT" in body and "FCL_NAVIERAS_IMPORT" in body
+        assert "exportacion" in body
+
+    def test_served_export_list_covers_all_export_vb_navieras(self, client):
+        # Abel's carrier must be selectable — the served list must include every
+        # export-VB naviera (guards an accidental import-only render).
+        html = client.get("/quote/new").data.decode()
+        served = json.loads(
+            _re.search(r"var FCL_NAVIERAS_EXPORT = (\[.*?\]);", html).group(1))
+        for n in ("MSC", "ONE", "MAERSK", "HAPAG LLOYD", "CMA CGM", "COSCO",
+                  "EVERGREEN"):
+            assert n in served, n
 
 
 class TestAgenteGatingTemplateWiring:

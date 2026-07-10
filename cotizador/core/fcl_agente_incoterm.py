@@ -21,11 +21,19 @@ validated cliente_local figures:
 GT's own fixed service fees keep their fixed values (Operative Charge, Agency
 Fee, Coordinación, Seal, the export Customs Broker base).
 
-Two concepts have NO clean doc source — left at their sheet value and flagged
+EXW naviera-sourced concepts (Abel 2026-07-10 — "EXW-EXPO: no aparece la
+naviera ... el sistema no calcularía correctamente los gastos de Visto Bueno,
+Gate Out de la naviera"): EXW now selects a naviera and injects two figures
+from the EXPORTACION-CALLAO sheet the cliente_local export path already reads:
+  - "Visto Bueno (Exportación)" ← get_export_vb_net_usd(naviera), per BL,
+    afecto IGV. This is a distinct concept from the fixed Coordinación 214 fee
+    (the export VB bundle does not contain Coordinación — Step 0b).
+  - "Gate out" ← resolve_export_gate_out(naviera), per container, afecto IGV.
+    Replaces the old static USD 150 placeholder. No depot selector exists, so
+    the no-overcharge minimum-net depot is used (see fcl_naviera_costs).
+
+One concept still has NO clean doc source — left at its sheet value and flagged
 (Session L STOP, do not guess a sheet→doc equivalence):
-  - EXW "Gate out": export gate is per-depot and multi-valued
-    (fcl_naviera_costs.get_export_gate_outs returns a dict, not one figure)
-    and is not wired into any cost var. Kept at USD 150.
   - DAP "Gate in": no import-gate doc source exists in the system. Kept at
     USD 205. (DDP's COST-only Gate in USD 210 is a separate new §2 value.)
 
@@ -51,7 +59,11 @@ PER_CNTR_EXTRA = "PER_CNTR_EXTRA" # per extra container (num_containers - 1); om
 BY_SIZE        = "BY_SIZE"        # amount varies by container type (use amount_by_size)
 DYNAMIC        = "DYNAMIC"        # amount supplied at runtime (Open Transport pickup/delivery)
 RESOLVED       = "RESOLVED"       # amount injected at runtime from a doc source
-                                  # (port_costs / naviera figures), keyed by description
+                                  # (port_costs / naviera figures), keyed by
+                                  # description; charged once (per BL)
+RESOLVED_PER_CNTR = "RESOLVED_PER_CNTR"  # like RESOLVED but the injected amount is a
+                                  # per-container unit price (× num_containers). Used by
+                                  # the EXW naviera Gate out (source tipo = CONTENEDOR).
 
 
 # ── Concept definition ────────────────────────────────────────────────────────
@@ -132,17 +144,30 @@ _REGISTRY: dict[tuple[str, str], tuple[FclConcept, ...]] = {
             igv_applicable=True, is_international=False,
             amount_usd=214.0,
         ),
+        # Visto Bueno (Exportación): naviera-sourced (Abel 2026-07-10 — EXW must
+        # pick a naviera and compute VB + Gate Out from it). Amount injected at
+        # runtime from get_export_vb_net_usd(naviera) — the SAME net figure the
+        # cliente_local export path charges, so agente == cliente_local VB.
+        # Charged once per shipment (per BL), like cliente_local. Afecto a IGV
+        # (Session L: todo VB afecto). NOT the Coordinación fee: the export VB
+        # bundle does not contain Coordinación (the import VB does) — Step 0b.
+        FclConcept(
+            "Visto Bueno (Exportación)", RESOLVED,
+            igv_applicable=True, is_international=False,
+        ),
         FclConcept(
             "Agency Fee", PER_BL,
             igv_applicable=True, is_international=False,
             amount_usd=5.35,
         ),
-        # Gate out: NO clean doc source (export gate is per-depot/multi-valued,
-        # not wired). STOP-listed — kept at sheet value, do not re-source.
+        # Gate out: naviera-sourced PER CONTAINER (Abel 2026-07-10, reversing the
+        # Session L STOP). Amount injected from resolve_export_gate_out(naviera).
+        # No depot selector exists in the cotizador, so the no-overcharge
+        # minimum-net depot is used (see fcl_naviera_costs). The old static
+        # USD 150 placeholder is removed (no double-charge). Afecto a IGV.
         FclConcept(
-            "Gate out", PER_CNTR,
+            "Gate out", RESOLVED_PER_CNTR,
             igv_applicable=True, is_international=False,
-            amount_usd=150.0,
         ),
         # Terminal Fee: re-sourced from port_costs (export). Single merged
         # port+depósito line (preserves F4). Amount injected at runtime.
@@ -355,6 +380,14 @@ def build_agente_venta_items(
             total      = unit_price
             quantity   = 1
 
+        elif c.unit == RESOLVED_PER_CNTR:
+            amt = resolved.get(c.description)
+            if amt is None or amt <= 0:
+                continue  # doc figure unavailable — omit, never default
+            unit_price = round(amt, 2)               # per-container unit price
+            total      = round(amt * num_containers, 2)
+            quantity   = num_containers
+
         else:
             continue
 
@@ -382,10 +415,14 @@ def registered_incoterms() -> list[tuple[str, str]]:
 # Internacional, Tipo/N° Contenedor, Margen, the client-type selector) are not
 # gated — they apply to every FCL agente quote.
 
-# Concepts whose amount is resolved from the selected naviera's import docs; the
+# Concepts whose amount is resolved from the selected naviera's docs; the
 # Naviera selector is only meaningful when one of these is in the structure.
+# Export side (Abel 2026-07-10): the EXW "Visto Bueno (Exportación)" and "Gate
+# out" are sourced from the EXPORTACION-CALLAO naviera sheet, so EXW now needs
+# the Naviera selector too.
 _NAVIERA_SOURCED = frozenset({
     "THC", "ISPS", "BL Master", "Emisión MBL", "Visto Bueno (Importación)",
+    "Visto Bueno (Exportación)", "Gate out",
 })
 
 

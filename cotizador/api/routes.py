@@ -61,8 +61,10 @@ from core.fcl_import_costs import (
     get_vb_importacion_data,
 )
 from core.fcl_naviera_costs import (
+    export_naviera_options,
     fcl_customs_agent_costs,
     get_export_vb_net_usd,
+    resolve_export_gate_out,
 )
 from core.fcl_agente_incoterm import (
     agente_field_visibility_map,
@@ -212,6 +214,12 @@ def new_quote_form():
         "new_quote.html",
         open_transport_districts=list_open_transport_districts(),
         fcl_navieras=sorted(get_g_locales_data()),
+        # Export-only naviera list (Abel 2026-07-10): the agente EXW path resolves
+        # VB + Gate Out from the EXPORTACION-CALLAO sheet, so its Naviera dropdown
+        # must offer exactly those navieras — the form JS swaps to this list when
+        # the agente EXW (EXPO) structure is active, keeping the import list for
+        # DAP/DDP and cliente_local (byte-for-byte).
+        fcl_export_navieras=export_naviera_options(),
         # Per-incoterm field visibility for the agente_internacional FCL path —
         # keyed "FLUJO/INCOTERM"; the form JS shows an optional input only when
         # its concept is in that incoterm's registry set (Abel F3/F4 2026-07-06).
@@ -433,6 +441,8 @@ def create_quote():
     fcl_mbl_usd = 0.0
     fcl_vb_importacion_usd = 0.0
     fcl_gate_in_usd = 0.0  # Session L §2: DDP agente Gate in — COST side only
+    fcl_gate_out_usd = 0.0  # Abel 2026-07-10: agente EXW Gate out — naviera-sourced
+    fcl_gate_out_depot = None  # which depot resolved the Gate out (audit)
 
     if mode == "fcl":
         port = get_port_cost(fcl_terminal, operation, fcl_container_type)
@@ -673,6 +683,28 @@ def create_quote():
                 )
                 # §2 Gate in USD 210/contenedor — COST side only, never venta.
                 fcl_gate_in_usd = round(210.0 * num_containers, 2)
+            if incoterm == "EXW":
+                # Abel 2026-07-10: EXW selects a naviera and computes Visto Bueno
+                # (Exportación) + Gate Out from it. VB reuses fcl_visto_bueno_usd
+                # (the SAME net the cliente_local export path charged above via
+                # get_export_vb_net_usd) — charged once per shipment. Gate out is
+                # naviera-sourced per container from resolve_export_gate_out; the
+                # no-overcharge minimum-net depot is used (no depot selector
+                # exists) and recorded for audit. Both afecto IGV; render-layer
+                # applies the 18%. MAERSK's VB ($160) is retención-inclusive
+                # (open TODO abel-F1F4) — passed through as-is this pass.
+                if fcl_visto_bueno_usd > 0:
+                    _resolved_amounts["Visto Bueno (Exportación)"] = fcl_visto_bueno_usd
+                _gate = resolve_export_gate_out(fcl_naviera) if fcl_naviera else None
+                if _gate is not None:
+                    fcl_gate_out_depot = _gate["depot"]
+                    fcl_gate_out_usd = round(_gate["net"] * num_containers, 2)
+                    _resolved_amounts["Gate out"] = round(_gate["net"], 2)
+                elif fcl_naviera:
+                    logging.warning(
+                        "No export Gate Out for naviera %r — EXW Gate out not charged",
+                        fcl_naviera,
+                    )
             agente_incoterm_items = build_agente_venta_items(
                 _agente_concepts, num_containers, fcl_container_type,
                 open_transport_usd, resolved_amounts=_resolved_amounts,
@@ -685,7 +717,7 @@ def create_quote():
         + fcl_port_usd + fcl_deposito_temporal_usd + fcl_visto_bueno_usd
         + fcl_customs_commission_usd + fcl_customs_gastos_operativos_usd + fcl_customs_precinto_usd
         + fcl_thc_usd + fcl_isps_usd + fcl_mbl_usd + fcl_vb_importacion_usd
-        + fcl_gate_in_usd
+        + fcl_gate_in_usd + fcl_gate_out_usd
     )
 
     costeo = {
@@ -721,6 +753,8 @@ def create_quote():
         "fcl_mbl_usd": fcl_mbl_usd if fcl_mbl_usd else None,
         "fcl_vb_importacion_usd": fcl_vb_importacion_usd if fcl_vb_importacion_usd else None,
         "fcl_gate_in_usd": fcl_gate_in_usd if fcl_gate_in_usd else None,
+        "fcl_gate_out_usd": fcl_gate_out_usd if fcl_gate_out_usd else None,
+        "fcl_gate_out_depot": fcl_gate_out_depot,
         "aereo_modalidad": aereo_modalidad if mode == "aereo" else None,
         "aereo_consolidado": aereo_consolidado if mode == "aereo" else None,
         "aereo_transmission_usd": aereo_transmission_usd if aereo_transmission_usd else None,

@@ -295,3 +295,35 @@ def get_export_gate_outs(naviera: str) -> dict[str, dict]:
     """Gate Out almacenes for a naviera, keyed by depot name. Empty dict if unknown."""
     entry = _export_vb_lookup(naviera)
     return entry.get("gate_out", {}) if entry else {}
+
+
+def resolve_export_gate_out(naviera: str) -> dict | None:
+    """
+    Collapse a naviera's export Gate Out into ONE figure for the agente EXW
+    quote, returning {"depot", "net", "igv", "total"} or None if the naviera
+    has no gate-out data.
+
+    Most navieras map to a single depot (unambiguous). ONE and EVERGREEN map to
+    several. The cotizador has NO depot-selection mechanism — cliente_local has
+    never charged export Gate Out (it charges the naviera VB only; see
+    routes.py and ABEL_FOLLOWUPS.md item #4), so there is no existing field or
+    rule to reuse. Following the project's documented no-overcharge default
+    (CLAUDE.md "prefer the documented, no-overcharge value; let F3/F4 surface
+    corrections"), pick the minimum-net depot, breaking ties alphabetically so
+    the choice is deterministic, and record the depot so Abel can correct it in
+    F4. EVERGREEN's IMUPESA (133.50) vs TPP/DP-World (120.50) spread is the only
+    non-trivial case — flagged in ABEL_FOLLOWUPS.
+    """
+    gates = get_export_gate_outs(naviera)
+    if not gates:
+        return None
+    depot, vals = min(gates.items(), key=lambda kv: (kv[1]["net"], kv[0]))
+    return {"depot": depot, **vals}
+
+
+def export_naviera_options() -> list[str]:
+    """Sorted list of navieras with an export VB table entry — the exact option
+    set for the agente EXW Naviera dropdown. Includes MAERSK even though its
+    $160 is retención-inclusive (open TODO abel-F1F4): the carrier must be
+    selectable; the retención treatment is resolved in a separate pass."""
+    return sorted(_EXPORT_VB_BY_NAVIERA.keys())
